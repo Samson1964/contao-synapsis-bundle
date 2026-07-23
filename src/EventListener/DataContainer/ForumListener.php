@@ -1,0 +1,224 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt das Forum "Synapsis" fuer Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
+ */
+
+namespace Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer;
+
+use Contao\Backend;
+use Contao\DataContainer;
+use Contao\Image;
+use Contao\Input;
+use Contao\StringUtil;
+use Doctrine\DBAL\Connection;
+
+/**
+ * Callbacks der Forenstruktur (tl_synapsis_forum).
+ *
+ * Die Klasse haelt die Logik der Baumstruktur zusammen: welcher Typ an welcher
+ * Stelle erlaubt ist, wie ein Knoten im Baum dargestellt wird und wie der Alias
+ * erzeugt wird. Die Registrierung erfolgt ueber Service-Tags (services.yaml),
+ * nicht ueber die config.php.
+ */
+class ForumListener
+{
+    /**
+     * Erlaubte Kindtypen je Elterntyp.
+     *
+     * Startpunkte gibt es nur auf oberster Ebene. In einem Startpunkt sind
+     * Kategorien und Foren erlaubt, in einer Kategorie ausschliesslich Foren.
+     * Ein Forum kann Unterforen enthalten - Themen haengen aber immer direkt
+     * am Forum, nie an einer Kategorie.
+     *
+     * @var array<string, array<string>>
+     */
+    private const ALLOWED_CHILDREN = [
+        'root' => ['category', 'forum'],
+        'category' => ['forum'],
+        'forum' => ['forum'],
+    ];
+
+    /**
+     * Icons der einzelnen Typen (Kernicons, inkl. Dark-Mode-Varianten).
+     *
+     * @var array<string, string>
+     */
+    private const ICONS = [
+        'root' => 'root.svg',
+        'category' => 'folderC.svg',
+        'forum' => 'articles.svg',
+    ];
+
+    /**
+     * @var Connection
+     */
+    private $connection;
+
+    public function __construct(Connection $connection)
+    {
+        $this->connection = $connection;
+    }
+
+    /**
+     * Liefert die an der aktuellen Position erlaubten Typen (options_callback).
+     *
+     * Auf oberster Ebene ist nur ein Startpunkt moeglich, darunter richtet sich
+     * die Auswahl nach dem Typ des uebergeordneten Datensatzes.
+     *
+     * @return array<string>
+     */
+    public function getTypeOptions(?DataContainer $dc = null): array
+    {
+        $pid = $this->getParentId($dc);
+
+        if (0 === $pid) {
+            return ['root'];
+        }
+
+        $parentType = (string) $this->connection->fetchOne(
+            'SELECT type FROM tl_synapsis_forum WHERE id = ?',
+            [$pid]
+        );
+
+        return self::ALLOWED_CHILDREN[$parentType] ?? ['forum'];
+    }
+
+    /**
+     * Stellt einen Knoten der Forenstruktur dar (label_callback im Baummodus).
+     *
+     * @param array<string, mixed> $row            Datensatz des Knotens
+     * @param string               $label          Vorgefertigtes Label (Titel)
+     * @param DataContainer|null   $dc             Data Container
+     * @param string               $imageAttribute Zusaetzliche Attribute des Icons
+     * @param bool                 $returnImage    Nur das Icon zurueckgeben
+     * @param bool                 $protected      Knoten liegt in einem geschuetzten Bereich
+     */
+    public function renderLabel(array $row, string $label, ?DataContainer $dc = null, string $imageAttribute = '', bool $returnImage = false, bool $protected = false): string
+    {
+        $type = (string) ($row['type'] ?? 'forum');
+        $icon = self::ICONS[$type] ?? self::ICONS['forum'];
+
+        $image = Image::getHtml($icon, '', $imageAttribute);
+
+        if ($returnImage) {
+            return $image;
+        }
+
+        // Geschlossene Foren und unveroeffentlichte Knoten kenntlich machen
+        $suffix = '';
+
+        if ($row['closed'] ?? false) {
+            $suffix .= ' <span class="tl_gray">['.($GLOBALS['TL_LANG']['tl_synapsis_forum']['closedLabel'] ?? 'geschlossen').']</span>';
+        }
+
+        if (!($row['published'] ?? false)) {
+            $label = '<span class="tl_gray">'.$label.'</span>';
+        }
+
+        return $image.' '.$label.$suffix;
+    }
+
+    /**
+     * Erzeugt bei Bedarf den Alias aus dem Titel (save_callback).
+     *
+     * @param mixed $value Eingegebener Alias
+     *
+     * @throws \RuntimeException wenn der Alias bereits vergeben ist
+     */
+    public function generateAlias($value, DataContainer $dc): string
+    {
+        $value = (string) $value;
+        $id = (int) $dc->id;
+
+        if ('' === $value) {
+            $title = (string) Input::post('title');
+
+            if ('' === $title) {
+                $title = (string) $this->connection->fetchOne('SELECT title FROM tl_synapsis_forum WHERE id = ?', [$id]);
+            }
+
+            $value = StringUtil::generateAlias($title);
+
+            // Bei Dubletten die ID anhaengen, damit der Alias eindeutig bleibt
+            if ($this->aliasExists($value, $id)) {
+                $value .= '-'.$id;
+            }
+
+            return $value;
+        }
+
+        if ($this->aliasExists($value, $id)) {
+            throw new \RuntimeException(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'] ?? 'Der Alias "%s" ist bereits vergeben.', $value));
+        }
+
+        return $value;
+    }
+
+    /**
+     * Zeigt die Schaltflaeche "Themen" nur bei Foren an (button_callback).
+     *
+     * Kategorien und Startpunkte koennen keine Themen enthalten, deshalb wird
+     * die Schaltflaeche dort ausgeblendet.
+     *
+     * @param array<string, mixed> $row
+     * @param string|null          $href
+     * @param string               $label
+     * @param string               $title
+     * @param string|null          $icon
+     * @param mixed                $attributes
+     */
+    public function topicsButton(array $row, $href, $label, $title, $icon, $attributes): string
+    {
+        if ('forum' !== ($row['type'] ?? '')) {
+            return '';
+        }
+
+        return '<a href="'.Backend::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'" '.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
+    }
+
+    /**
+     * Ermittelt die ID des uebergeordneten Datensatzes.
+     *
+     * Beim Anlegen eines neuen Datensatzes steht die pid noch nicht in der
+     * Datenbank; Contao uebergibt sie dann per URL (mode=2 = "hineinfuegen",
+     * mode=1 = "danach einfuegen", pid ist dann ein Geschwisterdatensatz).
+     */
+    private function getParentId(?DataContainer $dc): int
+    {
+        if (null !== $dc && $dc->id) {
+            $pid = $this->connection->fetchOne('SELECT pid FROM tl_synapsis_forum WHERE id = ?', [(int) $dc->id]);
+
+            if (false !== $pid && null !== $pid) {
+                return (int) $pid;
+            }
+        }
+
+        $pid = (int) Input::get('pid');
+
+        if (0 === $pid) {
+            return 0;
+        }
+
+        if (1 === (int) Input::get('mode')) {
+            return (int) $this->connection->fetchOne('SELECT pid FROM tl_synapsis_forum WHERE id = ?', [$pid]);
+        }
+
+        return $pid;
+    }
+
+    /**
+     * Prueft, ob der Alias bereits von einem anderen Datensatz verwendet wird.
+     */
+    private function aliasExists(string $alias, int $id): bool
+    {
+        return (bool) $this->connection->fetchOne(
+            'SELECT id FROM tl_synapsis_forum WHERE alias = ? AND id != ?',
+            [$alias, $id]
+        );
+    }
+}

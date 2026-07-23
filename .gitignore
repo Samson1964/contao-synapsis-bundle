@@ -1,0 +1,11 @@
+/vendor/
+/composer.lock
+
+# Interne Spezifikation/Arbeitsanweisung - bleibt lokal
+/CLAUDE.md
+/.phpunit.result.cache
+/var/
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

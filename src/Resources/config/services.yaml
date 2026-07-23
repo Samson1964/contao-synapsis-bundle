@@ -1,0 +1,37 @@
+# Service-Konfiguration des Synapsis-Bundles.
+#
+# Konventionen (siehe CLAUDE.md):
+#   - Autowiring und Autoconfiguration sind aktiv.
+#   - Dienste sind privat; der Zugriff erfolgt ueber Dependency Injection.
+#   - Eigene Dienste erhalten das Praefix "schachbulle_contao_synapsis.*".
+#   - DCA-Callbacks werden ueber den Tag "contao.callback" registriert (statt
+#     ueber die config.php). Bewusst als YAML-Tag und nicht als PHP-Attribut,
+#     damit das Bundle auch unter PHP 7.4 funktioniert.
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # --- Forenstruktur (tl_synapsis_forum) -----------------------------------
+    schachbulle_contao_synapsis.listener.data_container.forum:
+        class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\ForumListener
+        tags:
+            - { name: contao.callback, table: tl_synapsis_forum, target: fields.type.options, method: getTypeOptions }
+            - { name: contao.callback, table: tl_synapsis_forum, target: fields.alias.save, method: generateAlias }
+            - { name: contao.callback, table: tl_synapsis_forum, target: list.label.label, method: renderLabel }
+            - { name: contao.callback, table: tl_synapsis_forum, target: list.operations.topics.button, method: topicsButton }
+
+    # --- Themen (tl_synapsis_topic) ------------------------------------------
+    schachbulle_contao_synapsis.listener.data_container.topic:
+        class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\TopicListener
+        tags:
+            - { name: contao.callback, table: tl_synapsis_topic, target: fields.alias.save, method: generateAlias }
+            - { name: contao.callback, table: tl_synapsis_topic, target: list.sorting.child_record, method: renderTopic }
+
+    # --- Beitraege (tl_synapsis_post) ----------------------------------------
+    schachbulle_contao_synapsis.listener.data_container.post:
+        class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\PostListener
+        tags:
+            - { name: contao.callback, table: tl_synapsis_post, target: list.sorting.child_record, method: renderPost }
