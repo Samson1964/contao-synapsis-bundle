@@ -69,67 +69,75 @@ class ForumAccessTest extends TestCase
         $this->assertTrue($this->access->canRead($chain, self::MEMBER, [9]));
     }
 
-    // --- Gaeste ---------------------------------------------------------------
+    // --- Gaeste ueber Checkboxen ---------------------------------------------
 
-    public function testGastOhneFreigabeHatKeinenZugriff(): void
+    public function testGastLiestOeffentlichesForum(): void
     {
-        $chain = [$this->node()]; // ungeschuetzt, aber kein Gaeste-Flag
+        // Ungeschuetzt = oeffentlich: Gaeste lesen, schreiben aber nicht.
+        $chain = [$this->node()];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testGeschuetztesForumOhneGaesteFreigabeGesperrt(): void
+    {
+        // Nur fuer Mitgliedergruppe 5, keine Gaeste-Freigabe.
+        $chain = [$this->node(['protected' => true, 'groups' => [5]])];
 
         $this->assertFalse($this->access->canRead($chain, self::GUEST, []));
-        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
     }
 
-    public function testGastDarfNurLesen(): void
+    public function testGuestReadCheckboxOeffnetGeschuetztesForum(): void
     {
-        $chain = [$this->node(['guestRead' => true])];
-
-        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
-        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
-    }
-
-    public function testGastDarfSchreibenSchliesstLesenEin(): void
-    {
-        $chain = [$this->node(['guestWrite' => true])];
-
-        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
-        $this->assertTrue($this->access->canWrite($chain, self::GUEST, []));
-    }
-
-    public function testGaesteFreigabeWirdVererbt(): void
-    {
-        // guestRead auf der Kategorie -> Forum darunter ist fuer Gaeste lesbar
-        $chain = [
-            $this->node(),                       // Forum: kein eigenes Flag
-            $this->node(['guestRead' => true]),  // Kategorie: Gaeste duerfen lesen
-        ];
-
-        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
-        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
-    }
-
-    public function testGaesteSchreibrechtWirdVererbt(): void
-    {
-        $chain = [
-            $this->node(),
-            $this->node(['guestWrite' => true]),
-        ];
-
-        $this->assertTrue($this->access->canWrite($chain, self::GUEST, []));
-    }
-
-    // --- Zusammenspiel Mitglieder/Gaeste --------------------------------------
-
-    public function testGaesteFreigabeMachtBereichOeffentlichLesbar(): void
-    {
-        // Geschuetzt fuer Gruppe 5, zusaetzlich guestRead: auch ein Mitglied
-        // der falschen Gruppe (und ein Gast) darf lesen, aber nicht schreiben.
+        // Geschuetzt fuer Gruppe 5, aber guestRead -> Gaeste (und alle) lesen.
         $chain = [$this->node(['protected' => true, 'groups' => [5], 'guestRead' => true])];
 
-        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [1]));   // falsche Gruppe, aber oeffentlich
         $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
-        $this->assertFalse($this->access->canWrite($chain, self::MEMBER, [1])); // nur lesen
         $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
-        $this->assertTrue($this->access->canWrite($chain, self::MEMBER, [5]));  // richtige Gruppe darf schreiben
+        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [1]));   // falsche Gruppe, aber oeffentlich lesbar
+        $this->assertFalse($this->access->canWrite($chain, self::MEMBER, [1])); // nur lesen
+        $this->assertTrue($this->access->canWrite($chain, self::MEMBER, [5]));  // richtige Gruppe schreibt
+    }
+
+    public function testGuestWriteCheckboxSchliesstLesenEin(): void
+    {
+        $chain = [$this->node(['protected' => true, 'groups' => [5], 'guestWrite' => true])];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertTrue($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testGuestReadWirdVererbt(): void
+    {
+        $chain = [
+            $this->node(['protected' => true, 'groups' => [5]]),   // Forum: mitgliederpflichtig
+            $this->node(['guestRead' => true]),                    // Kategorie: Gaeste duerfen lesen
+        ];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    // --- Gaeste-Gruppe (-1) hat Vorrang vor den Checkboxen -------------------
+
+    public function testGaesteGruppeGewaehrtLesezugriff(): void
+    {
+        // Geschuetzt fuer Gruppe 5 UND Gaeste (-1): Gaeste lesen, schreiben nicht.
+        $chain = [$this->node(['protected' => true, 'groups' => [5, -1]])];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testGaesteGruppeSchlaegtSchreibCheckbox(): void
+    {
+        // Gaeste-Gruppe (-1) UND guestWrite gesetzt: die Gruppe hat Vorrang,
+        // Gaeste bleiben nur-lesend (guestWrite ohne Wirkung).
+        $chain = [$this->node(['protected' => true, 'groups' => [-1], 'guestWrite' => true])];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
     }
 
     /**

@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 use Contao\DC_Table;
+use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
 // Contao-Version zuverlaessig anhand des installierten Pakets bestimmen; davon
@@ -83,9 +84,9 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
     (
         '__selector__' => array('type', 'protected'),
         'default'      => '{type_legend},type',
-        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
-        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
-        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
+        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
+        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
+        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
     ),
 
     'subpalettes' => array
@@ -147,6 +148,16 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
             'inputType' => 'textarea',
             'eval'      => array('style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'clr'),
             'sql'       => "text NULL",
+        ),
+        // Icon fuer Foren (Lucide). Wird vererbt: Startpunkt = Standard,
+        // Kategorie und Forum koennen ihn ueberschreiben. Leer = erben.
+        'forumIcon' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'select',
+            'options'   => LucideIcons::names(),
+            'eval'      => array('includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'),
+            'sql'       => "varchar(64) NOT NULL default ''",
         ),
         'closed' => array
         (

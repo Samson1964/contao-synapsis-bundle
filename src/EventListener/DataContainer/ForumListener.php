@@ -89,18 +89,19 @@ class ForumListener
     }
 
     /**
-     * Liefert die auswaehlbaren Mitgliedergruppen (options_callback des Feldes
+     * Liefert die auswaehlbaren Mitgliedergruppen inklusive der fiktiven Gruppe
+     * "Gaeste" (-1), wie in Contao ueblich (options_callback des Feldes
      * "groups").
      *
-     * Gaeste werden bewusst NICHT hier gefuehrt - ihr Zugriff laeuft ueber die
-     * getrennten Checkboxen "guestRead"/"guestWrite", damit Lese- und
-     * Schreibrecht fuer Gaeste unabhaengig steuerbar bleiben.
+     * Die Gaeste-Gruppe hat Vorrang vor den Checkboxen im Bereich
+     * "Gaeste-Zugriff": ist sie ausgewaehlt, regelt sie den Gaeste-Lesezugriff,
+     * und die Checkboxen bleiben ohne Wirkung (siehe ForumAccess).
      *
      * @return array<int, string>
      */
     public function getGroupOptions(): array
     {
-        $options = [];
+        $options = [-1 => ($GLOBALS['TL_LANG']['MSC']['guests'] ?? 'Gäste')];
 
         $rows = $this->connection->fetchAllAssociative('SELECT id, name FROM tl_member_group ORDER BY name');
 

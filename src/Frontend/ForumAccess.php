@@ -20,12 +20,17 @@ namespace Schachbulle\ContaoSynapsisBundle\Frontend;
  *               dort erlaubten Gruppen angehoeren. Ein Mitglied mit Lesezugriff
  *               auf ein (offenes) Forum darf dort auch schreiben.
  *
- *   Gaeste      ueber die Checkboxen "guestRead" und "guestWrite" (Opt-in):
- *               Gaeste duerfen NUR lesen, wenn irgendwo in der Kette guestRead
- *               (oder guestWrite) gesetzt ist, und nur schreiben, wenn irgendwo
- *               guestWrite gesetzt ist. Ohne gesetztes Flag haben Gaeste keinen
- *               Zugriff (fail-safe: vergessenes Haekchen haelt den Bereich
- *               privat). Der Mitglieder-Schutz spielt fuer Gaeste keine Rolle.
+ *   Gaeste      werden - wie in Contao ueblich - als Gruppe -1 behandelt. Ist
+ *               die Gaeste-Gruppe in den erlaubten Gruppen eines geschuetzten
+ *               Knotens enthalten, duerfen Gaeste dort LESEN (nie schreiben);
+ *               diese Freigabe hat Vorrang vor den Checkboxen. Zusaetzlich gibt
+ *               es die Checkboxen "guestRead"/"guestWrite" (Opt-in): sie
+ *               greifen dort, wo der Zugriff nicht bereits ueber die
+ *               Gaeste-Gruppe geregelt ist. guestRead = lesen, guestWrite =
+ *               lesen und schreiben.
+ *
+ * "Gaeste duerfen lesen" bedeutet oeffentlich lesbar - dann duerfen auch
+ * angemeldete Mitglieder ohne passende Gruppe lesen (aber nicht schreiben).
  *
  * Veroeffentlichung wird immer geprueft: ist ein Knoten der Kette unveroeffent-
  * licht, ist der Bereich fuer niemanden sichtbar.
@@ -36,6 +41,11 @@ namespace Schachbulle\ContaoSynapsisBundle\Frontend;
  */
 class ForumAccess
 {
+    /**
+     * ID der fiktiven Contao-Gruppe "Gaeste".
+     */
+    private const GUEST_GROUP = -1;
+
     /**
      * Prueft den Lesezugriff auf eine Knotenkette.
      *
@@ -49,11 +59,12 @@ class ForumAccess
             return false;
         }
 
-        // Lesbar, wenn das Mitglied die Mitglieder-Schutzpruefung besteht ODER
-        // der Bereich fuer Gaeste (und damit oeffentlich) freigegeben ist.
-        $memberOk = !$isGuest && $this->memberAllowed($chain, $memberGroupIds);
+        // Gaeste gelten als Gruppe -1. Lesbar, wenn die Gruppenpruefung besteht
+        // (Mitglied in erlaubter Gruppe bzw. Gast ueber die Gaeste-Gruppe) ODER
+        // eine Gaeste-Checkbox den Bereich oeffentlich lesbar macht.
+        $effectiveGroups = $isGuest ? [self::GUEST_GROUP] : $memberGroupIds;
 
-        return $memberOk || $this->guestAllowed($chain, false);
+        return $this->memberAllowed($chain, $effectiveGroups) || $this->guestAllowed($chain, false);
     }
 
     /**
@@ -71,12 +82,35 @@ class ForumAccess
             return false;
         }
 
-        // Schreiben darf, wer der erlaubten Mitgliedergruppe angehoert ODER wo
-        // Gaeste ausdruecklich schreiben duerfen. Reiner Gaeste-Lesezugriff
-        // (guestRead ohne guestWrite) berechtigt niemanden zum Schreiben.
-        $memberOk = !$isGuest && $this->memberAllowed($chain, $memberGroupIds);
+        if ($isGuest) {
+            // Regelt die Gaeste-Gruppe den Zugriff (geschuetzter Knoten mit -1),
+            // sind Gaeste dort ausdruecklich nur-lesend - die Schreib-Checkbox
+            // bleibt ohne Wirkung. Sonst zaehlt "Gaeste duerfen schreiben".
+            $governedByGuestGroup = $this->isProtectedChain($chain)
+                && $this->memberAllowed($chain, [self::GUEST_GROUP]);
 
-        return $memberOk || $this->guestAllowed($chain, true);
+            return !$governedByGuestGroup && $this->guestAllowed($chain, true);
+        }
+
+        // Mitglied: schreibt, wer einer erlaubten Gruppe angehoert oder wo Gaeste
+        // (und damit alle) schreiben duerfen.
+        return $this->memberAllowed($chain, $memberGroupIds) || $this->guestAllowed($chain, true);
+    }
+
+    /**
+     * Ist mindestens ein Knoten der Kette geschuetzt?
+     *
+     * @param array<array<string, mixed>> $chain
+     */
+    private function isProtectedChain(array $chain): bool
+    {
+        foreach ($chain as $node) {
+            if (!empty($node['protected'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -378,23 +378,33 @@
 .synapsis .synapsis-button,
 .synapsis a.synapsis-button,
 .synapsis button.synapsis-button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 2.4rem;
+    margin: 0;
     padding: 0.5rem 1.1rem;
     border-radius: var(--syn-radius);
-    background: var(--syn-bg-alt);
-    border: 1px solid var(--syn-border);
+    background: #e4e9ee;
+    border: 1px solid #c4ced7;
     color: var(--syn-text);
     text-decoration: none;
     cursor: pointer;
     font: inherit;
     font-size: 0.9rem;
     line-height: 1.2;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
+.synapsis .synapsis-button:hover,
 .synapsis a.synapsis-button:hover,
 .synapsis button.synapsis-button:hover {
     text-decoration: none;
-    background: #e9eef2;
+    background: #d5dce3;
     color: var(--syn-text);
 }
 
@@ -406,6 +416,7 @@
     color: #fff;
 }
 
+.synapsis .synapsis-button--primary:hover,
 .synapsis a.synapsis-button--primary:hover,
 .synapsis button.synapsis-button--primary:hover {
     background: var(--syn-accent-dark);

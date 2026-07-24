@@ -1,5 +1,28 @@
 # Synapsis Changelog
 
+## Version 0.4.0 (2026-07-24)
+
+### Gäste-Zugriff überarbeitet (Gäste-Gruppe + Checkboxen)
+
+* **Fiktive Gruppe „Gäste" (-1) wieder in den erlaubten Mitgliedergruppen** – behebt die Anzeige „Unbekannte Option: -1" bei bestehenden Datensätzen (Wiederherstellung des Contao-Standards).
+* **Vorrang-Regel**: Ist die Gruppe „Gäste" für einen geschützten Bereich ausgewählt, gewährt sie Gästen **Lesezugriff** (nie Schreibzugriff) und hat **Vorrang** vor den beiden Checkboxen – die bleiben dann ohne Wirkung.
+* Die Checkboxen „Gäste dürfen lesen"/„Gäste dürfen schreiben" greifen dort, wo die Gäste-Gruppe **nicht** ausgewählt ist. „Gäste dürfen lesen" macht einen Bereich öffentlich lesbar (auch für Mitglieder ohne passende Gruppe), „Gäste dürfen schreiben" erlaubt zusätzlich das Schreiben.
+* Damit ist ein reiner Gäste-Lesezugriff sicher möglich, ohne versehentlich Schreibrechte zu vergeben.
+
+### Konfigurierbare Forum-Icons (Lucide)
+
+* Neues Feld **„Forum-Icon"** auf Startpunkt, Kategorie und Forum mit einer kuratierten Auswahl von [Lucide](https://lucide.dev)-Icons.
+* **Vererbung**: Im Startpunkt legt man das Standard-Icon für die Foren fest; Kategorie und Forum können es überschreiben (leer = erben). Im Frontend wird das effektive Icon als Inline-SVG dargestellt.
+
+### Frontend-Korrekturen
+
+* **Buttons** vereinheitlicht: `<a>`- und `<button>`-Buttons haben jetzt dieselbe Höhe/Ausrichtung; der „Abbrechen"-Button erscheint als klar erkennbarer Sekundär-Button (gleiche Form wie „Thema erstellen", andere Farbe).
+* **TinyMCE**: Der Basis-Pfad ist jetzt **absolut**. Im Vorschau-Modus (`preview.php`) wurde ein relativer Pfad zuvor zu `preview.php/assets/…` aufgelöst, wodurch Skins/Plugins per 404 fehlschlugen (nicht das fehlende SSL-Zertifikat war die Ursache).
+
+### Verifiziert
+
+* Auf Contao 4.13.58 **und** 5.7: Migration `forumIcon`, Backend-Diagnose (Gäste-Gruppe in den Optionen, Felder vorhanden, Lucide-Icons), Frontend-Rauchtest (Lesezone/Schreibzone/Geheim + Gäste-Gruppe mit Vorrang + Leak-Test); 15 Unit-Tests der Zugriffslogik.
+
 ## Version 0.3.0 (2026-07-24)
 
 ### Neues Gäste-Zugriffsmodell (Opt-in, Lesen/Schreiben getrennt)

@@ -25,6 +25,7 @@ use Contao\Pagination;
 use Contao\StringUtil;
 use Contao\System;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
+use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 
 /**
  * Frontend-Modul des Synapsis-Forums.
@@ -586,25 +587,49 @@ class SynapsisForum extends Module
         $forum['topicCount'] = $topicCount;
         $forum['postCount'] = $postCount;
         $forum['lastPost'] = $this->findLastPost($forumIds);
-        // Fertiges Inline-SVG statt eines Icon-Namens, damit keine fremde
-        // Icon-Schrift der Seite den Namen (z. B. "message-square") einblendet.
-        $forum['iconSvg'] = $this->forumIcon((bool) $forum['closed']);
+        // Vererbtes, im Backend eingestelltes Lucide-Icon als fertiges Inline-SVG
+        // (kein Icon-Name im Markup, damit keine fremde Icon-Schrift der Seite
+        // eingreift). Geschlossene Foren werden zusaetzlich per CSS-Klasse
+        // "is-locked" gedaempft dargestellt.
+        $forum['iconSvg'] = LucideIcons::svg($this->resolveForumIcon($forumId));
 
         return $forum;
     }
 
     /**
-     * Liefert das Inline-SVG-Icon eines Forums (Sprechblase bzw. Schloss).
+     * Ermittelt den Icon-Namen eines Forums per Vererbung: das Forum selbst,
+     * sonst die naechste uebergeordnete Ebene (Kategorie, dann Startpunkt), die
+     * ein Icon gesetzt hat; sonst das Standard-Icon.
      */
-    private function forumIcon(bool $closed): string
+    private function resolveForumIcon(int $forumId): string
     {
-        if ($closed) {
-            // Lucide "lock"
-            return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+        $currentId = $forumId;
+        $guard = 0;
+
+        while ($currentId > 0 && $guard < 100) {
+            $row = Database::getInstance()
+                ->prepare('SELECT id, pid, forumIcon FROM tl_synapsis_forum WHERE id = ?')
+                ->execute($currentId)
+                ->row()
+            ;
+
+            if (empty($row)) {
+                break;
+            }
+
+            if ('' !== (string) $row['forumIcon']) {
+                return (string) $row['forumIcon'];
+            }
+
+            if ((int) $row['id'] === $this->rootId) {
+                break;
+            }
+
+            $currentId = (int) $row['pid'];
+            ++$guard;
         }
 
-        // Lucide "message-square"
-        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+        return LucideIcons::DEFAULT;
     }
 
     /**
@@ -1298,8 +1323,15 @@ class SynapsisForum extends Module
 
         // Contao liefert TinyMCE 5 unter assets/tinymce4 mit; von dort laden wir
         // den Editor. Der Base-Pfad zeigt auf das js-Verzeichnis, damit Plugins
-        // und Skins gefunden werden.
+        // und Skins gefunden werden. Er MUSS absolut sein - im Vorschau-Modus
+        // (preview.php) wuerde ein relativer Pfad sonst zu
+        // "preview.php/assets/..." aufgeloest und die Skins/Plugins per 404
+        // fehlschlagen.
         $base = \Contao\Controller::addStaticUrlTo('assets/tinymce4/js');
+
+        if (!preg_match('#^https?://#', $base)) {
+            $base = Environment::get('base').ltrim($base, '/');
+        }
 
         $GLOBALS['TL_JAVASCRIPT']['synapsis_tinymce'] = 'assets/tinymce4/js/tinymce.min.js|static';
 

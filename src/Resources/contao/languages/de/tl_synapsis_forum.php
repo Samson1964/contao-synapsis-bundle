@@ -25,17 +25,19 @@ $GLOBALS['TL_LANG']['tl_synapsis_forum']['type']        = array('Typ', 'Startpun
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['title']       = array('Bezeichnung', 'Geben Sie die Bezeichnung ein.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['alias']       = array('Alias', 'Der Alias ist eine eindeutige Referenz, die anstelle der numerischen ID aufgerufen werden kann. Wird er leer gelassen, erzeugt Contao ihn aus der Bezeichnung.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['description'] = array('Beschreibung', 'Geben Sie eine optionale Beschreibung ein, die im Frontend unter der Bezeichnung erscheint.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['forumIcon']   = array('Forum-Icon', 'Icon (Lucide) für die Foren. Wird vererbt: im Startpunkt legen Sie das Standard-Icon fest, in Kategorie und Forum können Sie es überschreiben. Leer = vom übergeordneten Element erben.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['closed']      = array('Forum schließen', 'In einem geschlossenen Forum können keine neuen Themen und Beiträge erstellt werden.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['protected']   = array('Zugriff schützen', 'Den Bereich nur für bestimmte Mitgliedergruppen sichtbar machen. Der Schutz wird an alle untergeordneten Kategorien, Foren und Themen vererbt.');
-$GLOBALS['TL_LANG']['tl_synapsis_forum']['groups']      = array('Erlaubte Mitgliedergruppen', 'Diese Mitgliedergruppen erhalten Zugriff auf den Bereich.');
-$GLOBALS['TL_LANG']['tl_synapsis_forum']['guestRead']   = array('Gäste dürfen lesen', 'Nicht angemeldete Besucher (Gäste) dürfen diesen Bereich lesen, aber nicht schreiben. Die Freigabe wird nach unten vererbt.');
-$GLOBALS['TL_LANG']['tl_synapsis_forum']['guestWrite']  = array('Gäste dürfen schreiben', 'Gäste dürfen in diesem Bereich Themen anlegen und antworten (schließt das Lesen ein). Die Freigabe wird nach unten vererbt.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['groups']      = array('Erlaubte Mitgliedergruppen', 'Diese Gruppen erhalten Zugriff auf den Bereich. Die Gruppe „Gäste" gewährt nicht angemeldeten Besuchern Lesezugriff und hat Vorrang vor den beiden Checkboxen im Bereich „Gäste-Zugriff".');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['guestRead']   = array('Gäste dürfen lesen', 'Nicht angemeldete Besucher (Gäste) dürfen diesen Bereich lesen, aber nicht schreiben. Vererbt nach unten. Wirkungslos, wenn oben die Gruppe „Gäste" ausgewählt ist.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['guestWrite']  = array('Gäste dürfen schreiben', 'Gäste dürfen hier Themen anlegen und antworten (schließt das Lesen ein). Vererbt nach unten. Wirkungslos, wenn oben die Gruppe „Gäste" ausgewählt ist (dann nur Lesen).');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['published']   = array('Veröffentlichen', 'Den Eintrag im Frontend sichtbar schalten.');
 
 // Legenden
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['type_legend']      = 'Typ';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['title_legend']     = 'Bezeichnung und Alias';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['meta_legend']      = 'Beschreibung';
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['icon_legend']      = 'Forum-Icon';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['config_legend']    = 'Einstellungen';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['protected_legend'] = 'Zugriffsschutz (Mitglieder)';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['guest_legend']     = 'Gäste-Zugriff';
