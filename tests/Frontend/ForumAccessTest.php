@@ -108,6 +108,21 @@ class ForumAccessTest extends TestCase
     }
 
     /**
+     * Die fiktive Gruppe "Gaeste" (-1) gewaehrt nicht angemeldeten Besuchern
+     * Zugriff auf einen geschuetzten Knoten.
+     */
+    public function testGaesteGruppeGewaehrtZugriff(): void
+    {
+        $chain = [$this->node(true, true, [-1])];
+
+        // Gast (Gruppe -1) darf hinein ...
+        $this->assertTrue($this->access->isAccessible($chain, [-1]));
+
+        // ... ein angemeldetes Mitglied ohne die Gaeste-Gruppe jedoch nicht.
+        $this->assertFalse($this->access->isAccessible($chain, [3, 4]));
+    }
+
+    /**
      * Serialisierte Gruppenwerte (wie aus der Datenbank) werden korrekt
      * ausgewertet.
      */

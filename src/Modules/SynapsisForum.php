@@ -14,6 +14,8 @@ use Contao\BackendTemplate;
 use Contao\Database;
 use Contao\Date;
 use Contao\Dbafs;
+use Contao\Email;
+use Contao\Environment;
 use Contao\FilesModel;
 use Contao\FileUpload;
 use Contao\FrontendUser;
@@ -290,7 +292,8 @@ class SynapsisForum extends Module
     {
         $topicId = (int) $this->activeTopic['id'];
 
-        // Antwort verarbeiten, bevor die Liste gerendert wird
+        // Abo-Umschaltung und Antwort verarbeiten, bevor die Liste gerendert wird
+        $this->handleSubscription();
         $this->handlePostSubmission();
 
         // Ansichtszaehler erhoehen (einmal pro Aufruf)
@@ -327,6 +330,12 @@ class SynapsisForum extends Module
 
         $this->Template->posts = $rows;
         $this->Template->pagination = $pagination->generate("\n");
+
+        // Abonnement-Schaltflaeche fuer angemeldete Mitglieder
+        $this->Template->canSubscribe = $this->isMemberLoggedIn();
+        $this->Template->isSubscribed = $this->isSubscribed($topicId);
+        $this->Template->subscribeAction = $this->pageUrl(['topic' => $topicId]);
+        $this->Template->subscribeFormId = 'synapsis_sub_'.$this->id;
 
         // Antwortformular nur fuer angemeldete Mitglieder in offenen Themen
         $canReply = $this->isMemberLoggedIn() && !$this->activeTopic['locked'] && !$this->activeForum['closed'];
@@ -431,7 +440,8 @@ class SynapsisForum extends Module
         }
 
         $now = time();
-        $this->insertPost((int) $this->activeTopic['id'], (int) FrontendUser::getInstance()->id, $text, $now);
+        $memberId = (int) FrontendUser::getInstance()->id;
+        $this->insertPost((int) $this->activeTopic['id'], $memberId, $text, $now);
 
         // Thema als aktualisiert markieren
         Database::getInstance()
@@ -439,7 +449,43 @@ class SynapsisForum extends Module
             ->execute($now, (int) $this->activeTopic['id'])
         ;
 
+        // Abonnenten benachrichtigen (ausser dem Verfasser)
+        $this->notifySubscribers((int) $this->activeTopic['id'], $memberId);
+
         $this->redirect($this->pageUrl(['topic' => (int) $this->activeTopic['id'], 'page_p'.$this->id => $this->lastPostPage()]));
+    }
+
+    /**
+     * Schaltet das Abonnement des aktiven Themas fuer das angemeldete Mitglied
+     * um (an/aus) und laedt die Themenansicht neu.
+     */
+    private function handleSubscription(): void
+    {
+        if ('synapsis_sub_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        if (!$this->isMemberLoggedIn()) {
+            return;
+        }
+
+        $memberId = (int) FrontendUser::getInstance()->id;
+        $topicId = (int) $this->activeTopic['id'];
+
+        if ($this->isSubscribed($topicId)) {
+            Database::getInstance()
+                ->prepare('DELETE FROM tl_synapsis_subscription WHERE member = ? AND topic = ?')
+                ->execute($memberId, $topicId)
+            ;
+        } else {
+            Database::getInstance()
+                ->prepare('INSERT INTO tl_synapsis_subscription %s')
+                ->set(['member' => $memberId, 'topic' => $topicId, 'tstamp' => time()])
+                ->execute()
+            ;
+        }
+
+        $this->redirect($this->pageUrl(['topic' => $topicId]));
     }
 
     /**
@@ -1004,19 +1050,99 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Gruppen-IDs des angemeldeten Mitglieds (leer, wenn nicht angemeldet).
+     * Gruppen-IDs des Besuchers fuer die Zugriffspruefung.
+     *
+     * Nicht angemeldete Besucher gelten als Gaeste und erhalten die fiktive
+     * Gruppe -1, damit ihnen gezielt Zugriff auf geschuetzte Bereiche gewaehrt
+     * werden kann. Angemeldete Mitglieder erhalten ihre echten Gruppen.
      *
      * @return array<int>
      */
     private function getMemberGroupIds(): array
     {
         if (!$this->isMemberLoggedIn()) {
-            return [];
+            return [-1];
         }
 
         $groups = StringUtil::deserialize(FrontendUser::getInstance()->groups, true);
 
         return array_map('intval', $groups);
+    }
+
+    /**
+     * Prueft, ob das angemeldete Mitglied das Thema abonniert hat.
+     */
+    private function isSubscribed(int $topicId): bool
+    {
+        if (!$this->isMemberLoggedIn()) {
+            return false;
+        }
+
+        return (bool) Database::getInstance()
+            ->prepare('SELECT id FROM tl_synapsis_subscription WHERE member = ? AND topic = ?')
+            ->execute((int) FrontendUser::getInstance()->id, $topicId)
+            ->numRows
+        ;
+    }
+
+    /**
+     * Benachrichtigt die Abonnenten eines Themas per E-Mail ueber eine neue
+     * Antwort - mit Ausnahme des Verfassers.
+     */
+    private function notifySubscribers(int $topicId, int $excludeMemberId): void
+    {
+        $subscribers = Database::getInstance()
+            ->prepare('SELECT m.email, m.firstname, m.lastname FROM tl_synapsis_subscription s INNER JOIN tl_member m ON m.id = s.member WHERE s.topic = ? AND s.member != ?')
+            ->execute($topicId, $excludeMemberId)
+            ->fetchAllAssoc()
+        ;
+
+        if (empty($subscribers)) {
+            return;
+        }
+
+        $title = (string) $this->activeTopic['title'];
+        $url = $this->absoluteUrl(['topic' => $topicId]);
+
+        $subject = sprintf($GLOBALS['TL_LANG']['MSC']['synapsisNotifySubject'] ?? 'Neue Antwort im Thema "%s"', $title);
+
+        foreach ($subscribers as $subscriber) {
+            if ('' === (string) $subscriber['email']) {
+                continue;
+            }
+
+            $body = sprintf(
+                $GLOBALS['TL_LANG']['MSC']['synapsisNotifyBody'] ?? "Hallo %s,\n\nim Thema \"%s\" wurde eine neue Antwort verfasst.\n\n%s\n",
+                trim(($subscriber['firstname'] ?? '').' '.($subscriber['lastname'] ?? '')),
+                $title,
+                $url
+            );
+
+            try {
+                $email = new Email();
+                $email->subject = $subject;
+                $email->text = $body;
+                $email->sendTo($subscriber['email']);
+            } catch (\Exception $e) {
+                // Einzelne fehlgeschlagene Zustellung darf den Beitrag nicht verhindern
+            }
+        }
+    }
+
+    /**
+     * Baut eine absolute URL auf der aktuellen Seite (fuer E-Mails).
+     *
+     * @param array<string, int|string> $params
+     */
+    private function absoluteUrl(array $params): string
+    {
+        $relative = $this->pageUrl($params);
+
+        if (preg_match('#^https?://#', $relative)) {
+            return $relative;
+        }
+
+        return Environment::get('base').ltrim($relative, '/');
     }
 
     /**

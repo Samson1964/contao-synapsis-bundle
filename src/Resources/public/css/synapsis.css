@@ -395,6 +395,20 @@
 
 .synapsis-button--primary:hover { background: var(--syn-accent-dark); }
 
+.synapsis-button--active {
+    background: #e7f2d9;
+    border-color: #b6d48a;
+    color: #3d5216;
+}
+
+.synapsis-topic__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.synapsis-subscribe { margin: 0; }
+
 .synapsis-form { display: flex; flex-direction: column; gap: 0.9rem; }
 .synapsis-form__field { display: flex; flex-direction: column; gap: 0.3rem; }
 .synapsis-form__label { font-weight: 600; font-size: 0.9rem; }

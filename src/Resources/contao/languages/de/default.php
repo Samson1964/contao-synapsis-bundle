@@ -49,3 +49,9 @@ $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum']  = 'Zur Übersicht';
 $GLOBALS['TL_LANG']['MSC']['synapsisBackToTopics'] = 'Zurück zum Forum';
 $GLOBALS['TL_LANG']['MSC']['synapsisEmptyFields']  = 'Bitte Titel und Text ausfüllen.';
 $GLOBALS['TL_LANG']['MSC']['synapsisEmptyText']    = 'Bitte einen Text eingeben.';
+
+// Abonnements
+$GLOBALS['TL_LANG']['MSC']['synapsisSubscribe']     = 'Thema abonnieren';
+$GLOBALS['TL_LANG']['MSC']['synapsisUnsubscribe']   = 'Abo beenden';
+$GLOBALS['TL_LANG']['MSC']['synapsisNotifySubject'] = 'Neue Antwort im Thema "%s"';
+$GLOBALS['TL_LANG']['MSC']['synapsisNotifyBody']    = "Hallo %s,\n\nim Thema \"%s\" wurde eine neue Antwort verfasst.\n\n%s\n";

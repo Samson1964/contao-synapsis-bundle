@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 use Schachbulle\ContaoSynapsisBundle\Model\SynapsisForumModel;
 use Schachbulle\ContaoSynapsisBundle\Model\SynapsisPostModel;
+use Schachbulle\ContaoSynapsisBundle\Model\SynapsisSubscriptionModel;
 use Schachbulle\ContaoSynapsisBundle\Model\SynapsisTopicModel;
 
 /*
@@ -42,3 +43,4 @@ $GLOBALS['FE_MOD']['synapsis']['synapsis_forum'] = \Schachbulle\ContaoSynapsisBu
 $GLOBALS['TL_MODELS']['tl_synapsis_forum'] = SynapsisForumModel::class;
 $GLOBALS['TL_MODELS']['tl_synapsis_topic'] = SynapsisTopicModel::class;
 $GLOBALS['TL_MODELS']['tl_synapsis_post'] = SynapsisPostModel::class;
+$GLOBALS['TL_MODELS']['tl_synapsis_subscription'] = SynapsisSubscriptionModel::class;

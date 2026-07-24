@@ -11,6 +11,10 @@ declare(strict_types=1);
 use Contao\DataContainer;
 use Contao\DC_Table;
 
+// Contao 5 erkennt man am neuen Treiber-API; danach richten sich Treiberklasse
+// und die Bauart der Operationsleiste (native Toggle-Operation ab Contao 5).
+$synapsisC5 = method_exists(DataContainer::class, 'getDriverForTable');
+
 /*
  * Tabelle tl_synapsis_forum
  *
@@ -30,7 +34,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
     (
         // Contao 5 erwartet den FQCN der Treiberklasse. Aeltere Contao-4.13-
         // Versionen kennen nur den Kurznamen "Table", deshalb die Weiche.
-        'dataContainer'    => method_exists(DataContainer::class, 'getDriverForTable') ? DC_Table::class : 'Table',
+        'dataContainer'    => $synapsisC5 ? DC_Table::class : 'Table',
         'ctable'           => array('tl_synapsis_topic'),
         'enableVersioning' => true,
         'markAsCopy'       => 'title',
@@ -69,42 +73,9 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
                 'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
             ),
         ),
-        'operations' => array
-        (
-            'edit' => array
-            (
-                'href' => 'act=edit',
-                'icon' => 'edit.svg',
-            ),
-            'topics' => array
-            (
-                // Wechselt in die Themen des Forums; nur bei Foren sichtbar
-                // (button_callback: ForumListener::topicsButton)
-                'href' => 'table=tl_synapsis_topic',
-                'icon' => 'articles.svg',
-            ),
-            'copy' => array
-            (
-                'href' => 'act=paste&amp;mode=copy',
-                'icon' => 'copy.svg',
-            ),
-            'cut' => array
-            (
-                'href' => 'act=paste&amp;mode=cut',
-                'icon' => 'cut.svg',
-            ),
-            'delete' => array
-            (
-                'href'       => 'act=delete',
-                'icon'       => 'delete.svg',
-                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '').'\'))return false;Backend.getScrollOffset()"',
-            ),
-            'show' => array
-            (
-                'href' => 'act=show',
-                'icon' => 'show.svg',
-            ),
-        ),
+        // 'operations' werden nach dieser Array-Definition versionsabhaengig
+        // gesetzt (siehe unten), damit Contao 5 seine native Toggle-Operation
+        // erhaelt und Contao 4.13 vollstaendige Operationsarrays.
     ),
 
     'palettes' => array
@@ -194,16 +165,17 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
         ),
         'groups' => array
         (
-            'exclude'    => true,
-            'inputType'  => 'checkbox',
-            'foreignKey' => 'tl_member_group.name',
-            'eval'       => array('mandatory' => true, 'multiple' => true),
-            'sql'        => "blob NULL",
-            'relation'   => array('type' => 'hasMany', 'load' => 'lazy'),
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            // options_callback: ForumListener::getGroupOptions (services.yaml)
+            // liefert die Mitgliedergruppen inkl. der fiktiven Gruppe "Gaeste" (-1)
+            'eval'      => array('mandatory' => true, 'multiple' => true),
+            'sql'       => "blob NULL",
         ),
         'published' => array
         (
             'exclude'   => true,
+            'toggle'    => true,
             'filter'    => true,
             'inputType' => 'checkbox',
             'eval'      => array('doNotCopy' => true, 'tl_class' => 'w50'),
@@ -211,3 +183,72 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
         ),
     ),
 );
+
+/*
+ * Operationsleiste versionsabhaengig setzen
+ *
+ * Contao 5 kennt String-Referenzen auf die Standardoperationen; darueber erhaelt
+ * man den nativen Veroeffentlichungs-Toggle (korrektes Icon, Rechtepruefung) ohne
+ * eigenen Callback. Die eigene Operation "topics" bleibt ein vollstaendiges Array
+ * und wird nur bei Foren angezeigt (button_callback: ForumListener::topicsButton).
+ *
+ * Contao 4.13 kennt diese String-Referenzen nicht und benoetigt vollstaendige
+ * Operationsarrays inkl. eigener Toggle-Operation.
+ */
+if ($synapsisC5) {
+    $GLOBALS['TL_DCA']['tl_synapsis_forum']['list']['operations'] = array
+    (
+        'edit',
+        'topics' => array
+        (
+            'href' => 'table=tl_synapsis_topic',
+            'icon' => 'articles.svg',
+        ),
+        'copy',
+        'cut',
+        'delete',
+        'toggle',
+        'show',
+    );
+} else {
+    $GLOBALS['TL_DCA']['tl_synapsis_forum']['list']['operations'] = array
+    (
+        'edit' => array
+        (
+            'href' => 'act=edit',
+            'icon' => 'edit.svg',
+        ),
+        'topics' => array
+        (
+            'href' => 'table=tl_synapsis_topic',
+            'icon' => 'articles.svg',
+        ),
+        'copy' => array
+        (
+            'href' => 'act=paste&amp;mode=copy',
+            'icon' => 'copy.svg',
+        ),
+        'cut' => array
+        (
+            'href' => 'act=paste&amp;mode=cut',
+            'icon' => 'cut.svg',
+        ),
+        'delete' => array
+        (
+            'href'       => 'act=delete',
+            'icon'       => 'delete.svg',
+            'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '').'\'))return false;Backend.getScrollOffset()"',
+        ),
+        'toggle' => array
+        (
+            'href'         => 'act=toggle&amp;field=published',
+            'icon'         => 'visible.svg',
+            'showInHeader' => true,
+        ),
+        'show' => array
+        (
+            'href' => 'act=show',
+            'icon' => 'show.svg',
+        ),
+    );
+}

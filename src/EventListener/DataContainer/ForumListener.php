@@ -30,17 +30,19 @@ class ForumListener
     /**
      * Erlaubte Kindtypen je Elterntyp.
      *
-     * Startpunkte gibt es nur auf oberster Ebene. In einem Startpunkt sind
-     * Kategorien und Foren erlaubt, in einer Kategorie ausschliesslich Foren.
-     * Ein Forum kann Unterforen enthalten - Themen haengen aber immer direkt
-     * am Forum, nie an einer Kategorie.
+     * Die Struktur ist streng dreistufig:
+     *   - oberste Ebene (pid 0): nur Startpunkte
+     *   - im Startpunkt:          nur Kategorien
+     *   - in der Kategorie:       nur Foren
+     *   - im Forum:               keine weiteren Baumknoten (die Themen haengen
+     *                             als eigene Kindtabelle am Forum)
      *
      * @var array<string, array<string>>
      */
     private const ALLOWED_CHILDREN = [
-        'root' => ['category', 'forum'],
+        'root' => ['category'],
         'category' => ['forum'],
-        'forum' => ['forum'],
+        'forum' => [],
     ];
 
     /**
@@ -67,12 +69,51 @@ class ForumListener
     /**
      * Liefert die an der aktuellen Position erlaubten Typen (options_callback).
      *
-     * Auf oberster Ebene ist nur ein Startpunkt moeglich, darunter richtet sich
-     * die Auswahl nach dem Typ des uebergeordneten Datensatzes.
+     * Wichtig: Das Ergebnis ist ein assoziatives Array (Wert => Beschriftung).
+     * Bei einer einfachen Liste wuerde Contao den numerischen Schluessel (0, 1)
+     * statt des Typnamens speichern, wodurch die passende Palette nicht mehr
+     * greift und der Datensatz faelschlich nur die Typ-Auswahl anzeigt.
+     *
+     * @return array<string, string>
+     */
+    public function getTypeOptions(?DataContainer $dc = null): array
+    {
+        $labels = $GLOBALS['TL_LANG']['tl_synapsis_forum']['types'] ?? [];
+        $options = [];
+
+        foreach ($this->allowedTypesFor($dc) as $type) {
+            $options[$type] = $labels[$type] ?? $type;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Liefert die auswaehlbaren Mitgliedergruppen inklusive der fiktiven
+     * Gruppe "Gaeste" (ID -1), damit auch nicht angemeldete Besucher gezielt
+     * Zugriff erhalten koennen (options_callback des Feldes "groups").
+     *
+     * @return array<string, string>
+     */
+    public function getGroupOptions(): array
+    {
+        $options = ['-1' => $GLOBALS['TL_LANG']['MSC']['guests'] ?? 'Gäste'];
+
+        $rows = $this->connection->fetchAllAssociative('SELECT id, name FROM tl_member_group ORDER BY name');
+
+        foreach ($rows as $row) {
+            $options[(string) $row['id']] = $row['name'];
+        }
+
+        return $options;
+    }
+
+    /**
+     * Ermittelt die an der aktuellen Position erlaubten Typen.
      *
      * @return array<string>
      */
-    public function getTypeOptions(?DataContainer $dc = null): array
+    private function allowedTypesFor(?DataContainer $dc): array
     {
         $pid = $this->getParentId($dc);
 
@@ -85,7 +126,7 @@ class ForumListener
             [$pid]
         );
 
-        return self::ALLOWED_CHILDREN[$parentType] ?? ['forum'];
+        return self::ALLOWED_CHILDREN[$parentType] ?? [];
     }
 
     /**
@@ -103,7 +144,14 @@ class ForumListener
         $type = (string) ($row['type'] ?? 'forum');
         $icon = self::ICONS[$type] ?? self::ICONS['forum'];
 
-        $image = Image::getHtml($icon, '', $imageAttribute);
+        // Unveroeffentlichte Knoten mit gedaempftem Icon kennzeichnen
+        $attribute = $imageAttribute;
+
+        if (!($row['published'] ?? false)) {
+            $attribute = trim($imageAttribute.' style="opacity:0.4"');
+        }
+
+        $image = Image::getHtml($icon, '', $attribute);
 
         if ($returnImage) {
             return $image;

@@ -28,7 +28,20 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
 
     <header class="synapsis-topic__header">
         <h2 class="synapsis-topic__title"><?= StringUtil::specialchars($this->topic['title']) ?></h2>
-        <?php if ($this->locked): ?><span class="synapsis-badge synapsis-badge--locked"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLocked'] ?? 'Geschlossen' ?></span><?php endif; ?>
+        <div class="synapsis-topic__actions">
+            <?php if ($this->locked): ?><span class="synapsis-badge synapsis-badge--locked"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLocked'] ?? 'Geschlossen' ?></span><?php endif; ?>
+            <?php if ($this->canSubscribe): ?>
+                <form action="<?= $this->subscribeAction ?>" method="post" class="synapsis-subscribe">
+                    <input type="hidden" name="FORM_SUBMIT" value="<?= $this->subscribeFormId ?>">
+                    <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                    <button type="submit" class="synapsis-button<?= $this->isSubscribed ? ' synapsis-button--active' : '' ?>">
+                        <?= $this->isSubscribed
+                            ? ($GLOBALS['TL_LANG']['MSC']['synapsisUnsubscribe'] ?? 'Abo beenden')
+                            : ($GLOBALS['TL_LANG']['MSC']['synapsisSubscribe'] ?? 'Thema abonnieren') ?>
+                    </button>
+                </form>
+            <?php endif; ?>
+        </div>
     </header>
 
     <div class="synapsis-posts">

@@ -16,16 +16,25 @@
 * Vier `.html5`-Templates und ein schlankes, responsives Stylesheet im klassischen Forenlayout (Kategorie-Kopfzeilen, Zeilen mit Icon/Zähler/letztem Beitrag)
 * Deutsche Frontend-Texte in `languages/de/default.php`
 
+### Backend-Korrekturen und Erweiterungen (Review-Runde)
+
+* **Typ-Auswahl korrigiert**: Der Options-Callback lieferte ein numerisch indiziertes Array, wodurch Contao statt des Typnamens den Schlüssel (0/1) speicherte – dadurch griff die leere Default-Palette, der Startpunkt ließ sich nicht bearbeiten und weder Typwahl noch Gruppen erschienen. Jetzt assoziativ (`Wert => Label`)
+* **Strenge Hierarchie** durchgesetzt: Startpunkt nur auf oberster Ebene, Kategorie nur im Startpunkt, Forum nur in einer Kategorie, Themen nur im Forum
+* **Veröffentlichungs-Toggle** in der Baumstruktur (Contao 5 nativ über `'toggle' => true`; Contao 4.13 als eigene Toggle-Operation) – unveröffentlichte Knoten werden mit gedämpftem Icon dargestellt
+* **Gruppen-/Zugriffsauswahl** auf jeder Ebene inklusive der fiktiven Gruppe **Gäste** (`-1`); die Rechte werden im Baum vererbt
+* **Gäste-Zugriff**: nicht angemeldete Besucher gelten als Gruppe `-1` und sehen ungeschützte Bereiche sowie geschützte Bereiche, die der Gruppe Gäste zugeordnet sind
+* **Themen-Abonnements**: angemeldete Mitglieder können Themen abonnieren (Tabelle `tl_synapsis_subscription`); bei einer neuen Antwort werden die Abonnenten (außer dem Verfasser) per E-Mail benachrichtigt
+
 ### Verifiziert
 
-* Gegen die Contao-5.7-Referenzinstallation: Migration der `tl_module`-Felder, Callback-Registrierung im Container, Render-Rauchtest aller Leseansichten (Übersicht/Forum/Thema), Zugriffsschutz und Ansichtszähler
-* 12 Unit-Tests (Strukturregeln + Zugriffsvererbung) grün
+* Gegen die Contao-5.7-Referenzinstallation: Migration der `tl_module`- und `tl_synapsis_subscription`-Tabellen, Callback-Registrierung im Container, Backend-Diagnose (Operationen inkl. nativem Toggle, assoziative Typ-Optionen, Gäste-Gruppe), Render-Rauchtest aller Leseansichten inkl. Gäste-Zugriff, Zugriffsschutz und Ansichtszähler
+* 13 Unit-Tests (Strukturregeln + Zugriffsvererbung inkl. Gäste) grün
 
 ### Offen / nächste Schritte
 
-* Schreib-Pfad (Thema/Antwort anlegen, Upload) ist nur code-/API-geprüft, noch nicht mit echtem Login live getestet
+* Schreib-Pfad (Thema/Antwort anlegen, Upload, Abo-Umschaltung, Benachrichtigungs-E-Mail) ist nur code-/API-geprüft, noch nicht mit echtem Login live getestet
 * TinyMCE-integrierter Bild-Upload (derzeit Bild-Einbindung über die Dateianhänge)
-* Emoticon-Auswahl im Editor feinjustieren; Zitieren/Melden von Beiträgen; RSS/Abo
+* Emoticon-Auswahl im Editor feinjustieren; Zitieren/Melden von Beiträgen; RSS
 
 ## Version 0.1.0 (2026-07-23)
 

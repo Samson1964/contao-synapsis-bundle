@@ -27,42 +27,46 @@ class ForumListenerTest extends TestCase
 {
     /**
      * Auf oberster Ebene ist ausschliesslich ein Startpunkt erlaubt.
+     *
+     * Geprueft werden die Schluessel (= gespeicherte Werte); die Labels stammen
+     * aus der Sprachdatei, die im Unit-Test nicht geladen ist.
      */
     public function testNurStartpunktAufObersterEbene(): void
     {
         $listener = new ForumListener($this->mockConnection(null));
 
-        $this->assertSame(['root'], $listener->getTypeOptions($this->mockDataContainer(1)));
+        $this->assertSame(['root'], array_keys($listener->getTypeOptions($this->mockDataContainer(1))));
     }
 
     /**
-     * In einem Startpunkt sind Kategorien und Foren erlaubt.
+     * In einem Startpunkt sind ausschliesslich Kategorien erlaubt.
      */
-    public function testKategorienUndForenImStartpunkt(): void
+    public function testNurKategorienImStartpunkt(): void
     {
         $listener = new ForumListener($this->mockConnection('root'));
 
-        $this->assertSame(['category', 'forum'], $listener->getTypeOptions($this->mockDataContainer(5)));
+        $this->assertSame(['category'], array_keys($listener->getTypeOptions($this->mockDataContainer(5))));
     }
 
     /**
-     * Eine Kategorie darf nur Foren enthalten - keine weiteren Kategorien.
+     * Eine Kategorie darf nur Foren enthalten.
      */
     public function testNurForenInEinerKategorie(): void
     {
         $listener = new ForumListener($this->mockConnection('category'));
 
-        $this->assertSame(['forum'], $listener->getTypeOptions($this->mockDataContainer(7)));
+        $this->assertSame(['forum'], array_keys($listener->getTypeOptions($this->mockDataContainer(7))));
     }
 
     /**
-     * Unter einem Forum sind nur Unterforen moeglich.
+     * In einem Forum sind keine weiteren Baumknoten erlaubt - die Themen haengen
+     * als eigene Kindtabelle am Forum.
      */
-    public function testNurUnterforenInEinemForum(): void
+    public function testKeineBaumknotenInEinemForum(): void
     {
         $listener = new ForumListener($this->mockConnection('forum'));
 
-        $this->assertSame(['forum'], $listener->getTypeOptions($this->mockDataContainer(9)));
+        $this->assertSame([], $listener->getTypeOptions($this->mockDataContainer(9)));
     }
 
     /**
