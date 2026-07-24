@@ -1,8 +1,8 @@
 # Synapsis Changelog
 
-## Version 1.2.0 (unveröffentlicht – Entwicklung auf dev-main)
+## Version 1.2.0 (2026-07-24)
 
-> Keine Schema-Änderung in diesem Stand.
+> Keine Schema-Änderung gegenüber 1.1.0 – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (kein `contao:migrate` nötig).
 
 ### Behoben / Geändert
 
