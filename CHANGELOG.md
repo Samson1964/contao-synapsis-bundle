@@ -1,6 +1,6 @@
 # Synapsis Changelog
 
-## Version 1.3.0 (unveröffentlicht – Entwicklung auf dev-main)
+## Version 1.3.0 (2026-07-24)
 
 > Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Umfrage-Tabellen, Rollen-/Umfrage-Felder in `tl_synapsis_forum` sowie `modCanPin` in den Einstellungen).
 
