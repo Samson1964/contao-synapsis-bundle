@@ -1,5 +1,20 @@
 # Synapsis Changelog
 
+## Version 0.4.2 (2026-07-24)
+
+### Behoben
+
+* **„Thema erstellen" löste keinen Request aus** (mit aktivem TinyMCE): Das Textfeld war als `required` markiert, wird von TinyMCE aber ausgeblendet. Ein verstecktes Pflichtfeld verhindert die native Formular-Absendung („not focusable"), ohne Fehlermeldung – daher passierte beim Klick nichts (der „Abbrechen"-Link war als Navigation nicht betroffen). Das `required` am Textfeld ist entfernt; leere Eingaben werden weiterhin serverseitig abgefangen. Gilt für das Antwortformular und das Formular für neue Themen.
+
+### Geändert
+
+* **Icon-Auswahl nach Bereichen gruppiert** und auf **211 Icons** erweitert (12 Bereiche: Kommunikation, Struktur & Ordner, Menschen, Symbole & Status, Freizeit & Medien, Natur & Wetter, Technik, Sport, Reisen & Orte, Wissen & Bildung, Handel & Zeit, Schach & Spiel). Direkt aus dem offiziellen Lucide-Sprite erzeugt.
+* Das Icon-Raster **füllt jetzt die volle Breite** (vorher bei ~60 % abgeschnitten).
+
+### Verifiziert
+
+* Auf Contao 4.13.58 und 5.7: Themenerstellung per POST, Backend-Diagnose (Icon-Wizard mit 211 Icons in Bereichen), Frontend-Rauchtest, 15 Unit-Tests.
+
 ## Version 0.4.1 (2026-07-24)
 
 ### Behoben

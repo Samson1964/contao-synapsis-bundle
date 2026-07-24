@@ -149,19 +149,30 @@ class ForumListener
      */
     public function iconWizard(?DataContainer $dc = null): string
     {
-        $buttons = '';
+        $sections = '';
 
-        foreach (LucideIcons::names() as $name) {
-            $buttons .= '<button type="button" data-icon="'.$name.'" title="'.$name.'"'
-                .' style="width:36px;height:36px;padding:5px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;color:#4b5563;line-height:0">'
-                .LucideIcons::svg($name)
-                .'</button>';
+        foreach (LucideIcons::categories() as $label => $names) {
+            $buttons = '';
+
+            foreach ($names as $name) {
+                $buttons .= '<button type="button" data-icon="'.$name.'" title="'.$name.'">'.LucideIcons::svg($name).'</button>';
+            }
+
+            $sections .= '<div class="syn-iconcat"><span class="syn-iconcat-label">'.StringUtil::specialchars($label).'</span>'
+                .'<div class="syn-iconrow">'.$buttons.'</div></div>';
         }
 
-        return '<div id="synapsis_iconwizard" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;max-width:660px">'.$buttons.'</div>'
-            .'<style>#synapsis_iconwizard button svg{width:22px;height:22px;display:block}'
+        return '<div id="synapsis_iconwizard">'.$sections.'</div>'
+            .'<style>'
+            .'#synapsis_iconwizard{width:100%;margin-top:8px}'
+            .'#synapsis_iconwizard .syn-iconcat{margin-bottom:12px}'
+            .'#synapsis_iconwizard .syn-iconcat-label{display:block;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin-bottom:4px}'
+            .'#synapsis_iconwizard .syn-iconrow{display:flex;flex-wrap:wrap;gap:5px}'
+            .'#synapsis_iconwizard button{width:36px;height:36px;padding:6px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;color:#4b5563;line-height:0}'
+            .'#synapsis_iconwizard button svg{width:22px;height:22px;display:block}'
             .'#synapsis_iconwizard button:hover{background:#eef1f4}'
-            .'#synapsis_iconwizard button.active{border-color:#f47c00;box-shadow:0 0 0 1px #f47c00;background:#fff7ee}</style>'
+            .'#synapsis_iconwizard button.active{border-color:#f47c00;box-shadow:0 0 0 1px #f47c00;background:#fff7ee}'
+            .'</style>'
             .'<script>(function(){var w=document.getElementById("synapsis_iconwizard");if(!w)return;'
             .'var s=document.getElementById("ctrl_forumIcon");'
             .'function m(){var v=s?s.value:"";w.querySelectorAll("[data-icon]").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-icon")===v)})}'

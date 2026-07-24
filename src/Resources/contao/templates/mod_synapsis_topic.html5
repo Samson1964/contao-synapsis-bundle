@@ -88,7 +88,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                 <input type="hidden" name="FORM_SUBMIT" value="<?= $this->formId ?>">
                 <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
 
-                <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8" required></textarea>
+                <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8"></textarea>
 
                 <?php if ($this->allowUploads): ?>
                     <label class="synapsis-form__upload">
