@@ -8,12 +8,13 @@ declare(strict_types=1);
  * @license LGPL-3.0-or-later
  */
 
-use Contao\DataContainer;
 use Contao\DC_Table;
+use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
-// Contao 5 erkennt man am neuen Treiber-API; danach richten sich Treiberklasse
-// und die Bauart der Operationsleiste (native Toggle-Operation ab Contao 5).
-$synapsisC5 = method_exists(DataContainer::class, 'getDriverForTable');
+// Contao-Version zuverlaessig anhand des installierten Pakets bestimmen; davon
+// haengen Treiberklasse und Bauart der Operationsleiste ab (native Toggle-
+// Operation ab Contao 5, vollstaendige Operationsarrays fuer Contao 4.13).
+$synapsisC5 = SchachbulleContaoSynapsisBundle::isContao5();
 
 /*
  * Tabelle tl_synapsis_forum

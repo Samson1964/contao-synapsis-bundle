@@ -8,8 +8,8 @@ declare(strict_types=1);
  * @license LGPL-3.0-or-later
  */
 
-use Contao\DataContainer;
 use Contao\DC_Table;
+use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
 /*
  * Tabelle tl_synapsis_topic
@@ -26,7 +26,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_topic'] = array
 (
     'config' => array
     (
-        'dataContainer'    => method_exists(DataContainer::class, 'getDriverForTable') ? DC_Table::class : 'Table',
+        'dataContainer'    => SchachbulleContaoSynapsisBundle::isContao5() ? DC_Table::class : 'Table',
         'ptable'           => 'tl_synapsis_forum',
         'ctable'           => array('tl_synapsis_post'),
         'enableVersioning' => true,

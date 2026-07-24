@@ -20,4 +20,24 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 class SchachbulleContaoSynapsisBundle extends Bundle
 {
+    /**
+     * Prueft anhand der installierten Version, ob Contao 5 (oder neuer) laeuft.
+     *
+     * Wird von den DCA-Dateien genutzt, um Treiberklasse und Operationsleiste
+     * versionsgerecht zu setzen. Die fruehere Erkennung ueber method_exists()
+     * war unzuverlaessig, weil einzelne Methoden bereits in Contao 4.13
+     * existieren.
+     */
+    public static function isContao5(): bool
+    {
+        if (!class_exists(\Composer\InstalledVersions::class)) {
+            return false;
+        }
+
+        return version_compare(
+            (string) \Composer\InstalledVersions::getVersion('contao/core-bundle'),
+            '5.0.0',
+            '>='
+        );
+    }
 }

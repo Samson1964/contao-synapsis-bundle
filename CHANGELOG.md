@@ -1,5 +1,11 @@
 # Synapsis Changelog
 
+## Version 0.2.1 (2026-07-24)
+
+### Behoben
+
+* **Fataler Fehler bei der Installation unter Contao 4.13** (`DcaLoader: Cannot access offset of type string on string` beim `cache:warmup`). Ursache: Die Contao-Version wurde über `method_exists(DataContainer::class, 'getDriverForTable')` erkannt – diese Methode existiert aber bereits in Contao 4.13, sodass dort fälschlich der Contao-5-Zweig mit String-Referenz-Operationen (`'edit'`, `'copy'`, …) griff. Die Erkennung läuft jetzt zuverlässig über die installierte Paketversion (`SchachbulleContaoSynapsisBundle::isContao5()`), betrifft alle vier DCA-Dateien (Treiberklasse) und die Operationsleiste der Forenstruktur.
+
 ## Version 0.2.0 (2026-07-24)
 
 ### Frontend-Modul
