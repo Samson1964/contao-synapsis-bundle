@@ -46,6 +46,37 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         </div>
     </header>
 
+    <?php if ($this->poll): ?>
+        <section class="synapsis-poll">
+            <h3 class="synapsis-poll__question"><?= StringUtil::specialchars($this->poll['question']) ?></h3>
+
+            <?php if ($this->poll['canVote']): ?>
+                <form action="<?= $this->poll['action'] ?>" method="post" class="synapsis-poll__form">
+                    <input type="hidden" name="FORM_SUBMIT" value="<?= $this->poll['formId'] ?>">
+                    <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                    <?php foreach ($this->poll['options'] as $opt): ?>
+                        <label class="synapsis-poll__option">
+                            <input type="<?= $this->poll['multiple'] ? 'checkbox' : 'radio' ?>" name="poll_choice<?= $this->poll['multiple'] ? '[]' : '' ?>" value="<?= $opt['id'] ?>"<?= $this->poll['multiple'] ? '' : ' required' ?>>
+                            <span><?= StringUtil::specialchars($opt['label']) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                    <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollVote'] ?? 'Abstimmen' ?></button>
+                </form>
+            <?php else: ?>
+                <ul class="synapsis-poll__results">
+                    <?php foreach ($this->poll['options'] as $opt): ?>
+                        <li class="synapsis-poll__result">
+                            <span class="synapsis-poll__label"><?= StringUtil::specialchars($opt['label']) ?></span>
+                            <span class="synapsis-poll__bar"><span class="synapsis-poll__fill" style="width:<?= $opt['percent'] ?>%"></span></span>
+                            <span class="synapsis-poll__count"><?= $opt['votes'] ?> (<?= $opt['percent'] ?>&#37;)</span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <p class="synapsis-poll__total"><?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisPollTotal'] ?? '%d Teilnehmende', (int) $this->poll['total']) ?></p>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+
     <div class="synapsis-posts">
         <?php foreach ($this->posts as $post): ?>
             <article class="synapsis-post" id="post-<?= $post['id'] ?>">

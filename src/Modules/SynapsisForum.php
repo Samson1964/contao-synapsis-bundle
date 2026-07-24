@@ -32,6 +32,8 @@ use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LikeManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 use Schachbulle\ContaoSynapsisBundle\Frontend\NotificationTemplate;
+use Schachbulle\ContaoSynapsisBundle\Frontend\PollAccess;
+use Schachbulle\ContaoSynapsisBundle\Frontend\PollManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ReadTracker;
 use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
@@ -109,6 +111,20 @@ class SynapsisForum extends Module
     private $likeManager;
 
     /**
+     * Zugriffshelfer fuer das Umfragen-Erstellrecht.
+     *
+     * @var PollAccess
+     */
+    private $pollAccess;
+
+    /**
+     * Umfragen-Verwaltung (lazy erzeugt).
+     *
+     * @var PollManager|null
+     */
+    private $pollManager;
+
+    /**
      * Aktive Mitglieder-Unteransicht (subs|sig|me|unread|liked) oder '' (keine).
      *
      * @var string
@@ -141,6 +157,7 @@ class SynapsisForum extends Module
         }
 
         $this->access = new ForumAccess();
+        $this->pollAccess = new PollAccess();
         $this->rootId = (int) $this->synapsis_root;
 
         if (0 === $this->rootId) {
@@ -398,6 +415,7 @@ class SynapsisForum extends Module
         // Abo-Umschaltung und Antwort verarbeiten, bevor die Liste gerendert wird
         $this->handleSubscription();
         $this->handleLike();
+        $this->handleVote();
         $this->handlePostSubmission();
 
         // Ansichtszaehler erhoehen - aber pro Sitzung nur einmal, damit ein
@@ -451,6 +469,9 @@ class SynapsisForum extends Module
         $this->Template->likeFormId = 'synapsis_like_'.$this->id;
         $this->Template->likeAction = $this->pageUrl(['topic' => $topicId, 'page_p'.$this->id => $this->getCurrentPage()]);
 
+        // Umfrage zum Thema (falls vorhanden)
+        $this->Template->poll = $this->buildPoll($topicId);
+
         // Antwortformular in offenen Themen fuer alle Schreibberechtigten
         // (Mitglieder bzw. Gaeste mit Schreibrecht).
         $canReply = !$this->activeTopic['locked']
@@ -484,6 +505,26 @@ class SynapsisForum extends Module
         $this->Template->formAction = $this->pageUrl(['forum' => $forumId, 'new' => 1]);
         $this->Template->formId = 'synapsis_topic_'.$this->id;
         $this->Template->cancelUrl = $this->pageUrl(['forum' => $forumId]);
+        // Optionale Umfrage nur anbieten, wenn das Mitglied dazu berechtigt ist.
+        $this->Template->canCreatePoll = $this->canCreatePoll($forumId);
+
+        if ($this->Template->canCreatePoll) {
+            $this->addPollScript();
+        }
+    }
+
+    /**
+     * Blendet die Umfrage-Felder nur ein, wenn "Umfrage hinzufuegen" aktiv ist
+     * (progressive Verbesserung - ohne JavaScript bleiben die Felder sichtbar).
+     */
+    private function addPollScript(): void
+    {
+        $GLOBALS['TL_BODY']['synapsis_poll'] = '<script>document.addEventListener("DOMContentLoaded",function(){'
+            .'document.querySelectorAll(".synapsis-pollform").forEach(function(fs){'
+            .'var cb=fs.querySelector(".synapsis-pollform__enable"),f=fs.querySelector(".synapsis-pollform__fields");'
+            .'if(!cb||!f)return;var u=function(){f.style.display=cb.checked?"":"none";};u();cb.addEventListener("change",u);'
+            .'});});</script>'
+        ;
     }
 
     // -------------------------------------------------------------------------
@@ -869,6 +910,16 @@ class SynapsisForum extends Module
 
         $this->insertPost($topicId, $memberId, $authorName, $text, $now);
 
+        // Optionale Umfrage anlegen - nur wenn das Mitglied hier dazu berechtigt
+        // ist (das Recht wird im Baum vererbt).
+        if (Input::post('poll_enable') && $this->canCreatePoll((int) $this->activeForum['id'])) {
+            $question = trim((string) Input::post('poll_question', true));
+            $multiple = 'multiple' === Input::post('poll_type');
+            $options = preg_split('/\r\n|\r|\n/', (string) Input::post('poll_options', true)) ?: [];
+
+            $this->pollManager()->create($topicId, $question, $multiple, $options);
+        }
+
         $this->redirect($this->pageUrl(['topic' => $topicId]));
     }
 
@@ -967,6 +1018,72 @@ class SynapsisForum extends Module
             'topic' => (int) $this->activeTopic['id'],
             'page_p'.$this->id => $this->getCurrentPage(),
         ]));
+    }
+
+    /**
+     * Verarbeitet eine Stimmabgabe zur Umfrage des aktiven Themas.
+     */
+    private function handleVote(): void
+    {
+        if ('synapsis_poll_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        if (!$this->isMemberLoggedIn()) {
+            return;
+        }
+
+        $poll = $this->pollManager()->findByTopic((int) $this->activeTopic['id']);
+
+        if (null !== $poll) {
+            $raw = Input::post('poll_choice');
+            $optionIds = \is_array($raw) ? array_map('intval', $raw) : [(int) $raw];
+
+            $this->pollManager()->vote((int) $poll['id'], (int) FrontendUser::getInstance()->id, $optionIds);
+        }
+
+        $this->redirect($this->pageUrl(['topic' => (int) $this->activeTopic['id']]));
+    }
+
+    /**
+     * Stellt die Anzeigedaten der Umfrage eines Themas zusammen (oder null).
+     *
+     * Ergebnisse werden gezeigt, sobald das Mitglied abgestimmt hat oder nicht
+     * abstimmen kann (Gast). Prozente beziehen sich auf die Zahl der Abstimmenden.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buildPoll(int $topicId): ?array
+    {
+        $poll = $this->pollManager()->findByTopic($topicId);
+
+        if (null === $poll) {
+            return null;
+        }
+
+        $pollId = (int) $poll['id'];
+        $memberId = $this->currentAuthorId();
+        $total = $this->pollManager()->totalVoters($pollId);
+        $options = $this->pollManager()->options($pollId);
+
+        foreach ($options as &$option) {
+            $option['percent'] = $total > 0 ? (int) round($option['votes'] * 100 / $total) : 0;
+        }
+        unset($option);
+
+        $canVote = $memberId > 0 && !$this->pollManager()->hasVoted($pollId, $memberId);
+
+        return [
+            'id' => $pollId,
+            'question' => (string) $poll['question'],
+            'multiple' => '1' === (string) $poll['multiple'],
+            'options' => $options,
+            'total' => $total,
+            'canVote' => $canVote,
+            'showResults' => !$canVote,
+            'formId' => 'synapsis_poll_'.$this->id,
+            'action' => $this->pageUrl(['topic' => $topicId]),
+        ];
     }
 
     /**
@@ -1529,7 +1646,7 @@ class SynapsisForum extends Module
 
         while ($currentId > 0 && $guard < 100) {
             $node = Database::getInstance()
-                ->prepare('SELECT id, pid, published, protected, groups, guestRead, guestWrite FROM tl_synapsis_forum WHERE id = ?')
+                ->prepare('SELECT id, pid, published, protected, groups, guestRead, guestWrite, pollGroups, pollMembers FROM tl_synapsis_forum WHERE id = ?')
                 ->execute($currentId)
                 ->row()
             ;
@@ -1574,6 +1691,23 @@ class SynapsisForum extends Module
             $this->buildChain($forumId),
             !$this->isMemberLoggedIn(),
             $this->getMemberGroupIds()
+        );
+    }
+
+    /**
+     * Darf das angemeldete Mitglied in diesem Forum eine Umfrage erstellen?
+     * Das Recht wird im Baum vererbt (siehe PollAccess). Gaeste nie.
+     */
+    private function canCreatePoll(int $forumId): bool
+    {
+        if (!$this->isMemberLoggedIn()) {
+            return false;
+        }
+
+        return $this->pollAccess->canCreate(
+            $this->buildChain($forumId),
+            $this->getMemberGroupIds(),
+            (int) FrontendUser::getInstance()->id
         );
     }
 
@@ -1728,6 +1862,18 @@ class SynapsisForum extends Module
         }
 
         return $this->likeManager;
+    }
+
+    /**
+     * Umfragen-Verwaltung (Tabellen tl_synapsis_poll*), lazy erzeugt.
+     */
+    private function pollManager(): PollManager
+    {
+        if (null === $this->pollManager) {
+            $this->pollManager = new PollManager(System::getContainer()->get('database_connection'));
+        }
+
+        return $this->pollManager;
     }
 
     /**

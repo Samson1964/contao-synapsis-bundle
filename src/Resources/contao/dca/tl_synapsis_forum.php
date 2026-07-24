@@ -84,9 +84,9 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
     (
         '__selector__' => array('type', 'protected'),
         'default'      => '{type_legend},type',
-        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
-        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
-        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
+        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
+        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
+        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
     ),
 
     'subpalettes' => array
@@ -202,6 +202,25 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
             'inputType' => 'checkbox',
             'eval'      => array('tl_class' => 'w50'),
             'sql'       => "char(1) NOT NULL default ''",
+        ),
+        // Umfragen-Erstellrecht (wird im Baum vererbt): erlaubte
+        // Mitgliedergruppen ...
+        'pollGroups' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            // options_callback: ForumListener::getMemberGroupOptions (services.yaml)
+            'eval'      => array('multiple' => true, 'tl_class' => 'clr'),
+            'sql'       => "blob NULL",
+        ),
+        // ... und zusaetzlich einzeln berechtigte Mitglieder.
+        'pollMembers' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'select',
+            // options_callback: ForumListener::getMemberOptions (services.yaml)
+            'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
+            'sql'       => "blob NULL",
         ),
         'published' => array
         (

@@ -681,6 +681,113 @@
     color: var(--syn-muted);
 }
 
+/* --- Umfragen ----------------------------------------------------------- */
+.synapsis-pollform {
+    margin: 1rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--syn-border);
+    border-radius: var(--syn-radius);
+    background: var(--syn-panel, #f3f4f6);
+}
+
+.synapsis-pollform__toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.synapsis-pollform__fields {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.synapsis-pollform__type {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.synapsis-poll {
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--syn-border);
+    border-radius: var(--syn-radius);
+    background: var(--syn-panel, #f3f4f6);
+}
+
+.synapsis-poll__question {
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
+}
+
+.synapsis-poll__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.synapsis-poll__option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.synapsis-poll__form .synapsis-button {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+}
+
+.synapsis-poll__results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.synapsis-poll__result {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+}
+
+.synapsis-poll__bar {
+    display: block;
+    height: 0.85rem;
+    background: var(--syn-border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.synapsis-poll__fill {
+    display: block;
+    height: 100%;
+    background: var(--syn-accent);
+}
+
+.synapsis-poll__count {
+    color: var(--syn-muted);
+    white-space: nowrap;
+}
+
+.synapsis-poll__total {
+    margin: 0.75rem 0 0;
+    font-size: 0.85rem;
+    color: var(--syn-muted);
+}
+
+@media (max-width: 640px) {
+    .synapsis-poll__result { grid-template-columns: 1fr auto; }
+    .synapsis-poll__bar { grid-column: 1 / -1; order: 3; }
+}
+
 /* --- Forensuche --------------------------------------------------------- */
 .synapsis-search {
     display: flex;

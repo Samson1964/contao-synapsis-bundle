@@ -1,6 +1,13 @@
 # Synapsis Changelog
 
-## Version 1.2.1 (2026-07-24)
+## Version 1.3.0 (unveröffentlicht – Entwicklung auf dev-main)
+
+> Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabellen `tl_synapsis_poll`, `tl_synapsis_poll_option`, `tl_synapsis_poll_vote` sowie die Felder `pollGroups`/`pollMembers` in `tl_synapsis_forum`).
+
+### Hinzugefügt
+
+* **Umfragen**: Beim Anlegen eines Themas kann optional eine Umfrage erstellt werden – wahlweise **Einfachauswahl** (eine Antwort) oder **Mehrfachauswahl**. In der Themenansicht stimmen angemeldete Mitglieder ab; danach (oder als Gast) werden die Ergebnisse mit Balken, Prozent und Teilnehmerzahl angezeigt. Doppelabstimmung ist ausgeschlossen.
+* **Umfragen-Erstellrecht (vererbt)**: Wer Umfragen anlegen darf, wird pro Startpunkt, Kategorie oder Forum über **Mitgliedergruppen** und/oder **einzelne Mitglieder** vergeben und vererbt sich nach unten (Standard: niemand). Logik in den testbaren Klassen `Frontend\PollAccess` und `Frontend\PollManager`.
 
 ### Behoben
 

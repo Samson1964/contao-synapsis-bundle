@@ -31,6 +31,8 @@ $GLOBALS['TL_LANG']['tl_synapsis_forum']['protected']   = array('Zugriff schütz
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['groups']      = array('Erlaubte Mitgliedergruppen', 'Diese Gruppen erhalten Zugriff auf den Bereich. Die Gruppe „Gäste" gewährt nicht angemeldeten Besuchern Lesezugriff und hat Vorrang vor den beiden Checkboxen im Bereich „Gäste-Zugriff".');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['guestRead']   = array('Gäste dürfen lesen', 'Nicht angemeldete Besucher (Gäste) dürfen diesen Bereich lesen, aber nicht schreiben. Vererbt nach unten. Wirkungslos, wenn oben die Gruppe „Gäste" ausgewählt ist.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['guestWrite']  = array('Gäste dürfen schreiben', 'Gäste dürfen hier Themen anlegen und antworten (schließt das Lesen ein). Vererbt nach unten. Wirkungslos, wenn oben die Gruppe „Gäste" ausgewählt ist (dann nur Lesen).');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['pollGroups']  = array('Umfragen: erlaubte Gruppen', 'Mitglieder dieser Gruppen dürfen beim Anlegen eines Themas eine Umfrage erstellen. Das Recht wird nach unten vererbt.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['pollMembers'] = array('Umfragen: erlaubte Mitglieder', 'Zusätzlich einzelne Mitglieder, die Umfragen erstellen dürfen. Das Recht wird nach unten vererbt.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['published']   = array('Veröffentlichen', 'Den Eintrag im Frontend sichtbar schalten.');
 
 // Legenden
@@ -41,6 +43,7 @@ $GLOBALS['TL_LANG']['tl_synapsis_forum']['icon_legend']      = 'Forum-Icon';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['config_legend']    = 'Einstellungen';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['protected_legend'] = 'Zugriffsschutz (Mitglieder)';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['guest_legend']     = 'Gäste-Zugriff';
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['poll_legend']      = 'Umfragen erstellen';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['publish_legend']   = 'Veröffentlichung';
 
 // Schaltflächen

@@ -69,6 +69,15 @@ $GLOBALS['TL_LANG']['MSC']['synapsisNoSubscriptions'] = 'Du hast keine Themen ab
 $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread']        = 'Es gibt keine ungelesenen Beiträge.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts']      = 'Du hast noch keine Beiträge geschrieben.';
 
+// Umfragen
+$GLOBALS['TL_LANG']['MSC']['synapsisAddPoll']       = 'Umfrage hinzufügen';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollQuestion']  = 'Frage';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollSingle']    = 'Einfachauswahl (eine Antwort)';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollMultiple']  = 'Mehrfachauswahl (mehrere Antworten)';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollOptions']   = 'Antwortmöglichkeiten (eine pro Zeile, mindestens zwei)';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollVote']      = 'Abstimmen';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollTotal']     = '%d Teilnehmende';
+
 // Forensuche
 $GLOBALS['TL_LANG']['MSC']['synapsisSearch']            = 'Suche';
 $GLOBALS['TL_LANG']['MSC']['synapsisSearchPlaceholder'] = 'Im Forum suchen …';

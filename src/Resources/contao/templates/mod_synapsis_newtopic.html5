@@ -60,6 +60,29 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
             </label>
         <?php endif; ?>
 
+        <?php if ($this->canCreatePoll): ?>
+            <fieldset class="synapsis-pollform">
+                <label class="synapsis-pollform__toggle">
+                    <input type="checkbox" name="poll_enable" value="1" class="synapsis-pollform__enable">
+                    <span><?= $GLOBALS['TL_LANG']['MSC']['synapsisAddPoll'] ?? 'Umfrage hinzufügen' ?></span>
+                </label>
+                <div class="synapsis-pollform__fields">
+                    <label class="synapsis-form__field">
+                        <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollQuestion'] ?? 'Frage' ?></span>
+                        <input type="text" name="poll_question" maxlength="255" class="synapsis-search__input">
+                    </label>
+                    <div class="synapsis-pollform__type">
+                        <label><input type="radio" name="poll_type" value="single" checked> <?= $GLOBALS['TL_LANG']['MSC']['synapsisPollSingle'] ?? 'Einfachauswahl' ?></label>
+                        <label><input type="radio" name="poll_type" value="multiple"> <?= $GLOBALS['TL_LANG']['MSC']['synapsisPollMultiple'] ?? 'Mehrfachauswahl' ?></label>
+                    </div>
+                    <label class="synapsis-form__field">
+                        <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollOptions'] ?? 'Antwortmöglichkeiten (eine pro Zeile, mindestens zwei)' ?></span>
+                        <textarea name="poll_options" rows="4" class="synapsis-form__textarea"></textarea>
+                    </label>
+                </div>
+            </fieldset>
+        <?php endif; ?>
+
         <div class="synapsis-form__actions">
             <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisCreateTopic'] ?? 'Thema erstellen' ?></button>
             <a class="synapsis-button" href="<?= $this->cancelUrl ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisCancel'] ?? 'Abbrechen' ?></a>
