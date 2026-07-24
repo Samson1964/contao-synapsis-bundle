@@ -16,6 +16,7 @@ use Contao\Image;
 use Contao\Input;
 use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
+use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 
 /**
  * Callbacks der Forenstruktur (tl_synapsis_forum).
@@ -136,6 +137,37 @@ class ForumListener
         if ([] !== $allowed) {
             $this->connection->update('tl_synapsis_forum', ['type' => $allowed[0]], ['id' => $insertId]);
         }
+    }
+
+    /**
+     * Rendert unter dem Icon-Auswahlfeld ein anklickbares Raster mit allen
+     * verfuegbaren Lucide-Icons (wizard-Callback des Feldes "forumIcon").
+     *
+     * Ein Klick auf ein Icon setzt den Wert des Auswahlfelds "ctrl_forumIcon".
+     * So ist visuell erkennbar, wie ein Icon aussieht, statt nur den Namen zu
+     * sehen.
+     */
+    public function iconWizard(?DataContainer $dc = null): string
+    {
+        $buttons = '';
+
+        foreach (LucideIcons::names() as $name) {
+            $buttons .= '<button type="button" data-icon="'.$name.'" title="'.$name.'"'
+                .' style="width:36px;height:36px;padding:5px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;color:#4b5563;line-height:0">'
+                .LucideIcons::svg($name)
+                .'</button>';
+        }
+
+        return '<div id="synapsis_iconwizard" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;max-width:660px">'.$buttons.'</div>'
+            .'<style>#synapsis_iconwizard button svg{width:22px;height:22px;display:block}'
+            .'#synapsis_iconwizard button:hover{background:#eef1f4}'
+            .'#synapsis_iconwizard button.active{border-color:#f47c00;box-shadow:0 0 0 1px #f47c00;background:#fff7ee}</style>'
+            .'<script>(function(){var w=document.getElementById("synapsis_iconwizard");if(!w)return;'
+            .'var s=document.getElementById("ctrl_forumIcon");'
+            .'function m(){var v=s?s.value:"";w.querySelectorAll("[data-icon]").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-icon")===v)})}'
+            .'w.addEventListener("click",function(e){var b=e.target.closest("[data-icon]");if(!b)return;e.preventDefault();'
+            .'if(s){s.value=b.getAttribute("data-icon");s.dispatchEvent(new Event("change"))}m()});'
+            .'if(s){s.addEventListener("change",m)}m()})();</script>';
     }
 
     /**

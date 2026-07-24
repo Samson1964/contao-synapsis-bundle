@@ -1,5 +1,20 @@
 # Synapsis Changelog
 
+## Version 0.4.1 (2026-07-24)
+
+### Behoben
+
+* **Neue Themen wurden nicht gespeichert**: Nach Klick auf „Thema erstellen" passierte nichts. Ursache: Das Formular sendete `FORM_SUBMIT=synapsis_topic_…`, der Handler prüfte aber gegen `tl_synapsis_topic_…` – die Abfrage schlug immer fehl. Jetzt korrigiert; das Anlegen von Themen (inkl. erstem Beitrag) ist per POST-Test auf Contao 4.13 und 5.7 verifiziert.
+
+### Geändert
+
+* **Forum-Icons: visuelle Auswahl.** Unter dem Auswahlfeld erscheint jetzt ein anklickbares Raster mit allen Icons als Grafik – man muss also nicht mehr aus dem Namen auf das Aussehen schließen. Ein Klick übernimmt das Icon.
+* **Deutlich mehr Icons**: Das kuratierte Lucide-Set wurde von 24 auf 54 erweitert (u. a. Liste, Ordner, Etikett, Mail, Link, Rakete, Ziel, Zahnrad, Kaffee, Gamepad, Schlüssel, Auge, Suche, Herz, Geschenk, Sonne, Mond …).
+
+### Verifiziert
+
+* Auf Contao 4.13.58 und 5.7: Themenerstellung per POST (Redirect + gespeichertes Thema + erster Beitrag), Backend-Diagnose (Icon-Wizard rendert 54 Icons), Frontend-Rauchtest, 15 Unit-Tests.
+
 ## Version 0.4.0 (2026-07-24)
 
 ### Gäste-Zugriff überarbeitet (Gäste-Gruppe + Checkboxen)

@@ -156,7 +156,8 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
             'exclude'   => true,
             'inputType' => 'select',
             'options'   => LucideIcons::names(),
-            'eval'      => array('includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'),
+            // wizard-Callback: ForumListener::iconWizard (visuelles Icon-Raster)
+            'eval'      => array('includeBlankOption' => true, 'tl_class' => 'clr'),
             'sql'       => "varchar(64) NOT NULL default ''",
         ),
         'closed' => array

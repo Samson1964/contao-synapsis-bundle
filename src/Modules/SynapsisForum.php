@@ -385,7 +385,7 @@ class SynapsisForum extends Module
      */
     private function handleTopicSubmission(): void
     {
-        if ('tl_synapsis_topic_'.$this->id !== Input::post('FORM_SUBMIT')) {
+        if ('synapsis_topic_'.$this->id !== Input::post('FORM_SUBMIT')) {
             return;
         }
 
