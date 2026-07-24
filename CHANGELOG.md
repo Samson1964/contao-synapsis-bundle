@@ -1,5 +1,20 @@
 # Synapsis Changelog
 
+## Version 0.2.3 (2026-07-24)
+
+### Behoben
+
+* **„Unbekannte Option: forum" in der Typ-Auswahl** beim Anlegen einer Kategorie/eines Forums: Ein neuer Datensatz startete mit dem SQL-Standardwert `forum`, der an der jeweiligen Position gar nicht erlaubt ist. Ein neuer `oncreate_callback` belegt den Typ jetzt passend zur Position vor (oberste Ebene → `root`, im Startpunkt → `category`, in der Kategorie → `forum`).
+* **Frontend-Icons wurden von einer Icon-Schrift überlagert** (z. B. der Text „message-square"): Statt eines Icon-Namens im `data-icon`-Attribut (das fremde Icon-Systeme der Seite interpretieren) wird das Forum-Icon nun als fertiges Inline-SVG (Sprechblase bzw. Schloss) ausgegeben.
+
+### Geändert
+
+* **Gäste dürfen schreiben**: Wer ein Forum sehen darf (auch die fiktive Gruppe „Gäste"), sieht in nicht geschlossenen Foren jetzt den „Neues Thema"-Button und das Antwortformular – vorher nur angemeldete Mitglieder. Beiträge von Gästen werden dem Autor „Gast" zugeordnet. Themen abonnieren bleibt angemeldeten Mitgliedern vorbehalten.
+
+### Verifiziert
+
+* Auf Contao 4.13.58 **und** 5.7: Backend-Diagnose (Typ-Vorbelegung via oncreate, Operationen/Toggle je Version, Gäste-Gruppe) und Frontend-Rauchtest (Gäste-Zugriff, „Neues Thema"/Antwort als Gast, Ansichtszähler) grün; 13 Unit-Tests.
+
 ## Version 0.2.2 (2026-07-24)
 
 ### Geändert

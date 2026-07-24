@@ -30,6 +30,7 @@ $GLOBALS['TL_LANG']['MSC']['synapsisSticky']     = 'Angeheftet';
 $GLOBALS['TL_LANG']['MSC']['synapsisLocked']     = 'Geschlossen';
 $GLOBALS['TL_LANG']['MSC']['synapsisClosed']     = 'Geschlossen';
 $GLOBALS['TL_LANG']['MSC']['synapsisUnknown']    = 'Unbekannt';
+$GLOBALS['TL_LANG']['MSC']['synapsisGuest']      = 'Gast';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoForums']   = 'Keine Foren vorhanden.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoTopics']   = 'In diesem Forum gibt es noch keine Themen.';
 $GLOBALS['TL_LANG']['MSC']['synapsisLockedNote'] = 'Dieses Thema ist geschlossen. Es sind keine Antworten mehr möglich.';

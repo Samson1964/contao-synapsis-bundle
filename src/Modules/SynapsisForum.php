@@ -166,7 +166,7 @@ class SynapsisForum extends Module
         if ($forumId > 0 && null !== ($forum = $this->findForum($forumId))) {
             $this->activeForum = $forum;
 
-            if (Input::get('new') && $this->isMemberLoggedIn() && !$forum['closed']) {
+            if (Input::get('new') && !$forum['closed']) {
                 $this->view = 'newtopic';
                 $this->strTemplate = 'mod_synapsis_newtopic';
 
@@ -241,7 +241,7 @@ class SynapsisForum extends Module
 
         $this->Template->forum = $this->activeForum;
         $this->Template->breadcrumb = $this->buildBreadcrumb($forumId);
-        $this->Template->newTopicUrl = (!$this->activeForum['closed'] && $this->isMemberLoggedIn())
+        $this->Template->newTopicUrl = !$this->activeForum['closed']
             ? $this->pageUrl(['forum' => $forumId, 'new' => 1])
             : '';
         $this->Template->closed = (bool) $this->activeForum['closed'];
@@ -337,8 +337,9 @@ class SynapsisForum extends Module
         $this->Template->subscribeAction = $this->pageUrl(['topic' => $topicId]);
         $this->Template->subscribeFormId = 'synapsis_sub_'.$this->id;
 
-        // Antwortformular nur fuer angemeldete Mitglieder in offenen Themen
-        $canReply = $this->isMemberLoggedIn() && !$this->activeTopic['locked'] && !$this->activeForum['closed'];
+        // Antwortformular in offenen Themen; wer das Thema sehen darf, darf auch
+        // antworten (auch Gaeste in fuer sie freigegebenen Foren).
+        $canReply = !$this->activeTopic['locked'] && !$this->activeForum['closed'];
         $this->Template->canReply = $canReply;
         $this->Template->locked = (bool) $this->activeTopic['locked'];
 
@@ -382,7 +383,7 @@ class SynapsisForum extends Module
             return;
         }
 
-        if (!$this->isMemberLoggedIn() || $this->activeForum['closed']) {
+        if ($this->activeForum['closed']) {
             return;
         }
 
@@ -395,7 +396,7 @@ class SynapsisForum extends Module
             return;
         }
 
-        $memberId = (int) FrontendUser::getInstance()->id;
+        $memberId = $this->currentAuthorId();
         $now = time();
 
         $topicId = (int) Database::getInstance()
@@ -427,7 +428,7 @@ class SynapsisForum extends Module
             return;
         }
 
-        if (!$this->isMemberLoggedIn() || $this->activeTopic['locked'] || $this->activeForum['closed']) {
+        if ($this->activeTopic['locked'] || $this->activeForum['closed']) {
             return;
         }
 
@@ -440,7 +441,7 @@ class SynapsisForum extends Module
         }
 
         $now = time();
-        $memberId = (int) FrontendUser::getInstance()->id;
+        $memberId = $this->currentAuthorId();
         $this->insertPost((int) $this->activeTopic['id'], $memberId, $text, $now);
 
         // Thema als aktualisiert markieren
@@ -580,9 +581,25 @@ class SynapsisForum extends Module
         $forum['topicCount'] = $topicCount;
         $forum['postCount'] = $postCount;
         $forum['lastPost'] = $this->findLastPost($forumIds);
-        $forum['icon'] = $forum['closed'] ? 'lock' : 'message-square';
+        // Fertiges Inline-SVG statt eines Icon-Namens, damit keine fremde
+        // Icon-Schrift der Seite den Namen (z. B. "message-square") einblendet.
+        $forum['iconSvg'] = $this->forumIcon((bool) $forum['closed']);
 
         return $forum;
+    }
+
+    /**
+     * Liefert das Inline-SVG-Icon eines Forums (Sprechblase bzw. Schloss).
+     */
+    private function forumIcon(bool $closed): string
+    {
+        if ($closed) {
+            // Lucide "lock"
+            return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+        }
+
+        // Lucide "message-square"
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
     }
 
     /**
@@ -1050,6 +1067,15 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Autor-ID des aktuellen Beitrags: Mitglieds-ID bei Anmeldung, sonst 0
+     * (Gast).
+     */
+    private function currentAuthorId(): int
+    {
+        return $this->isMemberLoggedIn() ? (int) FrontendUser::getInstance()->id : 0;
+    }
+
+    /**
      * Gruppen-IDs des Besuchers fuer die Zugriffspruefung.
      *
      * Nicht angemeldete Besucher gelten als Gaeste und erhalten die fiktive
@@ -1151,7 +1177,7 @@ class SynapsisForum extends Module
     private function memberName(int $memberId): string
     {
         if (0 === $memberId) {
-            return $GLOBALS['TL_LANG']['MSC']['synapsisUnknown'] ?? 'Unbekannt';
+            return $GLOBALS['TL_LANG']['MSC']['synapsisGuest'] ?? 'Gast';
         }
 
         $member = Database::getInstance()

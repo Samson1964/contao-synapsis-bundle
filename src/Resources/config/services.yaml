@@ -18,6 +18,7 @@ services:
     schachbulle_contao_synapsis.listener.data_container.forum:
         class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\ForumListener
         tags:
+            - { name: contao.callback, table: tl_synapsis_forum, target: config.oncreate, method: onCreate }
             - { name: contao.callback, table: tl_synapsis_forum, target: fields.type.options, method: getTypeOptions }
             - { name: contao.callback, table: tl_synapsis_forum, target: fields.groups.options, method: getGroupOptions }
             - { name: contao.callback, table: tl_synapsis_forum, target: fields.alias.save, method: generateAlias }

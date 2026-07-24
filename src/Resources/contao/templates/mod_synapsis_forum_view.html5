@@ -36,7 +36,7 @@ use Contao\StringUtil;
             <?php foreach ($this->subforums as $forum): ?>
                 <li class="synapsis-forumlist__row">
                     <span class="synapsis-col-forum">
-                        <span class="synapsis-forum-icon" data-icon="<?= $forum['icon'] ?>"></span>
+                        <span class="synapsis-forum-icon<?= $forum['closed'] ? ' is-locked' : '' ?>"><?= $forum['iconSvg'] ?></span>
                         <span class="synapsis-forum-info">
                             <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?= StringUtil::specialchars($forum['title']) ?></a>
                             <?php if ('' !== (string) $forum['description']): ?>

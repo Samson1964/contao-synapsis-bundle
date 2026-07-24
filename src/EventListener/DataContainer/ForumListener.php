@@ -109,6 +109,32 @@ class ForumListener
     }
 
     /**
+     * Belegt den Typ eines neu angelegten Knotens passend zur Position vor
+     * (oncreate_callback).
+     *
+     * Ohne diese Vorbelegung stuende im Datensatz der SQL-Standardwert "forum",
+     * der an der jeweiligen Position aber gar nicht erlaubt ist - Contao zeigt
+     * ihn dann als "Unbekannte Option: forum" in der Typ-Auswahl an.
+     *
+     * @param array<string, mixed> $set Eingefuegte Werte (hier ungenutzt)
+     */
+    public function onCreate(string $table, int $insertId, array $set, ?DataContainer $dc = null): void
+    {
+        $pid = (int) $this->connection->fetchOne('SELECT pid FROM tl_synapsis_forum WHERE id = ?', [$insertId]);
+
+        if (0 === $pid) {
+            $allowed = ['root'];
+        } else {
+            $parentType = (string) $this->connection->fetchOne('SELECT type FROM tl_synapsis_forum WHERE id = ?', [$pid]);
+            $allowed = self::ALLOWED_CHILDREN[$parentType] ?? [];
+        }
+
+        if ([] !== $allowed) {
+            $this->connection->update('tl_synapsis_forum', ['type' => $allowed[0]], ['id' => $insertId]);
+        }
+    }
+
+    /**
      * Ermittelt die an der aktuellen Position erlaubten Typen.
      *
      * @return array<string>
