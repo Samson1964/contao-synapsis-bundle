@@ -24,6 +24,7 @@ use Contao\Module;
 use Contao\Pagination;
 use Contao\StringUtil;
 use Contao\System;
+use Schachbulle\ContaoSynapsisBundle\Frontend\AuthorLabel;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 
@@ -406,6 +407,7 @@ class SynapsisForum extends Module
         }
 
         $memberId = $this->currentAuthorId();
+        $authorName = $this->memberUsername($memberId);
         $now = time();
 
         $topicId = (int) Database::getInstance()
@@ -416,6 +418,7 @@ class SynapsisForum extends Module
                 'title' => $title,
                 'alias' => $this->uniqueAlias('tl_synapsis_topic', $title),
                 'author' => $memberId,
+                'authorName' => $authorName,
                 'date' => $now,
                 'published' => '1',
             ])
@@ -423,7 +426,7 @@ class SynapsisForum extends Module
             ->insertId
         ;
 
-        $this->insertPost($topicId, $memberId, $text, $now);
+        $this->insertPost($topicId, $memberId, $authorName, $text, $now);
 
         $this->redirect($this->pageUrl(['topic' => $topicId]));
     }
@@ -451,7 +454,8 @@ class SynapsisForum extends Module
 
         $now = time();
         $memberId = $this->currentAuthorId();
-        $this->insertPost((int) $this->activeTopic['id'], $memberId, $text, $now);
+        $authorName = $this->memberUsername($memberId);
+        $this->insertPost((int) $this->activeTopic['id'], $memberId, $authorName, $text, $now);
 
         // Thema als aktualisiert markieren
         Database::getInstance()
@@ -501,7 +505,7 @@ class SynapsisForum extends Module
     /**
      * Fuegt einen Beitrag ein und verarbeitet optionale Dateianhaenge.
      */
-    private function insertPost(int $topicId, int $memberId, string $text, int $timestamp): int
+    private function insertPost(int $topicId, int $memberId, string $authorName, string $text, int $timestamp): int
     {
         $attachments = $this->synapsis_allowUploads ? $this->handleUploads() : null;
 
@@ -511,6 +515,7 @@ class SynapsisForum extends Module
                 'pid' => $topicId,
                 'tstamp' => $timestamp,
                 'author' => $memberId,
+                'authorName' => $authorName,
                 'date' => $timestamp,
                 'text' => $text,
                 'attachments' => $attachments,
@@ -648,7 +653,7 @@ class SynapsisForum extends Module
         $topicId = (int) $topic['id'];
 
         $topic['url'] = $this->pageUrl(['topic' => $topicId]);
-        $topic['authorName'] = $this->memberName((int) $topic['author']);
+        $topic['authorName'] = $this->authorLabel((int) $topic['author'], (string) ($topic['authorName'] ?? ''));
         $topic['authorAvatar'] = $this->avatar((int) $topic['author']);
         $topic['dateFormatted'] = $this->formatDate((int) $topic['date']);
         $topic['replyCount'] = max(0, (int) Database::getInstance()
@@ -672,7 +677,7 @@ class SynapsisForum extends Module
     {
         $authorId = (int) $post['author'];
 
-        $post['authorName'] = $this->memberName($authorId);
+        $post['authorName'] = $this->authorLabel($authorId, (string) ($post['authorName'] ?? ''));
         $post['authorAvatar'] = $this->avatar($authorId);
         $post['authorPostCount'] = (int) Database::getInstance()
             ->prepare('SELECT COUNT(*) FROM tl_synapsis_post WHERE author = ? AND published = ?')
@@ -727,7 +732,7 @@ class SynapsisForum extends Module
 
         while ($topPosters->next()) {
             $list[] = [
-                'name' => $this->memberName((int) $topPosters->author),
+                'name' => $this->authorLabel((int) $topPosters->author, ''),
                 'avatar' => $this->avatar((int) $topPosters->author),
                 'count' => (int) $topPosters->anzahl,
             ];
@@ -952,7 +957,7 @@ class SynapsisForum extends Module
     {
         if ($topicId > 0) {
             $row = Database::getInstance()
-                ->prepare('SELECT p.date, p.author FROM tl_synapsis_post p WHERE p.pid = ? AND p.published = ? ORDER BY p.date DESC')
+                ->prepare('SELECT p.date, p.author, p.authorName FROM tl_synapsis_post p WHERE p.pid = ? AND p.published = ? ORDER BY p.date DESC')
                 ->limit(1)
                 ->execute($topicId, '1')
                 ->row()
@@ -965,7 +970,7 @@ class SynapsisForum extends Module
             $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
 
             $row = Database::getInstance()
-                ->prepare('SELECT p.date, p.author, t.title, t.id AS topicId FROM tl_synapsis_post p INNER JOIN tl_synapsis_topic t ON t.id = p.pid WHERE t.pid IN ('.$placeholders.') AND p.published = ? AND t.published = ? ORDER BY p.date DESC')
+                ->prepare('SELECT p.date, p.author, p.authorName, t.title, t.id AS topicId FROM tl_synapsis_post p INNER JOIN tl_synapsis_topic t ON t.id = p.pid WHERE t.pid IN ('.$placeholders.') AND p.published = ? AND t.published = ? ORDER BY p.date DESC')
                 ->limit(1)
                 ->execute(...array_merge($forumIds, ['1', '1']))
                 ->row()
@@ -977,7 +982,7 @@ class SynapsisForum extends Module
         }
 
         return [
-            'authorName' => $this->memberName((int) $row['author']),
+            'authorName' => $this->authorLabel((int) $row['author'], (string) ($row['authorName'] ?? '')),
             'dateFormatted' => $this->formatDate((int) $row['date']),
             'title' => $row['title'] ?? '',
             'url' => isset($row['topicId']) ? $this->pageUrl(['topic' => (int) $row['topicId']]) : '',
@@ -1287,12 +1292,27 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Liefert den Anzeigenamen eines Mitglieds.
+     * Liefert den anzuzeigenden Autornamen.
+     *
+     * Existiert das Mitglied noch, wird sein aktueller Name gezeigt. Bei Gaesten
+     * (author=0) oder geloeschten Konten wird der gespeicherte Benutzername als
+     * „Gast (Name)" ausgegeben (siehe AuthorLabel).
      */
-    private function memberName(int $memberId): string
+    private function authorLabel(int $memberId, string $storedName): string
     {
-        if (0 === $memberId) {
-            return $GLOBALS['TL_LANG']['MSC']['synapsisGuest'] ?? 'Gast';
+        $guestWord = $GLOBALS['TL_LANG']['MSC']['synapsisGuest'] ?? 'Gast';
+
+        return AuthorLabel::format($this->liveMemberName($memberId), $storedName, $guestWord);
+    }
+
+    /**
+     * Aktueller Anzeigename eines noch existierenden Mitglieds, sonst null
+     * (Gast oder geloeschtes Konto).
+     */
+    private function liveMemberName(int $memberId): ?string
+    {
+        if ($memberId <= 0) {
+            return null;
         }
 
         $member = Database::getInstance()
@@ -1302,12 +1322,31 @@ class SynapsisForum extends Module
         ;
 
         if (empty($member)) {
-            return $GLOBALS['TL_LANG']['MSC']['synapsisUnknown'] ?? 'Unbekannt';
+            return null;
         }
 
         $name = trim(($member['firstname'] ?? '').' '.($member['lastname'] ?? ''));
 
         return '' !== $name ? $name : (string) $member['username'];
+    }
+
+    /**
+     * Benutzername eines Mitglieds als Momentaufnahme fuer die Speicherung
+     * (leer bei Gaesten oder unbekannter ID).
+     */
+    private function memberUsername(int $memberId): string
+    {
+        if ($memberId <= 0) {
+            return '';
+        }
+
+        $row = Database::getInstance()
+            ->prepare('SELECT username FROM tl_member WHERE id = ?')
+            ->execute($memberId)
+            ->row(true)
+        ;
+
+        return \is_array($row) ? (string) ($row[0] ?? '') : '';
     }
 
     /**

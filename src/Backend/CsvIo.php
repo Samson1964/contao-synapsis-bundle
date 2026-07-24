@@ -14,33 +14,35 @@ use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 
 /**
- * Export und Import einer Forenstruktur als CSV.
+ * Import einer Forenstruktur aus zwei CSV-Dateien.
  *
- * Der Export eines Startpunkts schreibt dessen komplette Unterstruktur
- * (Kategorien, Foren, Themen, Beitraege) in eine einzige CSV-Datei. Jede Zeile
- * hat eine laufende Nummer (ref) und verweist per parent auf die Nummer ihres
- * Elternknotens (0 = oberste Ebene). Dadurch laesst sich der Baum beim Import
- * eindeutig wiederherstellen, unabhaengig von den urspruenglichen IDs.
+ * Der Import ist auf die Uebernahme aus Fremdsystemen (z. B. phpBB) ausgelegt
+ * und erwartet zwei Dateien:
  *
- * Beim Import wird der Inhalt unter ein Ziel gehaengt:
- *   - Ziel Startpunkt  -> die obersten Zeilen muessen Kategorien sein
- *   - Ziel Kategorie   -> die obersten Zeilen muessen Foren sein
+ *   1. Struktur-CSV  (Kategorien und Foren)
+ *      Spalten: ref, parent, type, title, alias, description, forumIcon,
+ *               closed, protected, groups, guestRead, guestWrite, published
+ *      - type ist "category" oder "forum"
+ *      - ref ist eine in dieser Datei eindeutige Nummer (z. B. die forum_id des
+ *        Fremdsystems), parent verweist auf die ref des Elternknotens
+ *        (leer oder 0 = oberste Ebene, haengt an das gewaehlte Ziel)
  *
- * So kann eine vorher geloeschte Struktur vollstaendig wiederhergestellt werden.
+ *   2. Inhalt-CSV  (Themen und Beitraege)
+ *      Spalten: forum, topic, type, title, author, authorName, date, text,
+ *               sticky, locked, published, views
+ *      - type ist "topic" oder "post"
+ *      - eine Themenzeile verweist mit "forum" auf die ref eines Forums aus der
+ *        Struktur-CSV und traegt mit "topic" eine eigene, eindeutige Nummer
+ *      - eine Beitragszeile verweist mit "topic" auf die Themen-Nummer
+ *      - author ist die Mitglieds-ID (0 = Gast/Fremdsystem), authorName der
+ *        anzuzeigende Benutzername
+ *
+ * Das Ziel bestimmt, was auf oberster Ebene der Struktur erwartet wird:
+ *   - Ziel Startpunkt -> oberste Zeilen muessen Kategorien sein
+ *   - Ziel Kategorie  -> oberste Zeilen muessen Foren sein
  */
 class CsvIo
 {
-    /**
-     * Spaltenreihenfolge der CSV.
-     *
-     * @var array<string>
-     */
-    private const COLUMNS = [
-        'ref', 'parent', 'type', 'title', 'alias', 'description', 'forumIcon',
-        'closed', 'protected', 'groups', 'guestRead', 'guestWrite', 'published',
-        'sticky', 'locked', 'author', 'date', 'text',
-    ];
-
     /**
      * @var Connection
      */
@@ -58,155 +60,18 @@ class CsvIo
         $this->connection = $connection;
     }
 
-    // -------------------------------------------------------------------------
-    // Export
-    // -------------------------------------------------------------------------
-
     /**
-     * Exportiert die Unterstruktur eines Startpunkts als CSV-String.
-     */
-    public function export(int $rootId): string
-    {
-        $rows = [];
-        $ref = 0;
-
-        $this->walk($rootId, 0, $ref, $rows);
-
-        $handle = fopen('php://temp', 'r+');
-        fputcsv($handle, self::COLUMNS);
-
-        foreach ($rows as $row) {
-            $line = [];
-            foreach (self::COLUMNS as $col) {
-                $line[] = $row[$col] ?? '';
-            }
-            fputcsv($handle, $line);
-        }
-
-        rewind($handle);
-        $csv = (string) stream_get_contents($handle);
-        fclose($handle);
-
-        return $csv;
-    }
-
-    /**
-     * Durchlaeuft die Kinder eines Knotens und sammelt Zeilen (Elternknoten vor
-     * Kindknoten, damit der Import die Zuordnung aufloesen kann).
+     * Importiert Struktur (Pflicht) und optional Inhalte unter das Ziel.
      *
-     * @param array<int, array<string, mixed>> $rows
-     */
-    private function walk(int $pid, int $parentRef, int &$ref, array &$rows): void
-    {
-        $children = $this->connection->fetchAllAssociative(
-            'SELECT * FROM tl_synapsis_forum WHERE pid = ? ORDER BY sorting',
-            [$pid]
-        );
-
-        foreach ($children as $node) {
-            $myRef = ++$ref;
-            $rows[] = $this->forumRow($node, $myRef, $parentRef);
-
-            if ('forum' === $node['type']) {
-                $topics = $this->connection->fetchAllAssociative(
-                    'SELECT * FROM tl_synapsis_topic WHERE pid = ? ORDER BY date',
-                    [(int) $node['id']]
-                );
-
-                foreach ($topics as $topic) {
-                    $topicRef = ++$ref;
-                    $rows[] = $this->topicRow($topic, $topicRef, $myRef);
-
-                    $posts = $this->connection->fetchAllAssociative(
-                        'SELECT * FROM tl_synapsis_post WHERE pid = ? ORDER BY date',
-                        [(int) $topic['id']]
-                    );
-
-                    foreach ($posts as $post) {
-                        $rows[] = $this->postRow($post, ++$ref, $topicRef);
-                    }
-                }
-            }
-
-            $this->walk((int) $node['id'], $myRef, $ref, $rows);
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $node
-     *
-     * @return array<string, string>
-     */
-    private function forumRow(array $node, int $ref, int $parentRef): array
-    {
-        return [
-            'ref' => (string) $ref,
-            'parent' => (string) $parentRef,
-            'type' => (string) $node['type'],
-            'title' => (string) $node['title'],
-            'alias' => (string) $node['alias'],
-            'description' => (string) ($node['description'] ?? ''),
-            'forumIcon' => (string) ($node['forumIcon'] ?? ''),
-            'closed' => (string) ($node['closed'] ?? ''),
-            'protected' => (string) ($node['protected'] ?? ''),
-            'groups' => implode(',', StringUtil::deserialize($node['groups'] ?? null, true)),
-            'guestRead' => (string) ($node['guestRead'] ?? ''),
-            'guestWrite' => (string) ($node['guestWrite'] ?? ''),
-            'published' => (string) ($node['published'] ?? ''),
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $topic
-     *
-     * @return array<string, string>
-     */
-    private function topicRow(array $topic, int $ref, int $parentRef): array
-    {
-        return [
-            'ref' => (string) $ref,
-            'parent' => (string) $parentRef,
-            'type' => 'topic',
-            'title' => (string) $topic['title'],
-            'alias' => (string) $topic['alias'],
-            'published' => (string) ($topic['published'] ?? ''),
-            'sticky' => (string) ($topic['sticky'] ?? ''),
-            'locked' => (string) ($topic['locked'] ?? ''),
-            'author' => (string) ($topic['author'] ?? '0'),
-            'date' => (string) ($topic['date'] ?? '0'),
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $post
-     *
-     * @return array<string, string>
-     */
-    private function postRow(array $post, int $ref, int $parentRef): array
-    {
-        return [
-            'ref' => (string) $ref,
-            'parent' => (string) $parentRef,
-            'type' => 'post',
-            'published' => (string) ($post['published'] ?? ''),
-            'author' => (string) ($post['author'] ?? '0'),
-            'date' => (string) ($post['date'] ?? '0'),
-            'text' => (string) ($post['text'] ?? ''),
-        ];
-    }
-
-    // -------------------------------------------------------------------------
-    // Import
-    // -------------------------------------------------------------------------
-
-    /**
-     * Importiert eine CSV unter das angegebene Ziel (Startpunkt oder Kategorie).
+     * @param string $structureCsv Kategorien/Foren (Pflicht)
+     * @param string $contentCsv   Themen/Beitraege (optional, '' = keine)
+     * @param int    $targetId     Ziel-Knoten (Startpunkt oder Kategorie)
      *
      * @return array{forums:int, topics:int, posts:int} Anzahl importierter Datensaetze
      *
      * @throws \RuntimeException bei ungueltigem Ziel oder unpassender Struktur
      */
-    public function import(string $csv, int $targetId): array
+    public function import(string $structureCsv, string $contentCsv, int $targetId): array
     {
         $targetType = (string) $this->connection->fetchOne(
             'SELECT type FROM tl_synapsis_forum WHERE id = ?',
@@ -219,54 +84,143 @@ class CsvIo
 
         $expectedTop = 'root' === $targetType ? 'category' : 'forum';
 
-        $rows = $this->parse($csv);
+        $structureRows = $this->parse($structureCsv);
 
-        if ([] === $rows) {
-            throw new \RuntimeException('Die CSV-Datei enthält keine Datensätze.');
+        if ([] === $structureRows) {
+            throw new \RuntimeException('Die Struktur-Datei enthält keine Datensätze.');
         }
 
+        $contentRows = '' !== trim($contentCsv) ? $this->parse($contentCsv) : [];
+
+        $stats = ['forums' => 0, 'topics' => 0, 'posts' => 0];
+
+        $this->connection->beginTransaction();
+
+        try {
+            [$forumMap, $forumType] = $this->importStructure($structureRows, $targetId, $expectedTop, $stats);
+            $this->importContent($contentRows, $forumMap, $forumType, $stats);
+
+            $this->connection->commit();
+        } catch (\Throwable $e) {
+            $this->connection->rollBack();
+
+            throw $e;
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Legt Kategorien und Foren an und liefert die Zuordnung ref => neue ID
+     * sowie ref => type.
+     *
+     * @param array<int, array<string, string>> $rows
+     * @param array{forums:int, topics:int, posts:int} $stats
+     *
+     * @return array{0: array<string, int>, 1: array<string, string>}
+     */
+    private function importStructure(array $rows, int $targetId, string $expectedTop, array &$stats): array
+    {
         // Struktur der obersten Ebene pruefen
         foreach ($rows as $row) {
-            if ('0' === (string) $row['parent'] && $row['type'] !== $expectedTop) {
+            if ($this->isTopLevel($row['parent'] ?? '') && ($row['type'] ?? '') !== $expectedTop) {
                 throw new \RuntimeException(sprintf(
-                    'Die Datei passt nicht zum Ziel: erwartet werden „%s"-Einträge auf oberster Ebene.',
+                    'Die Struktur-Datei passt nicht zum Ziel: erwartet werden „%s"-Einträge auf oberster Ebene.',
                     $expectedTop
                 ));
             }
         }
 
         $map = [];
-        $stats = ['forums' => 0, 'topics' => 0, 'posts' => 0];
+        $type = [];
         $now = time();
 
         foreach ($rows as $row) {
-            $parentRef = (string) $row['parent'];
-            $newPid = '0' === $parentRef ? $targetId : ($map[$parentRef] ?? 0);
+            $rowType = (string) ($row['type'] ?? '');
 
-            if (0 === $newPid && '0' !== $parentRef) {
-                // Elternzeile nicht gefunden -> ueberspringen
+            if ('category' !== $rowType && 'forum' !== $rowType) {
                 continue;
             }
 
-            $type = (string) $row['type'];
+            $parentRef = (string) ($row['parent'] ?? '');
 
-            if ('category' === $type || 'forum' === $type) {
-                $newId = $this->insertForum($row, $newPid, $now);
-                ++$stats['forums'];
-            } elseif ('topic' === $type) {
-                $newId = $this->insertTopic($row, $newPid, $now);
-                ++$stats['topics'];
-            } elseif ('post' === $type) {
-                $newId = $this->insertPost($row, $newPid, $now);
-                ++$stats['posts'];
+            if ($this->isTopLevel($parentRef)) {
+                $newPid = $targetId;
+            } elseif (isset($map[$parentRef])) {
+                $newPid = $map[$parentRef];
             } else {
+                // Elternforum (noch) nicht angelegt -> Zeile ueberspringen
                 continue;
             }
 
-            $map[(string) $row['ref']] = $newId;
+            $newId = $this->insertForum($row, $newPid, $now);
+            ++$stats['forums'];
+
+            $ref = (string) ($row['ref'] ?? '');
+
+            if ('' !== $ref) {
+                $map[$ref] = $newId;
+                $type[$ref] = $rowType;
+            }
         }
 
-        return $stats;
+        return [$map, $type];
+    }
+
+    /**
+     * Legt Themen und Beitraege an. Themen haengen ueber die Forum-Referenz an
+     * den Strukturbaum, Beitraege ueber die Themen-Referenz an ihr Thema.
+     *
+     * @param array<int, array<string, string>> $rows
+     * @param array<string, int>    $forumMap  Struktur-ref => neue Forum-ID
+     * @param array<string, string> $forumType Struktur-ref => type
+     * @param array{forums:int, topics:int, posts:int} $stats
+     */
+    private function importContent(array $rows, array $forumMap, array $forumType, array &$stats): void
+    {
+        $topicMap = [];
+        $now = time();
+
+        foreach ($rows as $row) {
+            $type = (string) ($row['type'] ?? '');
+
+            if ('topic' === $type) {
+                $forumRef = (string) ($row['forum'] ?? '');
+
+                // Themen nur unter tatsaechlichen Foren (nicht Kategorien) anlegen
+                if (!isset($forumMap[$forumRef]) || ($forumType[$forumRef] ?? '') !== 'forum') {
+                    continue;
+                }
+
+                $newId = $this->insertTopic($row, $forumMap[$forumRef], $now);
+                ++$stats['topics'];
+
+                $topicRef = (string) ($row['topic'] ?? '');
+
+                if ('' !== $topicRef) {
+                    $topicMap[$topicRef] = $newId;
+                }
+            } elseif ('post' === $type) {
+                $topicRef = (string) ($row['topic'] ?? '');
+
+                if (!isset($topicMap[$topicRef])) {
+                    continue;
+                }
+
+                $this->insertPost($row, $topicMap[$topicRef], $now);
+                ++$stats['posts'];
+            }
+        }
+    }
+
+    /**
+     * Oberste Ebene, wenn kein Elternverweis gesetzt ist ('' oder '0').
+     */
+    private function isTopLevel(string $parentRef): bool
+    {
+        $parentRef = trim($parentRef);
+
+        return '' === $parentRef || '0' === $parentRef;
     }
 
     /**
@@ -352,10 +306,11 @@ class CsvIo
             'title' => $row['title'] ?? '',
             'alias' => $this->uniqueAlias('tl_synapsis_topic', $row['alias'] ?? '', $row['title'] ?? ''),
             'author' => (int) ($row['author'] ?? 0),
+            'authorName' => $row['authorName'] ?? '',
             'date' => (int) ($row['date'] ?? $now),
             'sticky' => $row['sticky'] ?? '',
             'locked' => $row['locked'] ?? '',
-            'views' => 0,
+            'views' => (int) ($row['views'] ?? 0),
             'published' => '' !== ($row['published'] ?? '') ? $row['published'] : '1',
         ]);
 
@@ -371,6 +326,7 @@ class CsvIo
             'pid' => $pid,
             'tstamp' => $now,
             'author' => (int) ($row['author'] ?? 0),
+            'authorName' => $row['authorName'] ?? '',
             'date' => (int) ($row['date'] ?? $now),
             'text' => $row['text'] ?? '',
             'published' => '' !== ($row['published'] ?? '') ? $row['published'] : '1',

@@ -11,18 +11,17 @@ declare(strict_types=1);
 namespace Schachbulle\ContaoSynapsisBundle\Backend;
 
 use Contao\Backend;
-use Contao\CoreBundle\Exception\ResponseException;
 use Contao\Input;
 use Contao\StringUtil;
 use Contao\System;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Backend-Modul "CSV Import / Export" (Gruppe Inhalte, do=synapsis_csv).
+ * Backend-Modul "CSV Import" (Gruppe Synapsis, do=synapsis_csv).
  *
- * Exportiert die komplette Struktur eines Startpunkts als CSV und importiert
- * eine solche CSV wieder unter einen Startpunkt oder eine Kategorie - so laesst
- * sich eine geloeschte Struktur vollstaendig wiederherstellen.
+ * Importiert eine Forenstruktur aus zwei CSV-Dateien - eine mit Kategorien und
+ * Foren, eine mit Themen und Beitraegen (siehe CsvIo). Damit lassen sich Daten
+ * aus Fremdsystemen (z. B. phpBB) uebernehmen oder eine geloeschte Struktur
+ * wiederherstellen.
  */
 class CsvModule extends Backend
 {
@@ -35,33 +34,15 @@ class CsvModule extends Backend
     }
 
     /**
-     * Erzeugt die Backend-Seite (bzw. loest den CSV-Download aus).
+     * Erzeugt die Backend-Seite und verarbeitet einen Import.
      */
     public function generate(): string
     {
         $connection = System::getContainer()->get('database_connection');
         $io = new CsvIo($connection);
 
-        // --- Export: als Download ausliefern ---
-        $source = (int) Input::get('source');
-
-        if ($source > 0) {
-            $row = $connection->fetchAssociative("SELECT title, alias FROM tl_synapsis_forum WHERE id = ? AND type = 'root'", [$source]);
-
-            if ($row) {
-                $csv = $io->export($source);
-                $name = 'synapsis-'.($row['alias'] ?: 'export').'.csv';
-
-                throw new ResponseException(new Response($csv, 200, [
-                    'Content-Type' => 'text/csv; charset=utf-8',
-                    'Content-Disposition' => 'attachment; filename="'.$name.'"',
-                ]));
-            }
-        }
-
         $message = '';
 
-        // --- Import verarbeiten ---
         if ('synapsis_csv_import' === Input::post('FORM_SUBMIT')) {
             $message = $this->handleImport($io);
         }
@@ -70,9 +51,8 @@ class CsvModule extends Backend
     }
 
     /**
-     * Verarbeitet die hochgeladene CSV und liefert eine Ergebnismeldung (HTML).
-     *
-     * @param CsvIo $io
+     * Verarbeitet die hochgeladenen CSV-Dateien und liefert eine
+     * Ergebnismeldung (HTML).
      */
     private function handleImport(CsvIo $io): string
     {
@@ -82,14 +62,21 @@ class CsvModule extends Backend
             return $this->error('Bitte ein Ziel auswählen.');
         }
 
-        if (empty($_FILES['csvfile']['tmp_name']) || !is_uploaded_file($_FILES['csvfile']['tmp_name'])) {
-            return $this->error('Bitte eine CSV-Datei auswählen.');
+        if (empty($_FILES['structurefile']['tmp_name']) || !is_uploaded_file($_FILES['structurefile']['tmp_name'])) {
+            return $this->error('Bitte die Struktur-Datei (Kategorien/Foren) auswählen.');
         }
 
-        $csv = (string) file_get_contents($_FILES['csvfile']['tmp_name']);
+        $structureCsv = (string) file_get_contents($_FILES['structurefile']['tmp_name']);
+
+        // Inhalt-Datei ist optional
+        $contentCsv = '';
+
+        if (!empty($_FILES['contentfile']['tmp_name']) && is_uploaded_file($_FILES['contentfile']['tmp_name'])) {
+            $contentCsv = (string) file_get_contents($_FILES['contentfile']['tmp_name']);
+        }
 
         try {
-            $stats = $io->import($csv, $target);
+            $stats = $io->import($structureCsv, $contentCsv, $target);
         } catch (\Throwable $e) {
             return $this->error(StringUtil::specialchars($e->getMessage()));
         }
@@ -106,7 +93,7 @@ class CsvModule extends Backend
     }
 
     /**
-     * Rendert die Export- und Import-Formulare im Backend-Stil.
+     * Rendert das Import-Formular im Backend-Stil.
      *
      * @param \Doctrine\DBAL\Connection $connection
      */
@@ -116,12 +103,6 @@ class CsvModule extends Backend
 
         $roots = $connection->fetchAllAssociative("SELECT id, title FROM tl_synapsis_forum WHERE type = 'root' ORDER BY sorting");
         $categories = $connection->fetchAllAssociative("SELECT id, title FROM tl_synapsis_forum WHERE type = 'category' ORDER BY sorting");
-
-        // Export-Optionen (Startpunkte)
-        $exportOptions = '';
-        foreach ($roots as $r) {
-            $exportOptions .= '<option value="'.$r['id'].'">'.StringUtil::specialchars($r['title']).'</option>';
-        }
 
         // Import-Ziele (Startpunkte und Kategorien)
         $targetOptions = '';
@@ -133,7 +114,7 @@ class CsvModule extends Backend
         }
 
         $html = '<div id="tl_buttons"></div>';
-        $html .= '<h2 class="sub_headline">Synapsis: CSV Import / Export</h2>';
+        $html .= '<h2 class="sub_headline">Synapsis: CSV Import</h2>';
         $html .= $message;
 
         if ([] === $roots) {
@@ -142,19 +123,6 @@ class CsvModule extends Backend
             return $html;
         }
 
-        // Export
-        $html .= '<form method="get" class="tl_form">'
-            .'<div class="tl_formbody_edit">'
-            .'<input type="hidden" name="do" value="synapsis_csv">'
-            .'<fieldset class="tl_tbox"><legend>Export eines Startpunkts</legend>'
-            .'<div class="widget"><h3><label for="source">Startpunkt</label></h3>'
-            .'<select name="source" id="source" class="tl_select">'.$exportOptions.'</select></div>'
-            .'</fieldset></div>'
-            .'<div class="tl_formbody_submit"><div class="tl_submit_container">'
-            .'<button type="submit" class="tl_submit">Als CSV exportieren</button>'
-            .'</div></div></form>';
-
-        // Import
         $html .= '<form method="post" enctype="multipart/form-data" class="tl_form">'
             .'<div class="tl_formbody_edit">'
             .'<input type="hidden" name="FORM_SUBMIT" value="synapsis_csv_import">'
@@ -162,9 +130,13 @@ class CsvModule extends Backend
             .'<fieldset class="tl_tbox"><legend>Import in einen Startpunkt oder eine Kategorie</legend>'
             .'<div class="widget"><h3><label for="target">Ziel</label></h3>'
             .'<select name="target" id="target" class="tl_select">'.$targetOptions.'</select>'
-            .'<p class="tl_help tl_tip">Startpunkt als Ziel erwartet Kategorien auf oberster Ebene, eine Kategorie erwartet Foren. So wird eine gelöschte Struktur wiederhergestellt.</p></div>'
-            .'<div class="widget"><h3><label for="csvfile">CSV-Datei</label></h3>'
-            .'<input type="file" name="csvfile" id="csvfile" class="tl_upload_field" accept=".csv"></div>'
+            .'<p class="tl_help tl_tip">Startpunkt als Ziel erwartet Kategorien auf oberster Ebene, eine Kategorie erwartet Foren.</p></div>'
+            .'<div class="widget"><h3><label for="structurefile">Struktur-Datei (Kategorien/Foren)</label></h3>'
+            .'<input type="file" name="structurefile" id="structurefile" class="tl_upload_field" accept=".csv">'
+            .'<p class="tl_help tl_tip">Pflicht. Spalten: ref, parent, type (category/forum), title, alias, description, forumIcon, closed, protected, groups, guestRead, guestWrite, published.</p></div>'
+            .'<div class="widget"><h3><label for="contentfile">Inhalt-Datei (Themen/Beiträge)</label></h3>'
+            .'<input type="file" name="contentfile" id="contentfile" class="tl_upload_field" accept=".csv">'
+            .'<p class="tl_help tl_tip">Optional. Spalten: forum, topic, type (topic/post), title, author, authorName, date, text, sticky, locked, published, views. „forum" verweist auf die ref eines Forums der Struktur-Datei, „topic" gruppiert Beiträge unter ihr Thema.</p></div>'
             .'</fieldset></div>'
             .'<div class="tl_formbody_submit"><div class="tl_submit_container">'
             .'<button type="submit" class="tl_submit">CSV importieren</button>'

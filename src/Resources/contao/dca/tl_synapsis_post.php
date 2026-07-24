@@ -84,7 +84,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_post'] = array
 
     'palettes' => array
     (
-        'default' => '{meta_legend},author,date;{text_legend},text;{attachment_legend},attachments;{publish_legend},published',
+        'default' => '{meta_legend},author,authorName,date;{text_legend},text;{attachment_legend},attachments;{publish_legend},published',
     ),
 
     'fields' => array
@@ -113,6 +113,18 @@ $GLOBALS['TL_DCA']['tl_synapsis_post'] = array
             'eval'       => array('mandatory' => true, 'chosen' => true, 'includeBlankOption' => true, 'tl_class' => 'w50'),
             'sql'        => "int(10) unsigned NOT NULL default 0",
             'relation'   => array('type' => 'hasOne', 'load' => 'lazy'),
+        ),
+        // Benutzername zum Zeitpunkt des Schreibens (Momentaufnahme). Wird als
+        // Autor angezeigt, wenn das Konto (author) nicht mehr existiert:
+        // „Gast (frueherer Benutzername)". Bei Importen aus Fremdsystemen ist
+        // author=0 und hier steht der urspruengliche Name.
+        'authorName' => array
+        (
+            'exclude'   => true,
+            'search'    => true,
+            'inputType' => 'text',
+            'eval'      => array('maxlength' => 255, 'tl_class' => 'w50'),
+            'sql'       => "varchar(255) NOT NULL default ''",
         ),
         'date' => array
         (

@@ -1,5 +1,22 @@
 # Synapsis Changelog
 
+## Version 1.1.0 (unveröffentlicht – Entwicklung auf dev-main)
+
+> Enthält eine Schema-Änderung: nach dem Update `contao:migrate` ausführen.
+
+### Hinzugefügt
+
+* **Autorname wird gespeichert** (`authorName` in `tl_synapsis_topic` und `tl_synapsis_post`): Beim Schreiben eines Themas/Beitrags wird der Benutzername als Momentaufnahme mitgespeichert. Existiert das Konto später nicht mehr, wird der Autor als **„Gast (früherer Benutzername)"** angezeigt statt als „Unbekannt". Das gilt auch für Importe aus Fremdsystemen (Autor-ID 0 mit ursprünglichem Namen). Die Anzeigelogik steckt in der testbaren Klasse `Frontend\AuthorLabel` (7 Unit-Tests).
+* **CSV-Import aus zwei Dateien**: Eine Datei mit **Kategorien/Foren** (Struktur) und eine mit **Themen/Beiträgen** (Inhalt). Themen verweisen über die Forum-Referenz auf die Struktur, Beiträge über die Themen-Referenz auf ihr Thema – passt zu Fremdsystem-IDs (z. B. phpBB `forum_id`/`topic_id`). Die Inhalt-Datei ist optional; Themen unter Kategorien und verwaiste Beiträge werden übersprungen. Der Import läuft in einer Transaktion (Rollback bei Fehler).
+
+### Entfernt
+
+* **CSV-Export**: Das Modul „CSV Import / Export" heißt jetzt „CSV Import" und dient nur noch dem Import. (Auf Wunsch – der Fokus liegt auf der Datenübernahme aus Fremdsystemen.)
+
+### Verifiziert
+
+* Auf Contao 4.13.58 und 5.7.7: Schema-Migration, Zwei-Datei-Import inkl. `authorName` und Guards, Import-Formular (echtes Rendering), Themenerstellung, Frontend-Rauchtest, 22 Unit-Tests.
+
 ## Version 1.0.1 (2026-07-24)
 
 ### Behoben
