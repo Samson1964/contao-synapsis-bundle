@@ -66,4 +66,6 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         </div>
     </form>
 
+    <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
+
 </div>

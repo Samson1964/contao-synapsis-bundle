@@ -562,6 +562,14 @@
     text-decoration: underline;
 }
 
+/* Aktiver Punkt: kein Link, hervorgehoben */
+.synapsis-membernav__link.is-active {
+    color: var(--syn-text);
+    font-weight: 700;
+    text-decoration: none;
+    cursor: default;
+}
+
 /* --- Mitglieder-Unteransichten (Panel) --------------------------------- */
 .synapsis-panel__header {
     margin-bottom: 1rem;

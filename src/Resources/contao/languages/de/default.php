@@ -70,5 +70,7 @@ $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread']        = 'Es gibt keine ungelesen
 $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts']      = 'Du hast noch keine Beiträge geschrieben.';
 
 // Gefaellt mir (Paket C)
-$GLOBALS['TL_LANG']['MSC']['synapsisLike']   = 'Gefällt mir';
-$GLOBALS['TL_LANG']['MSC']['synapsisUnlike'] = 'Gefällt mir nicht mehr';
+$GLOBALS['TL_LANG']['MSC']['synapsisLike']       = 'Gefällt mir';
+$GLOBALS['TL_LANG']['MSC']['synapsisUnlike']     = 'Gefällt mir nicht mehr';
+$GLOBALS['TL_LANG']['MSC']['synapsisLikedPosts'] = 'Gefällt mir';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoLiked']    = 'Du hast noch keine Beiträge mit „Gefällt mir" markiert.';

@@ -70,6 +70,8 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
             <p class="synapsis-empty">
                 <?php if ('unread' === $this->panel): ?>
                     <?= $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread'] ?? 'Es gibt keine ungelesenen Beiträge.' ?>
+                <?php elseif ('liked' === $this->panel): ?>
+                    <?= $GLOBALS['TL_LANG']['MSC']['synapsisNoLiked'] ?? 'Du hast noch keine Beiträge mit „Gefällt mir" markiert.' ?>
                 <?php else: ?>
                     <?= $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts'] ?? 'Du hast noch keine Beiträge geschrieben.' ?>
                 <?php endif; ?>
@@ -95,5 +97,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
     <?php endif; ?>
 
     <p class="synapsis-back"><a href="<?= $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum'] ?? 'Zur Übersicht' ?></a></p>
+
+    <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
 
 </div>

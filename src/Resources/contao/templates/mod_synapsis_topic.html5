@@ -144,4 +144,6 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
 
     <p class="synapsis-back"><a href="<?= $this->forum['id'] ? $this->baseUrl . '?forum=' . $this->forum['id'] : $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToTopics'] ?? 'Zurück zum Forum' ?></a></p>
 
+    <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
+
 </div>

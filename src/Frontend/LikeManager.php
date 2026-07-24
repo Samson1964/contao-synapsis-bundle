@@ -101,4 +101,35 @@ final class LikeManager
             $this->connection->fetchFirstColumn('SELECT member FROM tl_synapsis_like WHERE post = ? ORDER BY tstamp ASC, id ASC', [$postId])
         );
     }
+
+    /**
+     * IDs der Themen, in denen das Mitglied mindestens einen Beitrag mit
+     * "Gefaellt mir" markiert hat - beschraenkt auf die uebergebenen Foren
+     * (Startpunkt), neueste Markierung zuerst.
+     *
+     * @param array<int> $forumIds
+     *
+     * @return array<int>
+     */
+    public function likedTopicIds(int $memberId, array $forumIds): array
+    {
+        if ($memberId <= 0 || [] === $forumIds) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, \count($forumIds), '?'));
+
+        $sql = 'SELECT t.id, MAX(l.tstamp) AS lastLike'
+            .' FROM tl_synapsis_like l'
+            .' INNER JOIN tl_synapsis_post p ON p.id = l.post'
+            .' INNER JOIN tl_synapsis_topic t ON t.id = p.pid'
+            .' WHERE l.member = ?'
+            ." AND p.published = '1' AND t.published = '1'"
+            .' AND t.pid IN ('.$placeholders.')'
+            .' GROUP BY t.id ORDER BY lastLike DESC';
+
+        $params = array_merge([$memberId], $forumIds);
+
+        return array_map('intval', $this->connection->fetchFirstColumn($sql, $params));
+    }
 }

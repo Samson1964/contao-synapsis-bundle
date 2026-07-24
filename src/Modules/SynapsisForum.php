@@ -108,11 +108,18 @@ class SynapsisForum extends Module
     private $likeManager;
 
     /**
-     * Aktive Mitglieder-Unteransicht (subs|sig|me|unread) oder '' (keine).
+     * Aktive Mitglieder-Unteransicht (subs|sig|me|unread|liked) oder '' (keine).
      *
      * @var string
      */
     private $panel = '';
+
+    /**
+     * Zwischenspeicher der lesbaren Foren-IDs dieses Startpunkts.
+     *
+     * @var array<int>|null
+     */
+    private $readableForumIdsCache;
 
     /**
      * Erzeugt das Modul bzw. im Backend eine Platzhalterdarstellung.
@@ -156,15 +163,10 @@ class SynapsisForum extends Module
         $this->Template->baseUrl = $this->pageUrl([]);
         $this->Template->loggedIn = $this->isMemberLoggedIn();
 
-        // Mitglieder-Navigation (untere Box): nur fuer angemeldete Mitglieder
-        $this->Template->memberNav = $this->isMemberLoggedIn()
-            ? [
-                'me' => $this->pageUrl(['panel' => 'me']),
-                'unread' => $this->pageUrl(['panel' => 'unread']),
-                'subs' => $this->pageUrl(['panel' => 'subs']),
-                'sig' => $this->pageUrl(['panel' => 'sig']),
-            ]
-            : [];
+        // Mitglieder-Navigation (untere Box): nur fuer angemeldete Mitglieder,
+        // auf jeder Seite. Der aktive Menuepunkt wird nicht verlinkt.
+        $this->Template->memberNav = $this->isMemberLoggedIn() ? $this->buildMemberNav() : [];
+        $this->Template->memberNavTitle = $GLOBALS['TL_LANG']['MSC']['synapsisMemberArea'] ?? 'Mein Bereich';
 
         switch ($this->view) {
             case 'forum':
@@ -189,6 +191,36 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Baut die Punkte der Mitglieder-Navigation ("Mein Bereich"). Der aktuell
+     * geoeffnete Punkt ist als aktiv markiert (wird im Template nicht verlinkt).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildMemberNav(): array
+    {
+        $items = [
+            'me' => $GLOBALS['TL_LANG']['MSC']['synapsisMyPosts'] ?? 'Meine Beiträge',
+            'unread' => $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge',
+            'liked' => $GLOBALS['TL_LANG']['MSC']['synapsisLikedPosts'] ?? 'Gefällt mir',
+            'subs' => $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions'] ?? 'Abonnements',
+            'sig' => $GLOBALS['TL_LANG']['MSC']['synapsisSignature'] ?? 'Signatur',
+        ];
+
+        $nav = [];
+
+        foreach ($items as $key => $label) {
+            $nav[] = [
+                'key' => $key,
+                'label' => $label,
+                'url' => $this->pageUrl(['panel' => $key]),
+                'active' => 'panel' === $this->view && $this->panel === $key,
+            ];
+        }
+
+        return $nav;
+    }
+
+    /**
      * Ermittelt Ansicht und aktive Datensaetze aus den URL-Parametern und
      * setzt das passende Template.
      */
@@ -197,7 +229,7 @@ class SynapsisForum extends Module
         // Mitglieder-Unteransichten (Abos, Signatur, Meine/Ungelesene Beitraege)
         $panel = (string) Input::get('panel');
 
-        if ('' !== $panel && $this->isMemberLoggedIn() && \in_array($panel, ['subs', 'sig', 'me', 'unread'], true)) {
+        if ('' !== $panel && $this->isMemberLoggedIn() && \in_array($panel, ['subs', 'sig', 'me', 'unread', 'liked'], true)) {
             $this->panel = $panel;
             $this->view = 'panel';
             $this->strTemplate = 'mod_synapsis_panel';
@@ -453,6 +485,7 @@ class SynapsisForum extends Module
         $labels = [
             'me' => $GLOBALS['TL_LANG']['MSC']['synapsisMyPosts'] ?? 'Meine Beiträge',
             'unread' => $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge',
+            'liked' => $GLOBALS['TL_LANG']['MSC']['synapsisLikedPosts'] ?? 'Gefällt mir',
             'subs' => $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions'] ?? 'Abonnements',
             'sig' => $GLOBALS['TL_LANG']['MSC']['synapsisSignature'] ?? 'Signatur',
         ];
@@ -480,6 +513,10 @@ class SynapsisForum extends Module
 
             case 'unread':
                 $this->compilePanelUnread();
+                break;
+
+            case 'liked':
+                $this->compilePanelLiked();
                 break;
         }
     }
@@ -616,6 +653,34 @@ class SynapsisForum extends Module
                 'forumTitle' => $this->forumTitle((int) $topic['pid']),
                 'lastAuthor' => (string) ($lastPost['authorName'] ?? ''),
                 'dateFormatted' => (string) ($lastPost['dateFormatted'] ?? ''),
+            ];
+        }
+
+        $this->Template->items = $items;
+    }
+
+    /**
+     * Themen auflisten, in denen das Mitglied Beitraege mit "Gefaellt mir"
+     * markiert hat (auf diesen Startpunkt beschraenkt).
+     */
+    private function compilePanelLiked(): void
+    {
+        $memberId = (int) FrontendUser::getInstance()->id;
+        $topicIds = $this->likeManager()->likedTopicIds($memberId, $this->readableForumIds());
+
+        $items = [];
+
+        foreach ($topicIds as $topicId) {
+            $topic = $this->findTopic($topicId);
+
+            if (null === $topic) {
+                continue;
+            }
+
+            $items[] = [
+                'title' => (string) $topic['title'],
+                'url' => $this->pageUrl(['topic' => $topicId]),
+                'forumTitle' => $this->forumTitle((int) $topic['pid']),
             ];
         }
 
@@ -1010,11 +1075,9 @@ class SynapsisForum extends Module
         $post['likedByMe'] = \in_array($memberId, $likerIds, true);
         // Liken nur fuer angemeldete Mitglieder und nicht den eigenen Beitrag
         $post['canLike'] = $memberId > 0 && $memberId !== $authorId;
-        $post['authorPostCount'] = (int) Database::getInstance()
-            ->prepare('SELECT COUNT(*) FROM tl_synapsis_post WHERE author = ? AND published = ?')
-            ->execute($authorId, '1')
-            ->row(true)[0]
-        ;
+        // Beitragszahl NUR innerhalb dieses Startpunkts (nicht ueber andere
+        // Startpunkte hinweg).
+        $post['authorPostCount'] = $this->authorPostCountInRoot($authorId);
         $post['dateFormatted'] = $this->formatDate((int) $post['date']);
         $post['attachmentList'] = $this->renderAttachments($post['attachments'] ?? null);
 
@@ -1261,6 +1324,12 @@ class SynapsisForum extends Module
      */
     private function readableForumIds(): array
     {
+        // Pro Anfrage stabil (haengt nur an Startpunkt und Besucher) und wird an
+        // mehreren Stellen gebraucht - daher einmalig zwischenspeichern.
+        if (null !== $this->readableForumIdsCache) {
+            return $this->readableForumIdsCache;
+        }
+
         $ids = [];
 
         foreach ($this->collectForumIds($this->rootId) as $id) {
@@ -1269,7 +1338,23 @@ class SynapsisForum extends Module
             }
         }
 
-        return [] === $ids ? [0] : $ids;
+        return $this->readableForumIdsCache = ([] === $ids ? [0] : $ids);
+    }
+
+    /**
+     * Beitragszahl eines Autors NUR innerhalb dieses Startpunkts (in lesbaren
+     * Foren). So bleibt der Zaehler auf den Startpunkt begrenzt.
+     */
+    private function authorPostCountInRoot(int $authorId): int
+    {
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
+
+        return (int) Database::getInstance()
+            ->prepare('SELECT COUNT(*) FROM tl_synapsis_post p INNER JOIN tl_synapsis_topic t ON t.id = p.pid WHERE p.author = ? AND p.published = ? AND t.published = ? AND t.pid IN ('.$placeholders.')')
+            ->execute(...array_merge([$authorId, '1', '1'], $forumIds))
+            ->row(true)[0]
+        ;
     }
 
     /**

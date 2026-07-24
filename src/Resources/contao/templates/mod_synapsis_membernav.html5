@@ -1,0 +1,22 @@
+<?php
+/*
+ * Untere Navigationsbox "Mein Bereich" (nur fuer angemeldete Mitglieder).
+ * Wird per $this->insert('mod_synapsis_membernav', $this->getData()) auf jeder
+ * Forenseite eingebunden. Der aktive Punkt ist ein Text statt eines Links.
+ *
+ * @var array  $this->memberNav
+ * @var string $this->memberNavTitle
+ */
+?>
+<?php if (!empty($this->memberNav)): ?>
+    <nav class="synapsis-membernav">
+        <span class="synapsis-membernav__title"><?= $this->memberNavTitle ?></span>
+        <?php foreach ($this->memberNav as $item): ?>
+            <?php if (!empty($item['active'])): ?>
+                <span class="synapsis-membernav__link is-active" aria-current="page"><?= $item['label'] ?></span>
+            <?php else: ?>
+                <a class="synapsis-membernav__link" href="<?= $item['url'] ?>"><?= $item['label'] ?></a>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </nav>
+<?php endif; ?>

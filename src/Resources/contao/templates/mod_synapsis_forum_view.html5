@@ -89,4 +89,6 @@ use Contao\StringUtil;
 
     <p class="synapsis-back"><a href="<?= $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum'] ?? 'Zur Übersicht' ?></a></p>
 
+    <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
+
 </div>

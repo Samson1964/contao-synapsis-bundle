@@ -1,5 +1,18 @@
 # Synapsis Changelog
 
+## Version 1.2.0 (unveröffentlicht – Entwicklung auf dev-main)
+
+> Keine Schema-Änderung in diesem Stand.
+
+### Behoben / Geändert
+
+* **Zähler bleiben im Startpunkt**: Der Autor-Beitragszähler unter den Beiträgen zählte bisher über alle Startpunkte hinweg. Jetzt zählt er nur die Beiträge innerhalb des angezeigten Startpunkts. (Statistiken, Gelesen-/Ungelesen-Ermittlung, Themen-/Beitragslisten waren bereits startpunkt-gebunden.)
+* **„Mein Bereich" auf jeder Seite**: Die untere Navigationsbox erscheint jetzt auf allen Forenseiten (vorher nur auf der Übersicht). Der aktuell geöffnete Menüpunkt wird als Text statt als Link dargestellt.
+
+### Hinzugefügt
+
+* **„Gefällt mir" in „Mein Bereich"**: Neuer Menüpunkt mit eigener Seite, die die Themen auflistet, in denen das Mitglied Beiträge mit „Gefällt mir" markiert hat (auf den Startpunkt beschränkt).
+
 ## Version 1.1.0 (2026-07-24)
 
 > Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabellen `tl_synapsis_read`, `tl_synapsis_like`, `tl_synapsis_settings` sowie die Spalte `tl_member.signature`).
