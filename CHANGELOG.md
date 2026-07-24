@@ -1,5 +1,11 @@
 # Synapsis Changelog
 
+## Version 1.0.1 (2026-07-24)
+
+### Behoben
+
+* **Kategorie-Überschriften im Frontend lesbar**: Die Überschrift auf dem farbigen Kategorie-Kopf erbte nur das Weiß des Kopfes und wurde von einer direkten `h3`-Regel des Website-Themes überschrieben (Text kaum sichtbar). Die Schriftfarbe wird jetzt direkt auf der Überschrift und der Beschreibung gesetzt (`color: #fff !important`) und überschreibt das Theme zuverlässig.
+
 ## Version 1.0.0 (2026-07-24)
 
 **Erstes stabiles Release – Produktivbetrieb.**

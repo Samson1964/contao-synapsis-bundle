@@ -52,12 +52,17 @@
 .synapsis-category__header h3 {
     margin: 0;
     font-size: 1.05rem;
+    /* Farbe explizit setzen: das vererbte Weiss des Kopfes wird sonst von einer
+       direkten h3-Regel des Website-Themes ueberschrieben (Ueberschrift kaum
+       lesbar). !important erzwingt den Kontrast unabhaengig vom Theme. */
+    color: #fff !important;
 }
 
 .synapsis-category__desc {
     margin: 0.15rem 0 0;
     font-size: 0.85rem;
     opacity: 0.85;
+    color: #fff !important;
 }
 
 .synapsis-forumlist,
