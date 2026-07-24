@@ -96,4 +96,31 @@ class BBCodeTest extends TestCase
 
         $this->assertStringContainsString('Hallo <strong>Welt</strong> und <em>mehr</em>', $html);
     }
+
+    public function testContaoEntitiesWerdenErkannt(): void
+    {
+        // Contao speichert "=" als &#61; - der Link muss trotzdem erkannt werden.
+        $html = BBCode::toHtml('[url&#61;https://example.com]Test[/url]');
+
+        $this->assertStringContainsString('<a href="https://example.com"', $html);
+        $this->assertStringContainsString('>Test</a>', $html);
+    }
+
+    public function testFarbeMitContaoEntities(): void
+    {
+        // "=" -> &#61; und "#" -> &#35;
+        $html = BBCode::toHtml('[color&#61;&#35;ff0000]rot[/color]');
+
+        $this->assertStringContainsString('color:#ff0000', $html);
+        $this->assertStringContainsString('>rot</span>', $html);
+    }
+
+    public function testInsertTagsWerdenNeutralisiert(): void
+    {
+        $html = BBCode::toHtml('Hallo {{php::echo 1}} Welt');
+
+        // Kein aktives Insert-Tag mehr im Ausgabetext.
+        $this->assertStringNotContainsString('{{php', $html);
+        $this->assertStringContainsString('&#123;&#123;', $html);
+    }
 }

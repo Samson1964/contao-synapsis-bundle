@@ -1,5 +1,11 @@
 # Synapsis Changelog
 
+## Version 1.2.1 (2026-07-24)
+
+### Behoben
+
+* **BB-Code in Signaturen wurde nicht geparst**: Contao maskiert beim Speichern Sonderzeichen wie `=` und `#` als HTML-Entities (`&#61;`, `&#35;`), wodurch `[url=…]`/`[color=#…]` im Frontend als `[url&#61;…]` erschienen statt als Link/Farbe. `BBCode::toHtml` wandelt die Entities jetzt zuerst zurück (und maskiert danach wieder sicher); zusätzlich werden Insert-Tags (`{{…}}`) in Signaturen neutralisiert. Bereits gespeicherte Signaturen werden dadurch ebenfalls korrekt dargestellt. Im Bearbeiten-Feld erscheint der BB-Code wieder lesbar.
+
 ## Version 1.2.0 (2026-07-24)
 
 > Keine Schema-Änderung gegenüber 1.1.0 – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (kein `contao:migrate` nötig).

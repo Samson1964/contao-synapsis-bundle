@@ -669,7 +669,10 @@ class SynapsisForum extends Module
             ->row(true)
         ;
 
-        $this->Template->signature = \is_array($row) ? (string) ($row[0] ?? '') : '';
+        // Zur Bearbeitung die von Contao maskierten Sonderzeichen (=, #, …)
+        // zurueckwandeln, damit der BB-Code im Textfeld lesbar ist.
+        $stored = \is_array($row) ? (string) ($row[0] ?? '') : '';
+        $this->Template->signature = StringUtil::decodeEntities($stored);
         $this->Template->sigFormId = 'synapsis_sig_'.$this->id;
         $this->Template->formAction = $this->pageUrl(['panel' => 'sig']);
         $this->Template->sigMaxLength = 500;

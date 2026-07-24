@@ -23,8 +23,16 @@ final class BBCode
 {
     public static function toHtml(string $text): string
     {
+        // 0. Contao maskiert bei der Eingabe Sonderzeichen wie = # ( ) als
+        //    HTML-Entities (&#61; &#35; …). Zuerst zurueckwandeln, damit die
+        //    BB-Code-Marken (z. B. [url=…], [color=#…]) erkannt werden.
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+
         // 1. Alles maskieren - danach existiert kein aktives HTML mehr.
         $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+
+        // 1b. Insert-Tags neutralisieren, damit kein {{…}} ausgefuehrt wird.
+        $text = str_replace(['{{', '}}'], ['&#123;&#123;', '&#125;&#125;'], $text);
 
         // 2. Einfache Formatierungen.
         $simple = [
