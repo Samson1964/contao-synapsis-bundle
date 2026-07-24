@@ -9,7 +9,10 @@ declare(strict_types=1);
  */
 
 /*
- * Bezeichnungen der Backend-Modulgruppe und des Backend-Moduls.
+ * Bezeichnung des Backend-Moduls "synapsis" (in der Kern-Gruppe "Inhalte").
+ *
+ * Der Modulschlüssel ist "synapsis" (do=synapsis); die Gruppe "content" wird
+ * bereits von Contao mit "Inhalte" beschriftet und daher hier nicht erneut
+ * definiert.
  */
-$GLOBALS['TL_LANG']['MOD']['synapsis'] = 'Synapsis-Forum';
-$GLOBALS['TL_LANG']['MOD']['forum'] = array('Forum', 'Die Forenstruktur mit Kategorien, Foren, Themen und Beiträgen verwalten.');
+$GLOBALS['TL_LANG']['MOD']['synapsis'] = array('Synapsis-Forum', 'Die Forenstruktur mit Kategorien, Foren, Themen und Beiträgen verwalten.');

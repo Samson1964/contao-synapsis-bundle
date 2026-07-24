@@ -1,5 +1,13 @@
 # Synapsis Changelog
 
+## Version 0.2.2 (2026-07-24)
+
+### Geändert
+
+* **Backend-Modul-Schlüssel von `forum` auf `synapsis` umbenannt** (Aufruf jetzt `do=synapsis`). Der bisherige Schlüssel `forum` kollidierte mit anderen Forum-Bundles (z. B. dem älteren Diskussionsforum), die im Backend ebenfalls `do=forum` verwenden – dadurch war unklar, welches Modul geöffnet wird.
+* **Backend-Modul in die Kern-Gruppe „Inhalte" (`content`) verschoben** – es wird also keine eigene Backend-Gruppe „Synapsis-Forum" mehr angelegt. Das Modul erscheint als „Synapsis-Forum" unter Inhalte.
+* Auf Contao 4.13.58 **und** 5.7 verifiziert (Registrierung unter `content/synapsis`, kein `do=forum`, Label „Synapsis-Forum").
+
 ## Version 0.2.1 (2026-07-24)
 
 ### Behoben
