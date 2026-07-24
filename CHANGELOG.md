@@ -1,5 +1,12 @@
 # Synapsis Changelog
 
+## Version 0.5.1 (2026-07-24)
+
+### Geändert
+
+* **Eigener Backend-Bereich „Synapsis-Forum"**: Da es nun zwei Module gibt, liegen „Forum" und „CSV Import / Export" in einer eigenen Backend-Gruppe statt unter „Inhalte". (Modulschlüssel `synapsis_forum` und `synapsis_csv`.)
+* **Absende-Buttons im CSV-Modul korrekt ausgerichtet**: Die Buttons stehen jetzt im Contao-Standardcontainer (`tl_formbody_submit`) statt am linken Rand.
+
 ## Version 0.5.0 (2026-07-24)
 
 ### CSV-Export und -Import (Sicherung & Wiederherstellung)

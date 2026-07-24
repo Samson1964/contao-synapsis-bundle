@@ -14,28 +14,25 @@ use Schachbulle\ContaoSynapsisBundle\Model\SynapsisSubscriptionModel;
 use Schachbulle\ContaoSynapsisBundle\Model\SynapsisTopicModel;
 
 /*
- * Backend-Modul registrieren
+ * Backend-Bereich "Synapsis" mit zwei Modulen.
  *
- * Das Modul "synapsis" (Aufruf ueber do=synapsis) wird in die Kern-Gruppe
- * "Inhalte" (content) eingehaengt - es gibt also bewusst KEINE eigene
- * Backend-Gruppe. Der Modulschluessel lautet "synapsis" (nicht "forum"), um
- * eine Kollision mit anderen Forum-Bundles zu vermeiden, die ebenfalls
- * do=forum verwenden. Alle drei Tabellen muessen aufgefuehrt sein, damit der
+ * Da es inzwischen zwei Module gibt (Forumverwaltung und CSV Import/Export),
+ * bekommen sie eine eigene Backend-Gruppe "synapsis" statt in "Inhalte" zu
+ * liegen. Modulschluessel bewusst mit "synapsis_"-Praefix (do=synapsis_forum
+ * bzw. do=synapsis_csv), um Kollisionen mit anderen Forum-Bundles (z. B.
+ * do=forum) zu vermeiden.
+ *
+ * Beim Forum-Modul muessen alle drei Tabellen aufgefuehrt sein, damit der
  * Wechsel von der Forenstruktur zu den Themen und weiter zu den Beitraegen
  * erlaubt ist.
  */
-$GLOBALS['BE_MOD']['content']['synapsis'] = array
+$GLOBALS['BE_MOD']['synapsis']['synapsis_forum'] = array
 (
     'tables' => array('tl_synapsis_forum', 'tl_synapsis_topic', 'tl_synapsis_post'),
     'icon'   => 'bundles/schachbullecontaosynapsis/icons/forum.svg',
 );
 
-/*
- * Backend-Modul "CSV Import / Export" (do=synapsis_csv), ebenfalls in der
- * Gruppe "Inhalte". Exportiert einen Startpunkt als CSV und stellt eine
- * geloeschte Struktur ueber den Import wieder her.
- */
-$GLOBALS['BE_MOD']['content']['synapsis_csv'] = array
+$GLOBALS['BE_MOD']['synapsis']['synapsis_csv'] = array
 (
     'callback' => \Schachbulle\ContaoSynapsisBundle\Backend\CsvModule::class,
     'icon'     => 'bundles/schachbullecontaosynapsis/icons/forum.svg',

@@ -9,11 +9,11 @@ declare(strict_types=1);
  */
 
 /*
- * Bezeichnung des Backend-Moduls "synapsis" (in der Kern-Gruppe "Inhalte").
+ * Bezeichnungen des Backend-Bereichs "Synapsis" und seiner beiden Module.
  *
- * Der Modulschlüssel ist "synapsis" (do=synapsis); die Gruppe "content" wird
- * bereits von Contao mit "Inhalte" beschriftet und daher hier nicht erneut
- * definiert.
+ * "synapsis" ist die Gruppe (String), "synapsis_forum" und "synapsis_csv" sind
+ * die Module (Array aus Label und Beschreibung).
  */
-$GLOBALS['TL_LANG']['MOD']['synapsis'] = array('Synapsis-Forum', 'Die Forenstruktur mit Kategorien, Foren, Themen und Beiträgen verwalten.');
-$GLOBALS['TL_LANG']['MOD']['synapsis_csv'] = array('Synapsis CSV Import / Export', 'Eine Forenstruktur als CSV exportieren oder wiederherstellen.');
+$GLOBALS['TL_LANG']['MOD']['synapsis'] = 'Synapsis-Forum';
+$GLOBALS['TL_LANG']['MOD']['synapsis_forum'] = array('Forum', 'Die Forenstruktur mit Kategorien, Foren, Themen und Beiträgen verwalten.');
+$GLOBALS['TL_LANG']['MOD']['synapsis_csv'] = array('CSV Import / Export', 'Eine Forenstruktur als CSV exportieren oder wiederherstellen.');

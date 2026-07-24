@@ -143,26 +143,32 @@ class CsvModule extends Backend
         }
 
         // Export
-        $html .= '<form method="get">'
+        $html .= '<form method="get" class="tl_form">'
+            .'<div class="tl_formbody_edit">'
             .'<input type="hidden" name="do" value="synapsis_csv">'
-            .'<div class="tl_formbody_edit"><fieldset class="tl_tbox"><legend>Export eines Startpunkts</legend>'
+            .'<fieldset class="tl_tbox"><legend>Export eines Startpunkts</legend>'
             .'<div class="widget"><h3><label for="source">Startpunkt</label></h3>'
             .'<select name="source" id="source" class="tl_select">'.$exportOptions.'</select></div>'
-            .'<p><button type="submit" class="tl_submit">Als CSV exportieren</button></p>'
-            .'</fieldset></div></form>';
+            .'</fieldset></div>'
+            .'<div class="tl_formbody_submit"><div class="tl_submit_container">'
+            .'<button type="submit" class="tl_submit">Als CSV exportieren</button>'
+            .'</div></div></form>';
 
         // Import
-        $html .= '<form method="post" enctype="multipart/form-data">'
+        $html .= '<form method="post" enctype="multipart/form-data" class="tl_form">'
+            .'<div class="tl_formbody_edit">'
             .'<input type="hidden" name="FORM_SUBMIT" value="synapsis_csv_import">'
             .'<input type="hidden" name="REQUEST_TOKEN" value="'.$token.'">'
-            .'<div class="tl_formbody_edit"><fieldset class="tl_tbox"><legend>Import in einen Startpunkt oder eine Kategorie</legend>'
+            .'<fieldset class="tl_tbox"><legend>Import in einen Startpunkt oder eine Kategorie</legend>'
             .'<div class="widget"><h3><label for="target">Ziel</label></h3>'
             .'<select name="target" id="target" class="tl_select">'.$targetOptions.'</select></div>'
             .'<div class="widget"><h3><label for="csvfile">CSV-Datei</label></h3>'
             .'<input type="file" name="csvfile" id="csvfile" class="tl_upload_field" accept=".csv"></div>'
-            .'<p class="tl_help">Startpunkt als Ziel erwartet Kategorien auf oberster Ebene, eine Kategorie erwartet Foren. So wird eine gelöschte Struktur wiederhergestellt.</p>'
-            .'<p><button type="submit" class="tl_submit">CSV importieren</button></p>'
-            .'</fieldset></div></form>';
+            .'<p class="tl_help tl_tip">Startpunkt als Ziel erwartet Kategorien auf oberster Ebene, eine Kategorie erwartet Foren. So wird eine gelöschte Struktur wiederhergestellt.</p>'
+            .'</fieldset></div>'
+            .'<div class="tl_formbody_submit"><div class="tl_submit_container">'
+            .'<button type="submit" class="tl_submit">CSV importieren</button>'
+            .'</div></div></form>';
 
         return $html;
     }
