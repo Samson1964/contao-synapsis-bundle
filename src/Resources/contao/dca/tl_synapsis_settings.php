@@ -45,7 +45,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
 
     'palettes' => array
     (
-        'default' => '{notify_legend},notifyEnabled,notifySubject,notifyBody;{sender_legend},senderName,senderEmail',
+        'default' => '{notify_legend},notifyEnabled,notifySubject,notifyBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin',
     ),
 
     'fields' => array
@@ -92,6 +92,14 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
             'inputType' => 'text',
             'eval'      => array('rgxp' => 'email', 'maxlength' => 255, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
+        ),
+        // Duerfen Moderatoren Themen anpinnen? (Administratoren duerfen immer.)
+        'modCanPin' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default '1'",
         ),
     ),
 );

@@ -84,9 +84,9 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
     (
         '__selector__' => array('type', 'protected'),
         'default'      => '{type_legend},type',
-        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
-        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
-        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
+        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{roles_legend:hide},adminGroups,adminMembers,modGroups,modMembers;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
+        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{roles_legend:hide},adminGroups,adminMembers,modGroups,modMembers;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
+        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{roles_legend:hide},adminGroups,adminMembers,modGroups,modMembers;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
     ),
 
     'subpalettes' => array
@@ -219,6 +219,40 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
             'exclude'   => true,
             'inputType' => 'select',
             // options_callback: ForumListener::getMemberOptions (services.yaml)
+            'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
+            'sql'       => "blob NULL",
+        ),
+        // Rollen (vererbt): Administratoren ...
+        'adminGroups' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            // options_callback: ForumListener::getMemberGroupOptions
+            'eval'      => array('multiple' => true, 'tl_class' => 'clr'),
+            'sql'       => "blob NULL",
+        ),
+        'adminMembers' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'select',
+            // options_callback: ForumListener::getMemberOptions
+            'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
+            'sql'       => "blob NULL",
+        ),
+        // ... und Moderatoren.
+        'modGroups' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            // options_callback: ForumListener::getMemberGroupOptions
+            'eval'      => array('multiple' => true, 'tl_class' => 'clr'),
+            'sql'       => "blob NULL",
+        ),
+        'modMembers' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'select',
+            // options_callback: ForumListener::getMemberOptions
             'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
             'sql'       => "blob NULL",
         ),

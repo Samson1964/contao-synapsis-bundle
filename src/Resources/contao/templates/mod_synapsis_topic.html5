@@ -31,7 +31,19 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
     <header class="synapsis-topic__header">
         <h2 class="synapsis-topic__title"><?= StringUtil::specialchars($this->topic['title']) ?></h2>
         <div class="synapsis-topic__actions">
+            <?php if ($this->isPinned): ?><span class="synapsis-badge synapsis-badge--sticky"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPinned'] ?? 'Angepinnt' ?></span><?php endif; ?>
             <?php if ($this->locked): ?><span class="synapsis-badge synapsis-badge--locked"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLocked'] ?? 'Geschlossen' ?></span><?php endif; ?>
+            <?php if ($this->canPin): ?>
+                <form action="<?= $this->pinAction ?>" method="post" class="synapsis-pin">
+                    <input type="hidden" name="FORM_SUBMIT" value="<?= $this->pinFormId ?>">
+                    <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                    <button type="submit" class="synapsis-button<?= $this->isPinned ? ' synapsis-button--active' : '' ?>">
+                        <?= $this->isPinned
+                            ? ($GLOBALS['TL_LANG']['MSC']['synapsisUnpin'] ?? 'Nicht mehr anpinnen')
+                            : ($GLOBALS['TL_LANG']['MSC']['synapsisPin'] ?? 'Oben anpinnen') ?>
+                    </button>
+                </form>
+            <?php endif; ?>
             <?php if ($this->canSubscribe): ?>
                 <form action="<?= $this->subscribeAction ?>" method="post" class="synapsis-subscribe">
                     <input type="hidden" name="FORM_SUBMIT" value="<?= $this->subscribeFormId ?>">

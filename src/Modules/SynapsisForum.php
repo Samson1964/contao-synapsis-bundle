@@ -35,6 +35,7 @@ use Schachbulle\ContaoSynapsisBundle\Frontend\NotificationTemplate;
 use Schachbulle\ContaoSynapsisBundle\Frontend\PollAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\PollManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ReadTracker;
+use Schachbulle\ContaoSynapsisBundle\Frontend\RoleAccess;
 use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
 /**
@@ -118,6 +119,13 @@ class SynapsisForum extends Module
     private $pollAccess;
 
     /**
+     * Zugriffshelfer fuer die Rollen (Administrator/Moderator).
+     *
+     * @var RoleAccess
+     */
+    private $roleAccess;
+
+    /**
      * Umfragen-Verwaltung (lazy erzeugt).
      *
      * @var PollManager|null
@@ -158,6 +166,7 @@ class SynapsisForum extends Module
 
         $this->access = new ForumAccess();
         $this->pollAccess = new PollAccess();
+        $this->roleAccess = new RoleAccess();
         $this->rootId = (int) $this->synapsis_root;
 
         if (0 === $this->rootId) {
@@ -416,6 +425,7 @@ class SynapsisForum extends Module
         $this->handleSubscription();
         $this->handleLike();
         $this->handleVote();
+        $this->handlePin();
         $this->handlePostSubmission();
 
         // Ansichtszaehler erhoehen - aber pro Sitzung nur einmal, damit ein
@@ -471,6 +481,12 @@ class SynapsisForum extends Module
 
         // Umfrage zum Thema (falls vorhanden)
         $this->Template->poll = $this->buildPoll($topicId);
+
+        // Anpinnen (nur fuer Administratoren/berechtigte Moderatoren)
+        $this->Template->canPin = $this->canPin((int) $this->activeForum['id']);
+        $this->Template->isPinned = (bool) $this->activeTopic['sticky'];
+        $this->Template->pinFormId = 'synapsis_pin_'.$this->id;
+        $this->Template->pinAction = $this->pageUrl(['topic' => $topicId]);
 
         // Antwortformular in offenen Themen fuer alle Schreibberechtigten
         // (Mitglieder bzw. Gaeste mit Schreibrecht).
@@ -1045,6 +1061,31 @@ class SynapsisForum extends Module
         }
 
         $this->redirect($this->pageUrl(['topic' => (int) $this->activeTopic['id']]));
+    }
+
+    /**
+     * Schaltet die Anheftung (sticky) des aktiven Themas um - nur fuer
+     * Administratoren bzw. berechtigte Moderatoren.
+     */
+    private function handlePin(): void
+    {
+        if ('synapsis_pin_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        if (!$this->canPin((int) $this->activeForum['id'])) {
+            return;
+        }
+
+        $topicId = (int) $this->activeTopic['id'];
+        $new = $this->activeTopic['sticky'] ? '' : '1';
+
+        Database::getInstance()
+            ->prepare('UPDATE tl_synapsis_topic SET sticky = ? WHERE id = ?')
+            ->execute($new, $topicId)
+        ;
+
+        $this->redirect($this->pageUrl(['topic' => $topicId]));
     }
 
     /**
@@ -1690,7 +1731,7 @@ class SynapsisForum extends Module
 
         while ($currentId > 0 && $guard < 100) {
             $node = Database::getInstance()
-                ->prepare('SELECT id, pid, published, protected, groups, guestRead, guestWrite, pollGroups, pollMembers FROM tl_synapsis_forum WHERE id = ?')
+                ->prepare('SELECT id, pid, published, protected, groups, guestRead, guestWrite, pollGroups, pollMembers, adminGroups, adminMembers, modGroups, modMembers FROM tl_synapsis_forum WHERE id = ?')
                 ->execute($currentId)
                 ->row()
             ;
@@ -1753,6 +1794,34 @@ class SynapsisForum extends Module
             $this->getMemberGroupIds(),
             (int) FrontendUser::getInstance()->id
         );
+    }
+
+    /**
+     * Darf das angemeldete Mitglied Themen in diesem Forum anpinnen?
+     * Administratoren immer; Moderatoren nur, wenn die globale Einstellung
+     * "Moderatoren duerfen anpinnen" aktiv ist.
+     */
+    private function canPin(int $forumId): bool
+    {
+        if (!$this->isMemberLoggedIn()) {
+            return false;
+        }
+
+        $chain = $this->buildChain($forumId);
+        $groups = $this->getMemberGroupIds();
+        $memberId = (int) FrontendUser::getInstance()->id;
+
+        if ($this->roleAccess->isAdmin($chain, $groups, $memberId)) {
+            return true;
+        }
+
+        if ($this->roleAccess->isModerator($chain, $groups, $memberId)) {
+            $settings = $this->forumSettings();
+
+            return '1' === (string) ($settings['modCanPin'] ?? '1');
+        }
+
+        return false;
     }
 
     /**

@@ -69,6 +69,11 @@ $GLOBALS['TL_LANG']['MSC']['synapsisNoSubscriptions'] = 'Du hast keine Themen ab
 $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread']        = 'Es gibt keine ungelesenen Beiträge.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts']      = 'Du hast noch keine Beiträge geschrieben.';
 
+// Anpinnen (Moderatoren/Administratoren)
+$GLOBALS['TL_LANG']['MSC']['synapsisPin']    = 'Oben anpinnen';
+$GLOBALS['TL_LANG']['MSC']['synapsisUnpin']  = 'Nicht mehr anpinnen';
+$GLOBALS['TL_LANG']['MSC']['synapsisPinned'] = 'Angepinnt';
+
 // Umfragen
 $GLOBALS['TL_LANG']['MSC']['synapsisAddPoll']       = 'Umfrage hinzufügen';
 $GLOBALS['TL_LANG']['MSC']['synapsisPollQuestion']  = 'Frage';

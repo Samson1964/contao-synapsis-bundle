@@ -39,6 +39,7 @@ class SettingsListener
                     'notifyEnabled' => '1',
                     'notifySubject' => 'Neue Antwort im Thema "##topic##"',
                     'notifyBody' => "Hallo ##name##,\n\nim Thema \"##topic##\" wurde eine neue Antwort verfasst.\n\n##url##\n",
+                    'modCanPin' => '1',
                 ])
                 ->execute()
             ;

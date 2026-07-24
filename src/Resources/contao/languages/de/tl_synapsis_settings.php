@@ -13,8 +13,15 @@ declare(strict_types=1);
  */
 
 // Legenden
-$GLOBALS['TL_LANG']['tl_synapsis_settings']['notify_legend'] = 'E-Mail bei neuer Antwort';
-$GLOBALS['TL_LANG']['tl_synapsis_settings']['sender_legend'] = 'Absender (optional)';
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['notify_legend']     = 'E-Mail bei neuer Antwort';
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['sender_legend']     = 'Absender (optional)';
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['moderators_legend'] = 'Rechte der Moderatoren';
+
+// Felder (Moderatoren)
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['modCanPin'] = array(
+    'Moderatoren dürfen Themen anpinnen',
+    'Ist dies aktiv, dürfen Moderatoren Themen oben anpinnen. Administratoren dürfen das immer.',
+);
 
 // Felder
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['notifyEnabled'] = array(

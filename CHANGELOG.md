@@ -2,10 +2,12 @@
 
 ## Version 1.3.0 (unveröffentlicht – Entwicklung auf dev-main)
 
-> Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabellen `tl_synapsis_poll`, `tl_synapsis_poll_option`, `tl_synapsis_poll_vote` sowie die Felder `pollGroups`/`pollMembers` in `tl_synapsis_forum`).
+> Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Umfrage-Tabellen, Rollen-/Umfrage-Felder in `tl_synapsis_forum` sowie `modCanPin` in den Einstellungen).
 
 ### Hinzugefügt
 
+* **Administratoren und Moderatoren**: An Startpunkt, Kategorie und Forum lassen sich – über **Mitgliedergruppen** und/oder **einzelne Mitglieder** – Administratoren und Moderatoren festlegen. Die Rollen vererben sich nach unten (Logik in der testbaren Klasse `Frontend\RoleAccess`).
+* **Themen anpinnen**: Administratoren (immer) und Moderatoren können Themen oben anpinnen bzw. wieder lösen (Button in der Themenansicht; nutzt das vorhandene „angeheftet"). Ob **Moderatoren** anpinnen dürfen, legt die neue globale Einstellung „Moderatoren dürfen Themen anpinnen" fest – so lassen sich die Moderatoren-Rechte später erweitern.
 * **Umfragen**: Beim Anlegen eines Themas kann optional eine Umfrage erstellt werden – wahlweise **Einfachauswahl** (eine Antwort) oder **Mehrfachauswahl**. Ein **Umfrageende** (Datum) ist Pflicht; danach kann nicht mehr abgestimmt werden. Optional lässt sich festlegen, dass die **Ergebnisse erst nach dem Umfrageende** sichtbar werden (sonst direkt nach der eigenen Stimmabgabe). Nach dem Ende sind die Ergebnisse immer sichtbar. Angezeigt werden Balken, Prozent, Teilnehmerzahl und der Status (läuft bis / beendet am). Doppelabstimmung ist ausgeschlossen.
 * **Umfragen-Erstellrecht (vererbt)**: Wer Umfragen anlegen darf, wird pro Startpunkt, Kategorie oder Forum über **Mitgliedergruppen** und/oder **einzelne Mitglieder** vergeben und vererbt sich nach unten (Standard: niemand). Logik in den testbaren Klassen `Frontend\PollAccess` und `Frontend\PollManager`.
 
