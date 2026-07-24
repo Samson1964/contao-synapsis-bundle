@@ -673,6 +673,9 @@ class SynapsisForum extends Module
         $this->Template->sigFormId = 'synapsis_sig_'.$this->id;
         $this->Template->formAction = $this->pageUrl(['panel' => 'sig']);
         $this->Template->sigMaxLength = 500;
+
+        // Skript fuer die BB-Code-Buttons ueber dem Signaturfeld
+        $this->addBBCodeScript();
     }
 
     /**
@@ -2095,6 +2098,24 @@ class SynapsisForum extends Module
             .'var s=ta.selectionStart||0,en=ta.selectionEnd||0;'
             .'ta.value=ta.value.slice(0,s)+emoji+ta.value.slice(en);'
             .'ta.selectionStart=ta.selectionEnd=s+emoji.length;ta.focus();'
+            .'});</script>'
+        ;
+    }
+
+    /**
+     * Bindet einmalig das Skript ein, das die BB-Code-Buttons der Signatur
+     * verarbeitet: Der markierte Text im zugehoerigen Textfeld wird mit den
+     * BB-Code-Marken umschlossen (data-open/data-close).
+     */
+    private function addBBCodeScript(): void
+    {
+        $GLOBALS['TL_BODY']['synapsis_bbcode'] = '<script>document.addEventListener("click",function(e){'
+            .'var b=e.target.closest&&e.target.closest(".synapsis-bb");if(!b)return;e.preventDefault();'
+            .'var open=b.getAttribute("data-open"),close=b.getAttribute("data-close");'
+            .'var form=b.closest("form");if(!form)return;var ta=form.querySelector("textarea");if(!ta)return;'
+            .'var s=ta.selectionStart||0,en=ta.selectionEnd||0,sel=ta.value.slice(s,en);'
+            .'ta.value=ta.value.slice(0,s)+open+sel+close+ta.value.slice(en);'
+            .'ta.selectionStart=ta.selectionEnd=s+open.length+sel.length;ta.focus();'
             .'});</script>'
         ;
     }

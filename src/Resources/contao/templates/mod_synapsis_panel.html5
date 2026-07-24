@@ -32,10 +32,18 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         <form action="<?= $this->formAction ?>" method="post" class="synapsis-form">
             <input type="hidden" name="FORM_SUBMIT" value="<?= $this->sigFormId ?>">
             <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
-            <label class="synapsis-form__field">
-                <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSignatureLabel'] ?? 'Deine Signatur (reiner Text)' ?></span>
+            <div class="synapsis-form__field">
+                <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSignatureLabel'] ?? 'Deine Signatur' ?></span>
+                <div class="synapsis-bbbar">
+                    <button type="button" class="synapsis-bb" data-open="[b]" data-close="[/b]" title="Fett"><strong>B</strong></button>
+                    <button type="button" class="synapsis-bb" data-open="[i]" data-close="[/i]" title="Kursiv"><em>I</em></button>
+                    <button type="button" class="synapsis-bb" data-open="[u]" data-close="[/u]" title="Unterstrichen"><span style="text-decoration:underline">U</span></button>
+                    <button type="button" class="synapsis-bb" data-open="[s]" data-close="[/s]" title="Durchgestrichen"><span style="text-decoration:line-through">S</span></button>
+                    <button type="button" class="synapsis-bb" data-open="[url=https://]" data-close="[/url]" title="Link">Link</button>
+                    <button type="button" class="synapsis-bb" data-open="[color=#ff0000]" data-close="[/color]" title="Farbe">Farbe</button>
+                </div>
                 <textarea name="signature" rows="4" maxlength="<?= $this->sigMaxLength ?>" class="synapsis-form__textarea"><?= StringUtil::specialchars($this->signature) ?></textarea>
-            </label>
+            </div>
             <div class="synapsis-form__actions">
                 <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSave'] ?? 'Speichern' ?></button>
             </div>
