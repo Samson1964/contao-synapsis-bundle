@@ -166,7 +166,7 @@ class SynapsisForum extends Module
         if ($forumId > 0 && null !== ($forum = $this->findForum($forumId))) {
             $this->activeForum = $forum;
 
-            if (Input::get('new') && !$forum['closed']) {
+            if (Input::get('new') && !$forum['closed'] && $this->canWrite($forumId)) {
                 $this->view = 'newtopic';
                 $this->strTemplate = 'mod_synapsis_newtopic';
 
@@ -196,22 +196,23 @@ class SynapsisForum extends Module
 
         // Direkte Kinder des Startpunkts (Kategorien und Foren)
         foreach ($this->findChildren($this->rootId) as $node) {
-            if (!$this->isVisible((int) $node['id'])) {
-                continue;
-            }
-
             if ('forum' === $node['type']) {
                 // Forum direkt unter dem Startpunkt: eigene Pseudo-Kategorie
-                $categories[] = [
-                    'title' => '',
-                    'description' => '',
-                    'forums' => [$this->decorateForum($node)],
-                ];
+                if ($this->isVisible((int) $node['id'])) {
+                    $categories[] = [
+                        'title' => '',
+                        'description' => '',
+                        'forums' => [$this->decorateForum($node)],
+                    ];
+                }
 
                 continue;
             }
 
-            // Kategorie: ihre Foren einsammeln
+            // Kategorie: ihre lesbaren Foren einsammeln. Die Kategorie selbst
+            // traegt keine eigene Gaeste-Freigabe - sie wird angezeigt, sobald
+            // sie mindestens ein fuer den Besucher lesbares Forum enthaelt (der
+            // Mitglieder-/Veroeffentlichungsschutz wird pro Forum vererbt).
             $forums = [];
 
             foreach ($this->findChildren((int) $node['id']) as $child) {
@@ -220,11 +221,13 @@ class SynapsisForum extends Module
                 }
             }
 
-            $categories[] = [
-                'title' => $node['title'],
-                'description' => $node['description'],
-                'forums' => $forums,
-            ];
+            if ([] !== $forums) {
+                $categories[] = [
+                    'title' => $node['title'],
+                    'description' => $node['description'],
+                    'forums' => $forums,
+                ];
+            }
         }
 
         $this->Template->categories = $categories;
@@ -241,7 +244,7 @@ class SynapsisForum extends Module
 
         $this->Template->forum = $this->activeForum;
         $this->Template->breadcrumb = $this->buildBreadcrumb($forumId);
-        $this->Template->newTopicUrl = !$this->activeForum['closed']
+        $this->Template->newTopicUrl = (!$this->activeForum['closed'] && $this->canWrite($forumId))
             ? $this->pageUrl(['forum' => $forumId, 'new' => 1])
             : '';
         $this->Template->closed = (bool) $this->activeForum['closed'];
@@ -337,9 +340,11 @@ class SynapsisForum extends Module
         $this->Template->subscribeAction = $this->pageUrl(['topic' => $topicId]);
         $this->Template->subscribeFormId = 'synapsis_sub_'.$this->id;
 
-        // Antwortformular in offenen Themen; wer das Thema sehen darf, darf auch
-        // antworten (auch Gaeste in fuer sie freigegebenen Foren).
-        $canReply = !$this->activeTopic['locked'] && !$this->activeForum['closed'];
+        // Antwortformular in offenen Themen fuer alle Schreibberechtigten
+        // (Mitglieder bzw. Gaeste mit Schreibrecht).
+        $canReply = !$this->activeTopic['locked']
+            && !$this->activeForum['closed']
+            && $this->canWrite((int) $this->activeForum['id']);
         $this->Template->canReply = $canReply;
         $this->Template->locked = (bool) $this->activeTopic['locked'];
 
@@ -383,7 +388,7 @@ class SynapsisForum extends Module
             return;
         }
 
-        if ($this->activeForum['closed']) {
+        if ($this->activeForum['closed'] || !$this->canWrite((int) $this->activeForum['id'])) {
             return;
         }
 
@@ -428,7 +433,7 @@ class SynapsisForum extends Module
             return;
         }
 
-        if ($this->activeTopic['locked'] || $this->activeForum['closed']) {
+        if ($this->activeTopic['locked'] || $this->activeForum['closed'] || !$this->canWrite((int) $this->activeForum['id'])) {
             return;
         }
 
@@ -663,7 +668,7 @@ class SynapsisForum extends Module
      */
     private function buildStatistics(): array
     {
-        $forumIds = $this->collectForumIds($this->rootId);
+        $forumIds = $this->readableForumIds();
 
         if ([] === $forumIds) {
             return ['topics' => 0, 'posts' => 0, 'members' => 0, 'topPosters' => []];
@@ -864,13 +869,33 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Neueste Themen des gesamten Startpunkts.
+     * IDs aller Foren unter dem Startpunkt, die der aktuelle Besucher lesen
+     * darf. So gelangen keine Themen/Beitraege aus gesperrten Foren in die
+     * "Neueste Themen"-Liste oder die Statistik.
+     *
+     * @return array<int>
+     */
+    private function readableForumIds(): array
+    {
+        $ids = [];
+
+        foreach ($this->collectForumIds($this->rootId) as $id) {
+            if (0 !== $id && $this->isVisible($id)) {
+                $ids[] = $id;
+            }
+        }
+
+        return [] === $ids ? [0] : $ids;
+    }
+
+    /**
+     * Neueste Themen der fuer den Besucher lesbaren Foren.
      *
      * @return array<array<string, mixed>>
      */
     private function findNewestTopics(int $limit): array
     {
-        $forumIds = $this->collectForumIds($this->rootId);
+        $forumIds = $this->readableForumIds();
         $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
 
         $topics = Database::getInstance()
@@ -932,10 +957,11 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Baut die Kette vom Forum bis zum Startpunkt und wertet Sichtbarkeit sowie
-     * Zugriffsschutz aus.
+     * Baut die Kette vom Knoten bis zum Startpunkt dieses Moduls.
+     *
+     * @return array<array<string, mixed>> Leeres Array bei kaputter Kette
      */
-    private function isVisible(int $forumId): bool
+    private function buildChain(int $forumId): array
     {
         $chain = [];
         $currentId = $forumId;
@@ -943,26 +969,52 @@ class SynapsisForum extends Module
 
         while ($currentId > 0 && $guard < 100) {
             $node = Database::getInstance()
-                ->prepare('SELECT id, pid, published, protected, groups FROM tl_synapsis_forum WHERE id = ?')
+                ->prepare('SELECT id, pid, published, protected, groups, guestRead, guestWrite FROM tl_synapsis_forum WHERE id = ?')
                 ->execute($currentId)
                 ->row()
             ;
 
             if (empty($node)) {
-                return false;
+                return [];
             }
 
             $chain[] = $node;
-            $currentId = (int) $node['pid'];
-            ++$guard;
 
             // Nur bis zum Startpunkt dieses Moduls aufsteigen
             if ((int) $node['id'] === $this->rootId) {
                 break;
             }
+
+            $currentId = (int) $node['pid'];
+            ++$guard;
         }
 
-        return $this->access->isAccessible($chain, $this->getMemberGroupIds());
+        return $chain;
+    }
+
+    /**
+     * Prueft den Lesezugriff auf ein Forum (Sichtbarkeit inkl. Vererbung).
+     */
+    private function isVisible(int $forumId): bool
+    {
+        return $this->access->canRead(
+            $this->buildChain($forumId),
+            !$this->isMemberLoggedIn(),
+            $this->getMemberGroupIds()
+        );
+    }
+
+    /**
+     * Prueft den Schreibzugriff auf ein Forum (ohne die closed/locked-Pruefung,
+     * die die aufrufenden Stellen selbst ergaenzen).
+     */
+    private function canWrite(int $forumId): bool
+    {
+        return $this->access->canWrite(
+            $this->buildChain($forumId),
+            !$this->isMemberLoggedIn(),
+            $this->getMemberGroupIds()
+        );
     }
 
     /**
@@ -1076,18 +1128,17 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Gruppen-IDs des Besuchers fuer die Zugriffspruefung.
+     * Mitgliedergruppen des angemeldeten Besuchers (bei Gaesten leer).
      *
-     * Nicht angemeldete Besucher gelten als Gaeste und erhalten die fiktive
-     * Gruppe -1, damit ihnen gezielt Zugriff auf geschuetzte Bereiche gewaehrt
-     * werden kann. Angemeldete Mitglieder erhalten ihre echten Gruppen.
+     * Gaeste steuert nicht die Gruppenzugehoerigkeit, sondern die Flags
+     * guestRead/guestWrite (siehe ForumAccess).
      *
      * @return array<int>
      */
     private function getMemberGroupIds(): array
     {
         if (!$this->isMemberLoggedIn()) {
-            return [-1];
+            return [];
         }
 
         $groups = StringUtil::deserialize(FrontendUser::getInstance()->groups, true);
@@ -1245,14 +1296,23 @@ class SynapsisForum extends Module
 
         $this->Template->editor = true;
 
+        // Contao liefert TinyMCE 5 unter assets/tinymce4 mit; von dort laden wir
+        // den Editor. Der Base-Pfad zeigt auf das js-Verzeichnis, damit Plugins
+        // und Skins gefunden werden.
+        $base = \Contao\Controller::addStaticUrlTo('assets/tinymce4/js');
+
         $GLOBALS['TL_JAVASCRIPT']['synapsis_tinymce'] = 'assets/tinymce4/js/tinymce.min.js|static';
 
+        // Versions-Schutz: nur mit TinyMCE 4+ initialisieren. Ist auf der Seite
+        // (etwa durch ein anderes Forum-Bundle) ein aeltes TinyMCE 3 aktiv,
+        // wird nicht initialisiert, statt eine fehlerhafte Einbindung zu
+        // erzeugen.
         $GLOBALS['TL_BODY']['synapsis_tinymce_init'] = '<script>document.addEventListener("DOMContentLoaded",function(){'
-            .'if(typeof tinymce==="undefined")return;'
+            .'if(typeof tinymce==="undefined"||parseInt(tinymce.majorVersion,10)<4)return;'
             .'tinymce.init({'
             .'selector:"textarea.synapsis-editor",'
             .'license_key:"gpl",'
-            .'base_url:"'.\Contao\Controller::addStaticUrlTo('assets/tinymce4/js').'",'
+            .'base_url:"'.$base.'",'
             .'suffix:".min",'
             .'menubar:false,'
             .'height:260,'

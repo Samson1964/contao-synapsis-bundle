@@ -83,9 +83,9 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
     (
         '__selector__' => array('type', 'protected'),
         'default'      => '{type_legend},type',
-        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{protected_legend:hide},protected;{publish_legend},published',
-        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{protected_legend:hide},protected;{publish_legend},published',
-        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{config_legend},closed;{protected_legend:hide},protected;{publish_legend},published',
+        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
+        'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
+        'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{publish_legend},published',
     ),
 
     'subpalettes' => array
@@ -169,9 +169,27 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
             'exclude'   => true,
             'inputType' => 'checkbox',
             // options_callback: ForumListener::getGroupOptions (services.yaml)
-            // liefert die Mitgliedergruppen inkl. der fiktiven Gruppe "Gaeste" (-1)
+            // fuehrt ausschliesslich echte Mitgliedergruppen (Gaeste separat)
             'eval'      => array('mandatory' => true, 'multiple' => true),
             'sql'       => "blob NULL",
+        ),
+        // Gaeste-Lesezugriff (Opt-in, wird im Baum vererbt)
+        'guestRead' => array
+        (
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50'),
+            'sql'       => "char(1) NOT NULL default ''",
+        ),
+        // Gaeste-Schreibrecht (Opt-in, schliesst Lesen ein, wird vererbt)
+        'guestWrite' => array
+        (
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50'),
+            'sql'       => "char(1) NOT NULL default ''",
         ),
         'published' => array
         (

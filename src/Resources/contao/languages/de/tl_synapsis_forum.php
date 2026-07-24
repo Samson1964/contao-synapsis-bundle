@@ -28,6 +28,8 @@ $GLOBALS['TL_LANG']['tl_synapsis_forum']['description'] = array('Beschreibung', 
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['closed']      = array('Forum schließen', 'In einem geschlossenen Forum können keine neuen Themen und Beiträge erstellt werden.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['protected']   = array('Zugriff schützen', 'Den Bereich nur für bestimmte Mitgliedergruppen sichtbar machen. Der Schutz wird an alle untergeordneten Kategorien, Foren und Themen vererbt.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['groups']      = array('Erlaubte Mitgliedergruppen', 'Diese Mitgliedergruppen erhalten Zugriff auf den Bereich.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['guestRead']   = array('Gäste dürfen lesen', 'Nicht angemeldete Besucher (Gäste) dürfen diesen Bereich lesen, aber nicht schreiben. Die Freigabe wird nach unten vererbt.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['guestWrite']  = array('Gäste dürfen schreiben', 'Gäste dürfen in diesem Bereich Themen anlegen und antworten (schließt das Lesen ein). Die Freigabe wird nach unten vererbt.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['published']   = array('Veröffentlichen', 'Den Eintrag im Frontend sichtbar schalten.');
 
 // Legenden
@@ -35,7 +37,8 @@ $GLOBALS['TL_LANG']['tl_synapsis_forum']['type_legend']      = 'Typ';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['title_legend']     = 'Bezeichnung und Alias';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['meta_legend']      = 'Beschreibung';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['config_legend']    = 'Einstellungen';
-$GLOBALS['TL_LANG']['tl_synapsis_forum']['protected_legend'] = 'Zugriffsschutz';
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['protected_legend'] = 'Zugriffsschutz (Mitglieder)';
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['guest_legend']     = 'Gäste-Zugriff';
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['publish_legend']   = 'Veröffentlichung';
 
 // Schaltflächen

@@ -89,20 +89,23 @@ class ForumListener
     }
 
     /**
-     * Liefert die auswaehlbaren Mitgliedergruppen inklusive der fiktiven
-     * Gruppe "Gaeste" (ID -1), damit auch nicht angemeldete Besucher gezielt
-     * Zugriff erhalten koennen (options_callback des Feldes "groups").
+     * Liefert die auswaehlbaren Mitgliedergruppen (options_callback des Feldes
+     * "groups").
      *
-     * @return array<string, string>
+     * Gaeste werden bewusst NICHT hier gefuehrt - ihr Zugriff laeuft ueber die
+     * getrennten Checkboxen "guestRead"/"guestWrite", damit Lese- und
+     * Schreibrecht fuer Gaeste unabhaengig steuerbar bleiben.
+     *
+     * @return array<int, string>
      */
     public function getGroupOptions(): array
     {
-        $options = ['-1' => $GLOBALS['TL_LANG']['MSC']['guests'] ?? 'Gäste'];
+        $options = [];
 
         $rows = $this->connection->fetchAllAssociative('SELECT id, name FROM tl_member_group ORDER BY name');
 
         foreach ($rows as $row) {
-            $options[(string) $row['id']] = $row['name'];
+            $options[(int) $row['id']] = $row['name'];
         }
 
         return $options;

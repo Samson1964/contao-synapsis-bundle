@@ -11,40 +11,72 @@ declare(strict_types=1);
 namespace Schachbulle\ContaoSynapsisBundle\Frontend;
 
 /**
- * Wertet die Sichtbarkeit und den Zugriffsschutz eines Forenknotens aus.
+ * Wertet Lese- und Schreibrechte eines Forenknotens aus.
  *
- * Veroeffentlichung und Zugriffsschutz werden in der Baumstruktur vererbt:
- * Ein Knoten ist nur sichtbar, wenn er selbst und alle uebergeordneten Knoten
- * veroeffentlicht sind; er ist nur zugaenglich, wenn das Mitglied fuer jeden
- * geschuetzten Knoten der Kette (Knoten selbst und Elternknoten) mindestens
- * einer der erlaubten Mitgliedergruppen angehoert.
+ * Zwei getrennte Achsen, jeweils im Baum vererbt:
  *
- * Die Klasse arbeitet bewusst ohne Datenbank- oder Framework-Abhaengigkeit,
- * damit die Vererbungsregeln isoliert testbar bleiben. Die Kette der Knoten
- * liefert das aufrufende Modul.
+ *   Mitglieder  ueber "protected" + "groups": ist ein Knoten (oder ein
+ *               uebergeordneter Knoten) geschuetzt, muss das Mitglied einer der
+ *               dort erlaubten Gruppen angehoeren. Ein Mitglied mit Lesezugriff
+ *               auf ein (offenes) Forum darf dort auch schreiben.
+ *
+ *   Gaeste      ueber die Checkboxen "guestRead" und "guestWrite" (Opt-in):
+ *               Gaeste duerfen NUR lesen, wenn irgendwo in der Kette guestRead
+ *               (oder guestWrite) gesetzt ist, und nur schreiben, wenn irgendwo
+ *               guestWrite gesetzt ist. Ohne gesetztes Flag haben Gaeste keinen
+ *               Zugriff (fail-safe: vergessenes Haekchen haelt den Bereich
+ *               privat). Der Mitglieder-Schutz spielt fuer Gaeste keine Rolle.
+ *
+ * Veroeffentlichung wird immer geprueft: ist ein Knoten der Kette unveroeffent-
+ * licht, ist der Bereich fuer niemanden sichtbar.
+ *
+ * Die Klasse arbeitet ohne Datenbank- oder Framework-Abhaengigkeit, damit die
+ * Vererbungsregeln isoliert testbar bleiben. Die Kette der Knoten (Zielknoten
+ * unten bis Startpunkt oben) liefert das aufrufende Modul.
  */
 class ForumAccess
 {
     /**
-     * Prueft, ob eine Knotenkette fuer die angegebenen Mitgliedergruppen
-     * sichtbar und zugaenglich ist.
+     * Prueft den Lesezugriff auf eine Knotenkette.
      *
-     * @param array<array<string, mixed>> $chain          Knoten von unten (Zielknoten) bis oben (Startpunkt); jeder Eintrag mit den Schluesseln "published", "protected" und "groups"
-     * @param array<int>                  $memberGroupIds IDs der Gruppen des angemeldeten Mitglieds (leer = nicht angemeldet)
+     * @param array<array<string, mixed>> $chain          Knoten von unten (Ziel) bis oben (Startpunkt); Schluessel: published, protected, groups, guestRead, guestWrite
+     * @param bool                        $isGuest        Nicht angemeldeter Besucher
+     * @param array<int>                  $memberGroupIds Gruppen des angemeldeten Mitglieds (bei Gaesten leer)
      */
-    public function isAccessible(array $chain, array $memberGroupIds): bool
+    public function canRead(array $chain, bool $isGuest, array $memberGroupIds): bool
     {
-        foreach ($chain as $node) {
-            if (!$this->isPublished($node)) {
-                return false;
-            }
-
-            if (!$this->isUnlocked($node, $memberGroupIds)) {
-                return false;
-            }
+        if ([] === $chain || !$this->isPublishedChain($chain)) {
+            return false;
         }
 
-        return true;
+        // Lesbar, wenn das Mitglied die Mitglieder-Schutzpruefung besteht ODER
+        // der Bereich fuer Gaeste (und damit oeffentlich) freigegeben ist.
+        $memberOk = !$isGuest && $this->memberAllowed($chain, $memberGroupIds);
+
+        return $memberOk || $this->guestAllowed($chain, false);
+    }
+
+    /**
+     * Prueft den Schreibzugriff auf eine Knotenkette (setzt Lesezugriff voraus).
+     *
+     * Geschlossene Foren bzw. gesperrte Themen pruefen die aufrufenden Stellen
+     * gesondert; hier geht es rein um die Berechtigung.
+     *
+     * @param array<array<string, mixed>> $chain
+     * @param array<int>                  $memberGroupIds
+     */
+    public function canWrite(array $chain, bool $isGuest, array $memberGroupIds): bool
+    {
+        if (!$this->canRead($chain, $isGuest, $memberGroupIds)) {
+            return false;
+        }
+
+        // Schreiben darf, wer der erlaubten Mitgliedergruppe angehoert ODER wo
+        // Gaeste ausdruecklich schreiben duerfen. Reiner Gaeste-Lesezugriff
+        // (guestRead ohne guestWrite) berechtigt niemanden zum Schreiben.
+        $memberOk = !$isGuest && $this->memberAllowed($chain, $memberGroupIds);
+
+        return $memberOk || $this->guestAllowed($chain, true);
     }
 
     /**
@@ -55,7 +87,7 @@ class ForumAccess
     public function isPublishedChain(array $chain): bool
     {
         foreach ($chain as $node) {
-            if (!$this->isPublished($node)) {
+            if (empty($node['published'])) {
                 return false;
             }
         }
@@ -64,39 +96,54 @@ class ForumAccess
     }
 
     /**
-     * @param array<string, mixed> $node
-     */
-    private function isPublished(array $node): bool
-    {
-        return (bool) ($node['published'] ?? false);
-    }
-
-    /**
-     * Ein Knoten ist freigeschaltet, wenn er nicht geschuetzt ist oder das
-     * Mitglied einer der erlaubten Gruppen angehoert.
+     * Gast-Berechtigung: fuer das Lesen genuegt guestRead ODER guestWrite an
+     * einem beliebigen Knoten der Kette, fuer das Schreiben ist guestWrite
+     * noetig (Schreibrecht schliesst Lesen ein).
      *
-     * @param array<string, mixed> $node
-     * @param array<int>           $memberGroupIds
+     * @param array<array<string, mixed>> $chain
      */
-    private function isUnlocked(array $node, array $memberGroupIds): bool
+    private function guestAllowed(array $chain, bool $write): bool
     {
-        if (empty($node['protected'])) {
-            return true;
+        foreach ($chain as $node) {
+            if (!empty($node['guestWrite'])) {
+                return true;
+            }
+
+            if (!$write && !empty($node['guestRead'])) {
+                return true;
+            }
         }
 
-        $allowed = $this->normalizeGroups($node['groups'] ?? null);
-
-        if (empty($allowed)) {
-            // Geschuetzt, aber ohne erlaubte Gruppe => fuer niemanden zugaenglich
-            return false;
-        }
-
-        return [] !== array_intersect($allowed, $memberGroupIds);
+        return false;
     }
 
     /**
-     * Fuehrt den in der Datenbank serialisierten oder bereits entpackten
-     * Gruppenwert in eine Liste von Integer-IDs ueber.
+     * Mitglieder-Berechtigung: fuer jeden geschuetzten Knoten der Kette muss
+     * das Mitglied einer der erlaubten Gruppen angehoeren.
+     *
+     * @param array<array<string, mixed>> $chain
+     * @param array<int>                  $memberGroupIds
+     */
+    private function memberAllowed(array $chain, array $memberGroupIds): bool
+    {
+        foreach ($chain as $node) {
+            if (empty($node['protected'])) {
+                continue;
+            }
+
+            $allowed = $this->normalizeGroups($node['groups'] ?? null);
+
+            if (empty($allowed) || [] === array_intersect($allowed, $memberGroupIds)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Fuehrt den serialisierten oder bereits entpackten Gruppenwert in eine
+     * Liste von Integer-IDs ueber.
      *
      * @param mixed $groups
      *

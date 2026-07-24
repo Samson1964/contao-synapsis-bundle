@@ -1,5 +1,25 @@
 # Synapsis Changelog
 
+## Version 0.3.0 (2026-07-24)
+
+### Neues Gäste-Zugriffsmodell (Opt-in, Lesen/Schreiben getrennt)
+
+* Zwei getrennte, im Baum vererbte Checkboxen je Startpunkt/Kategorie/Forum: **„Gäste dürfen lesen"** und **„Gäste dürfen schreiben"** (schließt Lesen ein). Beide standardmäßig **aus** – vergessene Einstellung hält einen Bereich privat (fail-safe).
+* Ersetzt die bisherige Lösung über die fiktive Gruppe `-1` im Mitgliedergruppen-Feld. Das Feld **Mitgliedergruppen** führt jetzt wieder ausschließlich echte Contao-Gruppen; Gäste-Rechte laufen getrennt über die beiden Checkboxen.
+* Lese- und Schreibrecht für Gäste sind damit **unabhängig** steuerbar: z. B. ein ansonsten mitgliederpflichtiges Board für Gäste nur lesbar machen, ohne ihnen das Schreiben zu erlauben.
+* „Gäste dürfen lesen" bedeutet **öffentlich lesbar**: auch angemeldete Mitglieder ohne passende Gruppe dürfen dann lesen (aber nicht schreiben).
+* **Kein Datenleck mehr**: „Neueste Themen" und die Statistik berücksichtigen jetzt den Lesezugriff pro Forum – Themen/Beiträge aus gesperrten Foren tauchen dort nicht mehr auf.
+
+### Frontend-Korrekturen
+
+* **Button-Text war unlesbar** (dunkel auf dunkel, nur beim Mouseover blass sichtbar, unterstrichen): Die allgemeine Link-Formatierung der Website übertrumpfte die Button-Farbe. Die Button-Stile sind jetzt gezielt qualifiziert (Element + Klasse), ohne Unterstreichung, mit lesbarer Schriftfarbe.
+* **„Abbrechen"-Button** wird jetzt als eigenständiger Sekundär-Button dargestellt (gleiche Form wie „Thema erstellen", andere Farbe) statt als Link.
+* **TinyMCE-Versions-Schutz**: Der Editor initialisiert nur noch mit TinyMCE 4+. Ist auf der Seite ein altes TinyMCE 3 aktiv (z. B. durch das parallel installierte `contao/forum-bundle`), wird der Editor nicht mehr fehlerhaft eingebunden. Hinweis: Der in der Konsole gemeldete Pfad `bundles/contaoforum/...` stammt von jenem Fremd-Bundle, nicht von Synapsis.
+
+### Verifiziert
+
+* Auf Contao 4.13.58 **und** 5.7: Migration der Felder `guestRead`/`guestWrite`, Backend-Diagnose (Felder vorhanden, Gruppen-Optionen ohne `-1`), Frontend-Rauchtest (Lesezone: lesen ohne schreiben; Schreibzone: lesen und schreiben; geheimes Forum kein Zugriff; kein Leak geheimer Themen); 14 Unit-Tests der Zugriffslogik.
+
 ## Version 0.2.3 (2026-07-24)
 
 ### Behoben

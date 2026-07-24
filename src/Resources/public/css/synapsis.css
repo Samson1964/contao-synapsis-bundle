@@ -26,12 +26,12 @@
     box-sizing: border-box;
 }
 
-.synapsis a {
+.synapsis a:not(.synapsis-button) {
     color: var(--syn-accent);
     text-decoration: none;
 }
 
-.synapsis a:hover {
+.synapsis a:not(.synapsis-button):hover {
     text-decoration: underline;
 }
 
@@ -372,28 +372,48 @@
     margin-bottom: 1rem;
 }
 
-.synapsis-button {
+/* Buttons koennen <a> oder <button> sein. Die Selektoren sind bewusst mit
+   Element + Klasse qualifiziert, damit sie die allgemeine Link-Formatierung der
+   umgebenden Website (Farbe/Unterstreichung) sicher uebertreffen. */
+.synapsis .synapsis-button,
+.synapsis a.synapsis-button,
+.synapsis button.synapsis-button {
     display: inline-block;
-    padding: 0.45rem 1rem;
+    padding: 0.5rem 1.1rem;
     border-radius: var(--syn-radius);
     background: var(--syn-bg-alt);
     border: 1px solid var(--syn-border);
     color: var(--syn-text);
+    text-decoration: none;
     cursor: pointer;
+    font: inherit;
     font-size: 0.9rem;
+    line-height: 1.2;
 }
 
-.synapsis-button:hover { text-decoration: none; background: #e9eef2; }
+.synapsis a.synapsis-button:hover,
+.synapsis button.synapsis-button:hover {
+    text-decoration: none;
+    background: #e9eef2;
+    color: var(--syn-text);
+}
 
-.synapsis-button--primary {
+.synapsis .synapsis-button--primary,
+.synapsis a.synapsis-button--primary,
+.synapsis button.synapsis-button--primary {
     background: var(--syn-accent);
     border-color: var(--syn-accent-dark);
     color: #fff;
 }
 
-.synapsis-button--primary:hover { background: var(--syn-accent-dark); }
+.synapsis a.synapsis-button--primary:hover,
+.synapsis button.synapsis-button--primary:hover {
+    background: var(--syn-accent-dark);
+    color: #fff;
+}
 
-.synapsis-button--active {
+.synapsis .synapsis-button--active,
+.synapsis a.synapsis-button--active {
     background: #e7f2d9;
     border-color: #b6d48a;
     color: #3d5216;

@@ -14,10 +14,13 @@ use PHPUnit\Framework\TestCase;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
 
 /**
- * Prueft die Vererbung von Veroeffentlichung und Zugriffsschutz.
+ * Prueft Lese-/Schreibrechte und ihre Vererbung (Mitglieder und Gaeste).
  */
 class ForumAccessTest extends TestCase
 {
+    private const GUEST = true;
+    private const MEMBER = false;
+
     /**
      * @var ForumAccess
      */
@@ -28,126 +31,133 @@ class ForumAccessTest extends TestCase
         $this->access = new ForumAccess();
     }
 
-    /**
-     * Ein veroeffentlichter, ungeschuetzter Knoten ist frei zugaenglich.
-     */
-    public function testOeffentlicherKnotenIstZugaenglich(): void
-    {
-        $chain = [$this->node(true, false, null)];
+    // --- Mitglieder -----------------------------------------------------------
 
-        $this->assertTrue($this->access->isAccessible($chain, []));
+    public function testMitgliedLiestUngeschuetztenBereich(): void
+    {
+        $chain = [$this->node()];
+
+        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [3]));
+        $this->assertTrue($this->access->canWrite($chain, self::MEMBER, [3]));
     }
 
-    /**
-     * Ein unveroeffentlichter Knoten ist fuer niemanden sichtbar.
-     */
-    public function testUnveroeffentlichterKnotenIstGesperrt(): void
+    public function testUnveroeffentlichtIstFuerNiemandenLesbar(): void
     {
-        $chain = [$this->node(false, false, null)];
+        $chain = [$this->node(['published' => false])];
 
-        $this->assertFalse($this->access->isAccessible($chain, [1, 2, 3]));
+        $this->assertFalse($this->access->canRead($chain, self::MEMBER, [1, 2]));
+        $this->assertFalse($this->access->canRead($chain, self::GUEST, []));
     }
 
-    /**
-     * Ein geschuetzter Knoten ohne passende Gruppe bleibt gesperrt.
-     */
-    public function testGeschuetzterKnotenOhneGruppeGesperrt(): void
+    public function testGeschuetzterBereichNurMitPassenderGruppe(): void
     {
-        $chain = [$this->node(true, true, [5])];
+        $chain = [$this->node(['protected' => true, 'groups' => [5]])];
 
-        $this->assertFalse($this->access->isAccessible($chain, [1, 2]));
+        $this->assertFalse($this->access->canRead($chain, self::MEMBER, [1, 2]));
+        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [5]));
+        $this->assertTrue($this->access->canWrite($chain, self::MEMBER, [5]));
     }
 
-    /**
-     * Mit passender Gruppe ist der geschuetzte Knoten zugaenglich.
-     */
-    public function testGeschuetzterKnotenMitGruppeFrei(): void
-    {
-        $chain = [$this->node(true, true, [5, 8])];
-
-        $this->assertTrue($this->access->isAccessible($chain, [8]));
-    }
-
-    /**
-     * Ein geschuetzter Knoten ganz ohne erlaubte Gruppen ist fuer niemanden
-     * zugaenglich.
-     */
-    public function testGeschuetzterKnotenOhneErlaubteGruppen(): void
-    {
-        $chain = [$this->node(true, true, [])];
-
-        $this->assertFalse($this->access->isAccessible($chain, [1, 2, 3]));
-    }
-
-    /**
-     * Der Schutz eines uebergeordneten Knotens wird an die Kinder vererbt.
-     */
     public function testSchutzWirdVomElternknotenGeerbt(): void
     {
         $chain = [
-            $this->node(true, false, null), // Zielforum: offen
-            $this->node(true, true, [9]),   // Kategorie: geschuetzt
+            $this->node(),                                          // Forum: offen
+            $this->node(['protected' => true, 'groups' => [9]]),   // Kategorie: geschuetzt
         ];
 
-        $this->assertFalse($this->access->isAccessible($chain, [3]));
-        $this->assertTrue($this->access->isAccessible($chain, [9]));
+        $this->assertFalse($this->access->canRead($chain, self::MEMBER, [3]));
+        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [9]));
     }
 
-    /**
-     * Eine unveroeffentlichte Kategorie verbirgt das darunter liegende Forum.
-     */
-    public function testUnveroeffentlichterElternknotenVerbirgtKind(): void
+    // --- Gaeste ---------------------------------------------------------------
+
+    public function testGastOhneFreigabeHatKeinenZugriff(): void
+    {
+        $chain = [$this->node()]; // ungeschuetzt, aber kein Gaeste-Flag
+
+        $this->assertFalse($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testGastDarfNurLesen(): void
+    {
+        $chain = [$this->node(['guestRead' => true])];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testGastDarfSchreibenSchliesstLesenEin(): void
+    {
+        $chain = [$this->node(['guestWrite' => true])];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertTrue($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testGaesteFreigabeWirdVererbt(): void
+    {
+        // guestRead auf der Kategorie -> Forum darunter ist fuer Gaeste lesbar
+        $chain = [
+            $this->node(),                       // Forum: kein eigenes Flag
+            $this->node(['guestRead' => true]),  // Kategorie: Gaeste duerfen lesen
+        ];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testGaesteSchreibrechtWirdVererbt(): void
     {
         $chain = [
-            $this->node(true, false, null),  // Forum: veroeffentlicht
-            $this->node(false, false, null), // Kategorie: unveroeffentlicht
+            $this->node(),
+            $this->node(['guestWrite' => true]),
         ];
 
-        $this->assertFalse($this->access->isAccessible($chain, []));
-        $this->assertFalse($this->access->isPublishedChain($chain));
+        $this->assertTrue($this->access->canWrite($chain, self::GUEST, []));
     }
 
-    /**
-     * Die fiktive Gruppe "Gaeste" (-1) gewaehrt nicht angemeldeten Besuchern
-     * Zugriff auf einen geschuetzten Knoten.
-     */
-    public function testGaesteGruppeGewaehrtZugriff(): void
+    // --- Zusammenspiel Mitglieder/Gaeste --------------------------------------
+
+    public function testGaesteFreigabeMachtBereichOeffentlichLesbar(): void
     {
-        $chain = [$this->node(true, true, [-1])];
+        // Geschuetzt fuer Gruppe 5, zusaetzlich guestRead: auch ein Mitglied
+        // der falschen Gruppe (und ein Gast) darf lesen, aber nicht schreiben.
+        $chain = [$this->node(['protected' => true, 'groups' => [5], 'guestRead' => true])];
 
-        // Gast (Gruppe -1) darf hinein ...
-        $this->assertTrue($this->access->isAccessible($chain, [-1]));
-
-        // ... ein angemeldetes Mitglied ohne die Gaeste-Gruppe jedoch nicht.
-        $this->assertFalse($this->access->isAccessible($chain, [3, 4]));
+        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [1]));   // falsche Gruppe, aber oeffentlich
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canWrite($chain, self::MEMBER, [1])); // nur lesen
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+        $this->assertTrue($this->access->canWrite($chain, self::MEMBER, [5]));  // richtige Gruppe darf schreiben
     }
 
     /**
-     * Serialisierte Gruppenwerte (wie aus der Datenbank) werden korrekt
-     * ausgewertet.
-     */
-    public function testSerialisierteGruppenWerdenAkzeptiert(): void
-    {
-        $chain = [$this->node(true, true, null)];
-        $chain[0]['groups'] = serialize(['7']);
-
-        $this->assertTrue($this->access->isAccessible($chain, [7]));
-        $this->assertFalse($this->access->isAccessible($chain, [4]));
-    }
-
-    /**
-     * Baut einen Knoten-Datensatz fuer die Kette.
+     * Baut einen Knoten-Datensatz; Vorgaben entsprechen einem offenen,
+     * veroeffentlichten Knoten ohne Gaeste-Freigabe.
      *
-     * @param array<int>|null $groups
+     * @param array<string, mixed> $overrides
      *
      * @return array<string, mixed>
      */
-    private function node(bool $published, bool $protected, ?array $groups): array
+    private function node(array $overrides = []): array
     {
+        $defaults = [
+            'published' => true,
+            'protected' => false,
+            'groups' => null,
+            'guestRead' => false,
+            'guestWrite' => false,
+        ];
+
+        $node = array_merge($defaults, $overrides);
+
         return [
-            'published' => $published ? '1' : '',
-            'protected' => $protected ? '1' : '',
-            'groups' => null === $groups ? null : serialize($groups),
+            'published' => $node['published'] ? '1' : '',
+            'protected' => $node['protected'] ? '1' : '',
+            'groups' => null === $node['groups'] ? null : serialize($node['groups']),
+            'guestRead' => $node['guestRead'] ? '1' : '',
+            'guestWrite' => $node['guestWrite'] ? '1' : '',
         ];
     }
 }
