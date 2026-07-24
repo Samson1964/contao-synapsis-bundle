@@ -300,11 +300,14 @@ class SynapsisForum extends Module
         $this->handleSubscription();
         $this->handlePostSubmission();
 
-        // Ansichtszaehler erhoehen (einmal pro Aufruf)
-        Database::getInstance()
-            ->prepare('UPDATE tl_synapsis_topic SET views = views + 1 WHERE id = ?')
-            ->execute($topicId)
-        ;
+        // Ansichtszaehler erhoehen - aber pro Sitzung nur einmal, damit ein
+        // Reload nicht mitzaehlt (kein IP-Speicher, DSGVO-freundlich)
+        if ($this->registerView($topicId)) {
+            Database::getInstance()
+                ->prepare('UPDATE tl_synapsis_topic SET views = views + 1 WHERE id = ?')
+                ->execute($topicId)
+            ;
+        }
 
         $this->Template->topic = $this->activeTopic;
         $this->Template->forum = $this->activeForum;
@@ -1133,6 +1136,42 @@ class SynapsisForum extends Module
         ;
 
         return (int) ceil(max(1, $total) / $perPage);
+    }
+
+    /**
+     * Vermerkt einen Themenaufruf in der Sitzung und meldet, ob dies der erste
+     * Aufruf in dieser Sitzung war (nur dann wird gezaehlt).
+     *
+     * Bewusst ueber die Sitzung statt ueber IP-Adressen: kein personenbezogenes
+     * Datum, keine Aufbewahrungsfrist. Ein Reload zaehlt so nicht mit; ein neuer
+     * Besuch (neue Sitzung) zaehlt wieder einmal.
+     */
+    private function registerView(int $topicId): bool
+    {
+        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+
+        if (null === $request || !$request->hasSession()) {
+            // Ohne Sitzung wie bisher zaehlen, statt gar nicht.
+            return true;
+        }
+
+        $session = $request->getSession();
+        $viewed = $session->get('synapsis_viewed', []);
+
+        if (\in_array($topicId, $viewed, true)) {
+            return false;
+        }
+
+        $viewed[] = $topicId;
+
+        // Liste begrenzen, damit die Sitzung nicht unbegrenzt waechst.
+        if (\count($viewed) > 300) {
+            $viewed = \array_slice($viewed, -300);
+        }
+
+        $session->set('synapsis_viewed', $viewed);
+
+        return true;
     }
 
     /**

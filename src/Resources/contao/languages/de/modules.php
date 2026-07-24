@@ -16,3 +16,4 @@ declare(strict_types=1);
  * definiert.
  */
 $GLOBALS['TL_LANG']['MOD']['synapsis'] = array('Synapsis-Forum', 'Die Forenstruktur mit Kategorien, Foren, Themen und Beiträgen verwalten.');
+$GLOBALS['TL_LANG']['MOD']['synapsis_csv'] = array('Synapsis CSV Import / Export', 'Eine Forenstruktur als CSV exportieren oder wiederherstellen.');

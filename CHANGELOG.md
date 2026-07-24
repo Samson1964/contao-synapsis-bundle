@@ -1,5 +1,22 @@
 # Synapsis Changelog
 
+## Version 0.5.0 (2026-07-24)
+
+### CSV-Export und -Import (Sicherung & Wiederherstellung)
+
+* Neues Backend-Modul **„Synapsis CSV Import / Export"** (Gruppe Inhalte).
+* **Export**: Ein Startpunkt wird mit seiner kompletten Unterstruktur – Kategorien, Foren (inkl. Icon, Schutz, Gruppen, Gäste-Freigaben), Themen und Beiträge – in eine CSV-Datei geschrieben.
+* **Import**: Die CSV wird unter ein wählbares Ziel eingebunden – ein **Startpunkt** (erwartet Kategorien) oder eine **Kategorie** (erwartet Foren). Der Baum wird über laufende Referenznummern eindeutig wiederhergestellt (unabhängig von den ursprünglichen IDs). Damit lässt sich eine **vorher gelöschte Struktur vollständig wiederherstellen** (per Roundtrip-Test auf Contao 4.13 und 5.7 verifiziert).
+
+### Geändert
+
+* **Ansichtszähler mit Sperre**: Ein Reload zählt nicht mehr mit. Statt IP-Adressen (personenbezogen, DSGVO) merkt sich das Forum in der **Sitzung**, welche Themen schon gezählt wurden – pro Sitzung wird ein Thema nur einmal gezählt, ein neuer Besuch wieder. Kein IP-Speicher, keine Aufbewahrungsfrist.
+* **Icon-Auswahl auf 221 Icons erweitert** – darunter jetzt **echte Schachfiguren** (König, Dame, Turm, Läufer, Springer, Bauer) sowie Schachbrett-Raster, Würfel und Sanduhr in der Kategorie „Schach & Spiel".
+
+### Verifiziert
+
+* Auf Contao 4.13.58 und 5.7: CSV-Roundtrip (Export → Löschen → Import → vollständige Wiederherstellung), sitzungsbasierte Zähler-Sperre, Backend-Modul-Registrierung, Themenerstellung, Frontend-Rauchtest, 15 Unit-Tests.
+
 ## Version 0.4.2 (2026-07-24)
 
 ### Behoben

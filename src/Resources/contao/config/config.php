@@ -31,6 +31,17 @@ $GLOBALS['BE_MOD']['content']['synapsis'] = array
 );
 
 /*
+ * Backend-Modul "CSV Import / Export" (do=synapsis_csv), ebenfalls in der
+ * Gruppe "Inhalte". Exportiert einen Startpunkt als CSV und stellt eine
+ * geloeschte Struktur ueber den Import wieder her.
+ */
+$GLOBALS['BE_MOD']['content']['synapsis_csv'] = array
+(
+    'callback' => \Schachbulle\ContaoSynapsisBundle\Backend\CsvModule::class,
+    'icon'     => 'bundles/schachbullecontaosynapsis/icons/forum.svg',
+);
+
+/*
  * Frontend-Modul registrieren
  *
  * Ein einziges Modul stellt alle Ansichten des Forums dar. Als Legacy-Modul
