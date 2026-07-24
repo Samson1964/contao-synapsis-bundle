@@ -50,6 +50,16 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         <section class="synapsis-poll">
             <h3 class="synapsis-poll__question"><?= StringUtil::specialchars($this->poll['question']) ?></h3>
 
+            <?php if ('' !== $this->poll['closeLabel']): ?>
+                <p class="synapsis-poll__deadline">
+                    <?php if ($this->poll['ended']): ?>
+                        <?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisPollEnded'] ?? 'Umfrage beendet am %s.', $this->poll['closeLabel']) ?>
+                    <?php else: ?>
+                        <?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisPollRunning'] ?? 'Abstimmen bis %s.', $this->poll['closeLabel']) ?>
+                    <?php endif; ?>
+                </p>
+            <?php endif; ?>
+
             <?php if ($this->poll['canVote']): ?>
                 <form action="<?= $this->poll['action'] ?>" method="post" class="synapsis-poll__form">
                     <input type="hidden" name="FORM_SUBMIT" value="<?= $this->poll['formId'] ?>">
@@ -62,7 +72,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                     <?php endforeach; ?>
                     <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollVote'] ?? 'Abstimmen' ?></button>
                 </form>
-            <?php else: ?>
+            <?php elseif ($this->poll['showResults']): ?>
                 <ul class="synapsis-poll__results">
                     <?php foreach ($this->poll['options'] as $opt): ?>
                         <li class="synapsis-poll__result">
@@ -73,6 +83,8 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                     <?php endforeach; ?>
                 </ul>
                 <p class="synapsis-poll__total"><?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisPollTotal'] ?? '%d Teilnehmende', (int) $this->poll['total']) ?></p>
+            <?php else: ?>
+                <p class="synapsis-poll__pending"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollPending'] ?? 'Die Ergebnisse werden nach dem Umfrageende angezeigt.' ?></p>
             <?php endif; ?>
         </section>
     <?php endif; ?>

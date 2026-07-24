@@ -77,6 +77,11 @@ $GLOBALS['TL_LANG']['MSC']['synapsisPollMultiple']  = 'Mehrfachauswahl (mehrere 
 $GLOBALS['TL_LANG']['MSC']['synapsisPollOptions']   = 'Antwortmöglichkeiten (eine pro Zeile, mindestens zwei)';
 $GLOBALS['TL_LANG']['MSC']['synapsisPollVote']      = 'Abstimmen';
 $GLOBALS['TL_LANG']['MSC']['synapsisPollTotal']     = '%d Teilnehmende';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollClose']     = 'Umfrageende (danach kann nicht mehr abgestimmt werden)';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollHide']      = 'Ergebnisse erst nach Umfrageende anzeigen';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollRunning']   = 'Abstimmen möglich bis %s.';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollEnded']     = 'Umfrage beendet am %s.';
+$GLOBALS['TL_LANG']['MSC']['synapsisPollPending']   = 'Die Ergebnisse werden nach dem Umfrageende angezeigt.';
 
 // Forensuche
 $GLOBALS['TL_LANG']['MSC']['synapsisSearch']            = 'Suche';

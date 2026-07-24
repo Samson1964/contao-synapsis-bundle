@@ -79,6 +79,14 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                         <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollOptions'] ?? 'Antwortmöglichkeiten (eine pro Zeile, mindestens zwei)' ?></span>
                         <textarea name="poll_options" rows="4" class="synapsis-form__textarea"></textarea>
                     </label>
+                    <label class="synapsis-form__field">
+                        <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollClose'] ?? 'Umfrageende (danach kann nicht mehr abgestimmt werden)' ?></span>
+                        <input type="date" name="poll_close" class="synapsis-search__input">
+                    </label>
+                    <label class="synapsis-pollform__hide">
+                        <input type="checkbox" name="poll_hide" value="1">
+                        <span><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollHide'] ?? 'Ergebnisse erst nach Umfrageende anzeigen' ?></span>
+                    </label>
                 </div>
             </fieldset>
         <?php endif; ?>

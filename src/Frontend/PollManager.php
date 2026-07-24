@@ -32,17 +32,20 @@ final class PollManager
     }
 
     /**
-     * Legt eine Umfrage zu einem Thema an. Erwartet eine Frage und mindestens
-     * zwei nicht-leere Antwortmoeglichkeiten; sonst wird nichts angelegt (0).
+     * Legt eine Umfrage zu einem Thema an. Erwartet eine Frage, mindestens zwei
+     * nicht-leere Antwortmoeglichkeiten und ein Enddatum (Zeitpunkt, ab dem
+     * nicht mehr abgestimmt werden kann); sonst wird nichts angelegt (0).
      *
      * @param array<string> $options
+     * @param int           $closeDate    Umfrageende als Zeitstempel (> 0 Pflicht)
+     * @param bool          $hideResults  Ergebnisse erst nach Umfrageende zeigen
      */
-    public function create(int $topicId, string $question, bool $multiple, array $options): int
+    public function create(int $topicId, string $question, bool $multiple, array $options, int $closeDate, bool $hideResults): int
     {
         $question = trim($question);
         $options = array_values(array_filter(array_map('trim', $options), static fn ($o) => '' !== $o));
 
-        if ($topicId <= 0 || '' === $question || \count($options) < 2) {
+        if ($topicId <= 0 || '' === $question || \count($options) < 2 || $closeDate <= 0) {
             return 0;
         }
 
@@ -53,6 +56,8 @@ final class PollManager
             'tstamp' => $now,
             'question' => mb_substr($question, 0, 255),
             'multiple' => $multiple ? '1' : '',
+            'closeDate' => $closeDate,
+            'hideResults' => $hideResults ? '1' : '',
         ]);
         $pollId = (int) $this->connection->lastInsertId();
 
@@ -138,9 +143,14 @@ final class PollManager
             return false;
         }
 
-        $poll = $this->connection->fetchAssociative('SELECT id, multiple FROM tl_synapsis_poll WHERE id = ?', [$pollId]);
+        $poll = $this->connection->fetchAssociative('SELECT id, multiple, closeDate FROM tl_synapsis_poll WHERE id = ?', [$pollId]);
 
         if (!$poll || $this->hasVoted($pollId, $memberId)) {
+            return false;
+        }
+
+        // Nach Umfrageende ist keine Stimmabgabe mehr moeglich.
+        if ($this->hasEnded($poll)) {
             return false;
         }
 
@@ -169,5 +179,17 @@ final class PollManager
         }
 
         return true;
+    }
+
+    /**
+     * Ist die Umfrage beendet (Enddatum gesetzt und erreicht)?
+     *
+     * @param array<string, mixed> $poll Datensatz mit Schluessel "closeDate"
+     */
+    public function hasEnded(array $poll): bool
+    {
+        $closeDate = (int) ($poll['closeDate'] ?? 0);
+
+        return $closeDate > 0 && time() >= $closeDate;
     }
 }

@@ -60,5 +60,15 @@ $GLOBALS['TL_DCA']['tl_synapsis_poll'] = array
         (
             'sql' => "char(1) NOT NULL default ''",
         ),
+        // Zeitpunkt, ab dem nicht mehr abgestimmt werden kann (Umfrageende)
+        'closeDate' => array
+        (
+            'sql' => "int(10) unsigned NOT NULL default 0",
+        ),
+        // '1' = Ergebnisse erst nach Umfrageende sichtbar
+        'hideResults' => array
+        (
+            'sql' => "char(1) NOT NULL default ''",
+        ),
     ),
 );

@@ -783,6 +783,19 @@
     color: var(--syn-muted);
 }
 
+.synapsis-poll__deadline {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--syn-muted);
+}
+
+.synapsis-poll__pending {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--syn-muted);
+    font-style: italic;
+}
+
 @media (max-width: 640px) {
     .synapsis-poll__result { grid-template-columns: 1fr auto; }
     .synapsis-poll__bar { grid-column: 1 / -1; order: 3; }

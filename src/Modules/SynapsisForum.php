@@ -916,8 +916,10 @@ class SynapsisForum extends Module
             $question = trim((string) Input::post('poll_question', true));
             $multiple = 'multiple' === Input::post('poll_type');
             $options = preg_split('/\r\n|\r|\n/', (string) Input::post('poll_options', true)) ?: [];
+            $closeDate = $this->parseCloseDate((string) Input::post('poll_close'));
+            $hideResults = (bool) Input::post('poll_hide');
 
-            $this->pollManager()->create($topicId, $question, $multiple, $options);
+            $this->pollManager()->create($topicId, $question, $multiple, $options, $closeDate, $hideResults);
         }
 
         $this->redirect($this->pageUrl(['topic' => $topicId]));
@@ -1046,6 +1048,25 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Wandelt die Enddatum-Eingabe (YYYY-MM-DD) in einen Zeitstempel am Ende des
+     * Tages um (23:59:59). Leere/ungueltige Eingabe liefert 0.
+     */
+    private function parseCloseDate(string $value): int
+    {
+        $value = trim($value);
+
+        if ('' === $value) {
+            return 0;
+        }
+
+        // Nur das Datum verwenden (evtl. Uhrzeit aus datetime-local abschneiden).
+        $date = substr($value, 0, 10);
+        $timestamp = strtotime($date.' 23:59:59');
+
+        return false !== $timestamp ? (int) $timestamp : 0;
+    }
+
+    /**
      * Stellt die Anzeigedaten der Umfrage eines Themas zusammen (oder null).
      *
      * Ergebnisse werden gezeigt, sobald das Mitglied abgestimmt hat oder nicht
@@ -1071,7 +1092,27 @@ class SynapsisForum extends Module
         }
         unset($option);
 
-        $canVote = $memberId > 0 && !$this->pollManager()->hasVoted($pollId, $memberId);
+        $ended = $this->pollManager()->hasEnded($poll);
+        $hideResults = '1' === (string) $poll['hideResults'];
+        $hasVoted = $this->pollManager()->hasVoted($pollId, $memberId);
+
+        // Abstimmen nur vor dem Ende, angemeldet und noch nicht abgestimmt.
+        $canVote = !$ended && $memberId > 0 && !$hasVoted;
+
+        // Ergebnisse: nach Ende immer; davor nur, wenn nicht "erst nach Ende"
+        // und der Nutzer nicht mehr abstimmen kann (bereits abgestimmt/Gast).
+        if ($ended) {
+            $showResults = true;
+            $pending = false;
+        } elseif ($canVote) {
+            $showResults = false;
+            $pending = false;
+        } else {
+            $showResults = !$hideResults;
+            $pending = $hideResults;
+        }
+
+        $closeDate = (int) ($poll['closeDate'] ?? 0);
 
         return [
             'id' => $pollId,
@@ -1080,7 +1121,10 @@ class SynapsisForum extends Module
             'options' => $options,
             'total' => $total,
             'canVote' => $canVote,
-            'showResults' => !$canVote,
+            'showResults' => $showResults,
+            'pending' => $pending,
+            'ended' => $ended,
+            'closeLabel' => $closeDate > 0 ? $this->formatDate($closeDate) : '',
             'formId' => 'synapsis_poll_'.$this->id,
             'action' => $this->pageUrl(['topic' => $topicId]),
         ];
