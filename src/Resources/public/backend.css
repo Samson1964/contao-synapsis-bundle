@@ -1,0 +1,26 @@
+/*
+ * Backend-Styles des Synapsis-Forums.
+ *
+ * Setzt das Icon der eigenen Navigationsgruppe "synapsis". Contao vergibt der
+ * Gruppe die CSS-Klasse "group-synapsis"; Core-Gruppen erhalten ihr Icon per
+ * background-Bild. Da die Navigation in Contao 4.13 dunkel und in Contao 5 je
+ * nach Theme hell oder dunkel ist, waere ein einfarbiges Bild nicht ueberall
+ * sichtbar. Deshalb wird das Icon als Maske ueber currentColor eingefaerbt und
+ * uebernimmt so automatisch die Textfarbe der Gruppe (Lucide "messages-square").
+ */
+#tl_navigation a.group-synapsis {
+	position: relative;
+	background-image: none;
+}
+
+#tl_navigation a.group-synapsis::before {
+	content: "";
+	position: absolute;
+	left: 3px;
+	top: 2px;
+	width: 16px;
+	height: 16px;
+	background-color: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14%209a2%202%200%200%201-2%202H6l-4%204V4a2%202%200%200%201%202-2h8a2%202%200%200%201%202%202Z%22%2F%3E%3Cpath%20d%3D%22M18%209h2a2%202%200%200%201%202%202v11l-4-4h-6a2%202%200%200%201-2-2v-1%22%2F%3E%3C%2Fsvg%3E") center / 16px 16px no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14%209a2%202%200%200%201-2%202H6l-4%204V4a2%202%200%200%201%202-2h8a2%202%200%200%201%202%202Z%22%2F%3E%3Cpath%20d%3D%22M18%209h2a2%202%200%200%201%202%202v11l-4-4h-6a2%202%200%200%201-2-2v-1%22%2F%3E%3C%2Fsvg%3E") center / 16px 16px no-repeat;
+}

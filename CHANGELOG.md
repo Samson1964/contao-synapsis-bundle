@@ -1,5 +1,21 @@
 # Synapsis Changelog
 
+## Version 1.0.0 (2026-07-24)
+
+**Erstes stabiles Release – Produktivbetrieb.**
+
+### Behoben
+
+* **Hilfetext im CSV-Import korrekt ausgerichtet**: Der Hinweis unter dem Ziel-Feld saß am linken Rand statt bündig zum Feld. Er steht jetzt innerhalb des `.widget`-Containers und richtet sich wie ein normaler Feld-Hilfetext aus.
+
+### Hinzugefügt
+
+* **Icon für den Backend-Bereich „Synapsis-Forum"**: Die eigene Navigationsgruppe erhält ein Lucide-Icon (`messages-square`). Es wird als CSS-Maske über `currentColor` eingefärbt und übernimmt damit automatisch die Textfarbe der Navigation – sichtbar sowohl in der dunklen Contao-4.13-Navigation als auch im hellen und dunklen Contao-5-Theme. Das Backend-Stylesheet wird nur im Backend-Scope geladen.
+
+### Verifiziert
+
+* Auf Contao 4.13.58 und 5.7.7: BE_MOD-Registrierung, scope-abhängiges Laden des Backend-CSS, CSV-Roundtrip, sitzungsbasierte Zähler-Sperre, Themenerstellung, Frontend-Rauchtest, 15 Unit-Tests.
+
 ## Version 0.5.1 (2026-07-24)
 
 ### Geändert

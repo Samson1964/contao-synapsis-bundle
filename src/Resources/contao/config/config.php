@@ -8,6 +8,7 @@ declare(strict_types=1);
  * @license LGPL-3.0-or-later
  */
 
+use Contao\System;
 use Schachbulle\ContaoSynapsisBundle\Model\SynapsisForumModel;
 use Schachbulle\ContaoSynapsisBundle\Model\SynapsisPostModel;
 use Schachbulle\ContaoSynapsisBundle\Model\SynapsisSubscriptionModel;
@@ -56,3 +57,17 @@ $GLOBALS['TL_MODELS']['tl_synapsis_forum'] = SynapsisForumModel::class;
 $GLOBALS['TL_MODELS']['tl_synapsis_topic'] = SynapsisTopicModel::class;
 $GLOBALS['TL_MODELS']['tl_synapsis_post'] = SynapsisPostModel::class;
 $GLOBALS['TL_MODELS']['tl_synapsis_subscription'] = SynapsisSubscriptionModel::class;
+
+/*
+ * Backend-Stylesheet laden (nur im Backend).
+ *
+ * Das CSS gibt der eigenen Navigationsgruppe "synapsis" ein Icon. Es muss auf
+ * jeder Backend-Seite vorhanden sein, weil die Gruppe immer in der linken
+ * Navigation steht - deshalb hier statt ueber den 'stylesheet'-Schluessel eines
+ * einzelnen Moduls (der nur bei aktivem Modul geladen wuerde).
+ */
+$request = System::getContainer()->get('request_stack')->getCurrentRequest();
+
+if (null !== $request && 'backend' === $request->attributes->get('_scope')) {
+    $GLOBALS['TL_CSS']['synapsis_backend'] = 'bundles/schachbullecontaosynapsis/backend.css|static';
+}
