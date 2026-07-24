@@ -12,6 +12,8 @@
 ### Hinzugefügt
 
 * **„Gefällt mir" in „Mein Bereich"**: Neuer Menüpunkt mit eigener Seite, die die Themen auflistet, in denen das Mitglied Beiträge mit „Gefällt mir" markiert hat (auf den Startpunkt beschränkt).
+* **Forensuche**: Eine Suchbox auf Übersicht, Forum- und Themenansicht durchsucht Themen-Titel und Beitragstexte **innerhalb des Startpunkts** und zeigt die Treffer als Liste. Nur lesbare Foren werden durchsucht.
+* **BB-Code in Signaturen**: In der Signatur sind jetzt `[b]`, `[i]`, `[u]`, `[s]`, `[url]` und `[color]` erlaubt und werden unter den Beiträgen als HTML dargestellt. Die Umwandlung ist XSS-sicher (erst maskieren, dann nur wohlgeformte Marken ersetzen; URLs nur mit http(s)://). Logik in `Frontend\BBCode`.
 
 ## Version 1.1.0 (2026-07-24)
 

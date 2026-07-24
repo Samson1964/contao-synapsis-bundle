@@ -27,6 +27,7 @@ use Contao\System;
 use Composer\InstalledVersions;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AuthorLabel;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AvatarResolver;
+use Schachbulle\ContaoSynapsisBundle\Frontend\BBCode;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LikeManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
@@ -185,6 +186,10 @@ class SynapsisForum extends Module
                 $this->compilePanel();
                 break;
 
+            case 'search':
+                $this->compileSearch();
+                break;
+
             default:
                 $this->compileIndex();
         }
@@ -233,6 +238,14 @@ class SynapsisForum extends Module
             $this->panel = $panel;
             $this->view = 'panel';
             $this->strTemplate = 'mod_synapsis_panel';
+
+            return;
+        }
+
+        // Forensuche (innerhalb dieses Startpunkts)
+        if (null !== Input::get('q')) {
+            $this->view = 'search';
+            $this->strTemplate = 'mod_synapsis_search';
 
             return;
         }
@@ -471,6 +484,75 @@ class SynapsisForum extends Module
         $this->Template->formAction = $this->pageUrl(['forum' => $forumId, 'new' => 1]);
         $this->Template->formId = 'synapsis_topic_'.$this->id;
         $this->Template->cancelUrl = $this->pageUrl(['forum' => $forumId]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Forensuche
+    // -------------------------------------------------------------------------
+
+    /**
+     * Durchsucht Themen (Titel) und Beitraege (Text) innerhalb dieses
+     * Startpunkts und stellt die Trefferliste zusammen.
+     */
+    private function compileSearch(): void
+    {
+        $term = trim((string) Input::get('q'));
+
+        $breadcrumb = $this->buildBreadcrumb(0);
+        $breadcrumb[] = ['title' => $GLOBALS['TL_LANG']['MSC']['synapsisSearch'] ?? 'Suche', 'url' => ''];
+
+        $this->Template->breadcrumb = $breadcrumb;
+        $this->Template->query = $term;
+        $this->Template->searchAction = $this->pageUrl([]);
+        $this->Template->items = [];
+        $this->Template->tooShort = false;
+
+        // Zu kurze Eingabe: Hinweis nur, wenn ueberhaupt etwas eingegeben wurde.
+        if (mb_strlen($term) < 2) {
+            $this->Template->tooShort = '' !== $term;
+
+            return;
+        }
+
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
+        $like = '%'.$this->escapeLike($term).'%';
+
+        // Themen, deren Titel passt ODER die einen passenden Beitrag enthalten.
+        $sql = 'SELECT DISTINCT t.id, t.title, t.pid, t.date'
+            .' FROM tl_synapsis_topic t'
+            .' LEFT JOIN tl_synapsis_post p ON p.pid = t.id AND p.published = ?'
+            .' WHERE t.published = ? AND t.pid IN ('.$placeholders.')'
+            .' AND (t.title LIKE ? OR p.text LIKE ?)'
+            .' ORDER BY t.date DESC';
+
+        $rows = Database::getInstance()
+            ->prepare($sql)
+            ->limit(100)
+            ->execute(...array_merge(['1', '1'], $forumIds, [$like, $like]))
+        ;
+
+        $items = [];
+
+        while ($rows->next()) {
+            $items[] = [
+                'title' => (string) $rows->title,
+                'url' => $this->pageUrl(['topic' => (int) $rows->id]),
+                'forumTitle' => $this->forumTitle((int) $rows->pid),
+                'dateFormatted' => $this->formatDate((int) $rows->date),
+            ];
+        }
+
+        $this->Template->items = $items;
+    }
+
+    /**
+     * Maskiert die LIKE-Sonderzeichen % _ und den Backslash, damit die
+     * Sucheingabe woertlich (nicht als Muster) verwendet wird.
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 
     // -------------------------------------------------------------------------
@@ -1064,7 +1146,9 @@ class SynapsisForum extends Module
 
         $post['authorName'] = $this->authorLabel($authorId, (string) ($post['authorName'] ?? ''));
         $post['authorAvatar'] = $this->avatar($authorId);
-        $post['signature'] = $this->memberSignature($authorId);
+        // Signatur mit sicherem BB-Code als HTML (leer bleibt leer).
+        $signature = $this->memberSignature($authorId);
+        $post['signature'] = '' !== $signature ? BBCode::toHtml($signature) : '';
 
         // "Gefaellt mir"
         $postId = (int) $post['id'];

@@ -26,6 +26,8 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         </nav>
     <?php endif; ?>
 
+    <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
+
     <header class="synapsis-topic__header">
         <h2 class="synapsis-topic__title"><?= StringUtil::specialchars($this->topic['title']) ?></h2>
         <div class="synapsis-topic__actions">
@@ -71,7 +73,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                     <?php endif; ?>
 
                     <?php if (!empty($post['signature'])): ?>
-                        <div class="synapsis-post__signature"><?= nl2br(StringUtil::specialchars($post['signature'])) ?></div>
+                        <div class="synapsis-post__signature"><?= $post['signature'] ?></div>
                     <?php endif; ?>
 
                     <div class="synapsis-post__footer">

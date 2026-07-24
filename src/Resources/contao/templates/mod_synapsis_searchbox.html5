@@ -1,0 +1,16 @@
+<?php
+/*
+ * Suchformular (GET) fuer die Forensuche. Wird per
+ * $this->insert('mod_synapsis_searchbox', $this->getData()) auf den
+ * Forenseiten eingebunden.
+ *
+ * @var string $this->baseUrl
+ * @var string $this->query (optional: aktuelle Sucheingabe)
+ */
+
+use Contao\StringUtil;
+?>
+<form action="<?= $this->baseUrl ?>" method="get" class="synapsis-search" role="search">
+    <input type="search" name="q" value="<?= StringUtil::specialchars($this->query ?? '') ?>" class="synapsis-search__input" placeholder="<?= $GLOBALS['TL_LANG']['MSC']['synapsisSearchPlaceholder'] ?? 'Im Forum suchen …' ?>" aria-label="<?= $GLOBALS['TL_LANG']['MSC']['synapsisSearch'] ?? 'Suche' ?>">
+    <button type="submit" class="synapsis-button synapsis-button--secondary synapsis-search__button"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSearchButton'] ?? 'Suchen' ?></button>
+</form>

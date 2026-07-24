@@ -22,6 +22,8 @@ use Contao\StringUtil;
         </nav>
     <?php endif; ?>
 
+    <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
+
     <header class="synapsis-forumview__header">
         <h2 class="synapsis-forumview__title"><?= StringUtil::specialchars($this->forum['title']) ?></h2>
         <?php if ('' !== $this->newTopicUrl): ?>

@@ -23,6 +23,8 @@ use Contao\StringUtil;
         </nav>
     <?php endif; ?>
 
+    <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
+
     <?php if (!empty($this->newestTopics)): ?>
         <section class="synapsis-latest">
             <h3 class="synapsis-latest__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLatest'] ?? 'Neueste Themen' ?></h3>

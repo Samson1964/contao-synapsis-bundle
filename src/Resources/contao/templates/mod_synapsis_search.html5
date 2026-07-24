@@ -1,0 +1,53 @@
+<?php
+/*
+ * Trefferliste der Forensuche.
+ *
+ * @var array  $this->breadcrumb
+ * @var string $this->query
+ * @var array  $this->items
+ * @var bool   $this->tooShort
+ */
+
+use Contao\StringUtil;
+?>
+<div class="synapsis synapsis-search-results<?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
+    <header class="synapsis-panel__header">
+        <h2 class="synapsis-panel__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSearch'] ?? 'Suche' ?></h2>
+    </header>
+
+    <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
+
+    <?php if ($this->tooShort): ?>
+        <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSearchTooShort'] ?? 'Bitte mindestens 2 Zeichen eingeben.' ?></p>
+    <?php elseif ('' === (string) $this->query): ?>
+        <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSearchHint'] ?? 'Gib einen Suchbegriff ein.' ?></p>
+    <?php elseif (empty($this->items)): ?>
+        <p class="synapsis-empty"><?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisNoResults'] ?? 'Keine Treffer für „%s".', StringUtil::specialchars($this->query)) ?></p>
+    <?php else: ?>
+        <p class="synapsis-search-count"><?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisResultCount'] ?? '%d Treffer für „%s"', count($this->items), StringUtil::specialchars($this->query)) ?></p>
+        <ul class="synapsis-panel__list">
+            <?php foreach ($this->items as $item): ?>
+                <li class="synapsis-panel__item">
+                    <span class="synapsis-panel__main">
+                        <a class="synapsis-panel__link" href="<?= $item['url'] ?>"><?= StringUtil::specialchars($item['title']) ?></a>
+                        <span class="synapsis-panel__meta"><?= StringUtil::specialchars($item['forumTitle']) ?> &middot; <?= $item['dateFormatted'] ?></span>
+                    </span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+
+    <p class="synapsis-back"><a href="<?= $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum'] ?? 'Zur Übersicht' ?></a></p>
+
+    <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
+
+</div>

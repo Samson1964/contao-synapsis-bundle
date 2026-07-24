@@ -681,6 +681,32 @@
     color: var(--syn-muted);
 }
 
+/* --- Forensuche --------------------------------------------------------- */
+.synapsis-search {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.synapsis-search__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--syn-border);
+    border-radius: var(--syn-radius);
+    font-size: 0.95rem;
+}
+
+.synapsis-search__button {
+    flex: 0 0 auto;
+}
+
+.synapsis-search-count {
+    color: var(--syn-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
 /* --- Smiley-Leiste ------------------------------------------------------ */
 .synapsis-smileys {
     display: flex;

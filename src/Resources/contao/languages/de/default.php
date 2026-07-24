@@ -63,11 +63,20 @@ $GLOBALS['TL_LANG']['MSC']['synapsisMemberArea']      = 'Mein Bereich';
 $GLOBALS['TL_LANG']['MSC']['synapsisMyPosts']         = 'Meine Beiträge';
 $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions']   = 'Abonnements';
 $GLOBALS['TL_LANG']['MSC']['synapsisSignature']       = 'Signatur';
-$GLOBALS['TL_LANG']['MSC']['synapsisSignatureLabel']  = 'Deine Signatur (reiner Text)';
+$GLOBALS['TL_LANG']['MSC']['synapsisSignatureLabel']  = 'Deine Signatur (BB-Code erlaubt: [b] [i] [u] [s] [url] [color])';
 $GLOBALS['TL_LANG']['MSC']['synapsisSave']            = 'Speichern';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoSubscriptions'] = 'Du hast keine Themen abonniert.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread']        = 'Es gibt keine ungelesenen Beiträge.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts']      = 'Du hast noch keine Beiträge geschrieben.';
+
+// Forensuche
+$GLOBALS['TL_LANG']['MSC']['synapsisSearch']            = 'Suche';
+$GLOBALS['TL_LANG']['MSC']['synapsisSearchPlaceholder'] = 'Im Forum suchen …';
+$GLOBALS['TL_LANG']['MSC']['synapsisSearchButton']      = 'Suchen';
+$GLOBALS['TL_LANG']['MSC']['synapsisSearchTooShort']    = 'Bitte mindestens 2 Zeichen eingeben.';
+$GLOBALS['TL_LANG']['MSC']['synapsisSearchHint']        = 'Gib einen Suchbegriff ein.';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoResults']         = 'Keine Treffer für „%s".';
+$GLOBALS['TL_LANG']['MSC']['synapsisResultCount']       = '%d Treffer für „%s"';
 
 // Gefaellt mir (Paket C)
 $GLOBALS['TL_LANG']['MSC']['synapsisLike']       = 'Gefällt mir';
