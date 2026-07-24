@@ -1,8 +1,8 @@
 # Synapsis Changelog
 
-## Version 1.1.0 (unveröffentlicht – Entwicklung auf dev-main)
+## Version 1.1.0 (2026-07-24)
 
-> Enthält eine Schema-Änderung: nach dem Update `contao:migrate` ausführen.
+> Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabellen `tl_synapsis_read`, `tl_synapsis_like`, `tl_synapsis_settings` sowie die Spalte `tl_member.signature`).
 
 ### Hinzugefügt
 
