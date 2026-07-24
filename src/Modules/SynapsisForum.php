@@ -30,6 +30,7 @@ use Schachbulle\ContaoSynapsisBundle\Frontend\AvatarResolver;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LikeManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
+use Schachbulle\ContaoSynapsisBundle\Frontend\NotificationTemplate;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ReadTracker;
 use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
@@ -1639,6 +1640,13 @@ class SynapsisForum extends Module
      */
     private function notifySubscribers(int $topicId, int $excludeMemberId): void
     {
+        $settings = $this->forumSettings();
+
+        // Benachrichtigungen koennen global abgeschaltet werden.
+        if ('1' !== (string) ($settings['notifyEnabled'] ?? '1')) {
+            return;
+        }
+
         $subscribers = Database::getInstance()
             ->prepare('SELECT m.email, m.firstname, m.lastname FROM tl_synapsis_subscription s INNER JOIN tl_member m ON m.id = s.member WHERE s.topic = ? AND s.member != ?')
             ->execute($topicId, $excludeMemberId)
@@ -1652,29 +1660,57 @@ class SynapsisForum extends Module
         $title = (string) $this->activeTopic['title'];
         $url = $this->absoluteUrl(['topic' => $topicId]);
 
-        $subject = sprintf($GLOBALS['TL_LANG']['MSC']['synapsisNotifySubject'] ?? 'Neue Antwort im Thema "%s"', $title);
+        $subjectTpl = '' !== (string) ($settings['notifySubject'] ?? '') ? (string) $settings['notifySubject'] : 'Neue Antwort im Thema "##topic##"';
+        $bodyTpl = '' !== (string) ($settings['notifyBody'] ?? '') ? (string) $settings['notifyBody'] : "Hallo ##name##,\n\nim Thema \"##topic##\" wurde eine neue Antwort verfasst.\n\n##url##\n";
+        $senderName = (string) ($settings['senderName'] ?? '');
+        $senderEmail = (string) ($settings['senderEmail'] ?? '');
 
         foreach ($subscribers as $subscriber) {
             if ('' === (string) $subscriber['email']) {
                 continue;
             }
 
-            $body = sprintf(
-                $GLOBALS['TL_LANG']['MSC']['synapsisNotifyBody'] ?? "Hallo %s,\n\nim Thema \"%s\" wurde eine neue Antwort verfasst.\n\n%s\n",
-                trim(($subscriber['firstname'] ?? '').' '.($subscriber['lastname'] ?? '')),
-                $title,
-                $url
-            );
+            $tokens = [
+                'topic' => $title,
+                'name' => trim(($subscriber['firstname'] ?? '').' '.($subscriber['lastname'] ?? '')),
+                'url' => $url,
+            ];
 
             try {
                 $email = new Email();
-                $email->subject = $subject;
-                $email->text = $body;
+
+                if ('' !== $senderEmail) {
+                    $email->from = $senderEmail;
+                }
+
+                if ('' !== $senderName) {
+                    $email->fromName = $senderName;
+                }
+
+                $email->subject = NotificationTemplate::render($subjectTpl, $tokens);
+                $email->text = NotificationTemplate::render($bodyTpl, $tokens);
                 $email->sendTo($subscriber['email']);
             } catch (\Exception $e) {
                 // Einzelne fehlgeschlagene Zustellung darf den Beitrag nicht verhindern
             }
         }
+    }
+
+    /**
+     * Globale Foreneinstellungen (einzelner Datensatz id=1). Leeres Array, wenn
+     * noch nichts gespeichert wurde - dann gelten die Standardwerte.
+     *
+     * @return array<string, mixed>
+     */
+    private function forumSettings(): array
+    {
+        $row = Database::getInstance()
+            ->prepare('SELECT * FROM tl_synapsis_settings WHERE id = 1')
+            ->execute()
+            ->row()
+        ;
+
+        return \is_array($row) ? $row : [];
     }
 
     /**

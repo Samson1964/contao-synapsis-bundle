@@ -44,3 +44,9 @@ services:
         class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\ModuleListener
         tags:
             - { name: contao.callback, table: tl_module, target: fields.synapsis_root.options, method: getRootOptions }
+
+    # --- Globale Einstellungen (tl_synapsis_settings) ------------------------
+    schachbulle_contao_synapsis.listener.data_container.settings:
+        class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\SettingsListener
+        tags:
+            - { name: contao.callback, table: tl_synapsis_settings, target: config.onload, method: onLoad }

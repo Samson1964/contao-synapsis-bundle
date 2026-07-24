@@ -39,6 +39,12 @@ $GLOBALS['BE_MOD']['synapsis']['synapsis_csv'] = array
     'icon'     => 'bundles/schachbullecontaosynapsis/icons/forum.svg',
 );
 
+$GLOBALS['BE_MOD']['synapsis']['synapsis_settings'] = array
+(
+    'tables' => array('tl_synapsis_settings'),
+    'icon'   => 'bundles/schachbullecontaosynapsis/icons/forum.svg',
+);
+
 /*
  * Frontend-Modul registrieren
  *

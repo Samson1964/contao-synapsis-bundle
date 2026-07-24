@@ -14,6 +14,7 @@
 * **„Gefällt mir" für Beiträge**: Angemeldete Mitglieder können Beiträge liken und wieder entliken (nicht den eigenen). Unter jedem Beitrag stehen Anzahl und Namen der Likenden (neue Tabelle `tl_synapsis_like`, Logik in `Frontend\LikeManager`).
 * **Smileys**: Eine Smiley-Leiste unter dem Editor fügt gängige Emoji per Klick ein (mit TinyMCE und einfacher Textarea). Zusätzlich steht im TinyMCE der Emoji-Auswahl-Button zur Verfügung.
 * **Avatare (optional)**: Ist [terminal42/contao-avatar](https://github.com/terminal42/contao-avatar) installiert, wird der Mitglieder-Avatar verwendet; sonst das bisherige farbige Standard-Icon (Lucide). Die Markup-Logik steckt in `Frontend\AvatarResolver`.
+* **Globale Einstellungen (Backend)**: Neues Backend-Modul „Einstellungen" in der Synapsis-Gruppe (Einzelsatz `tl_synapsis_settings`). Dort lassen sich die **E-Mail-Vorlagen** für die Benachrichtigung bei neuen Antworten pflegen (Platzhalter `##topic##`, `##name##`, `##url##`), die Benachrichtigung global an-/abschalten und ein optionaler Absender (Name/E-Mail) festlegen. Die Vorlagen nutzen Token statt `sprintf` (robust gegen `%`-Zeichen; `Frontend\NotificationTemplate`).
 
 ### Entfernt
 
@@ -21,7 +22,7 @@
 
 ### Verifiziert
 
-* Auf Contao 4.13.58 und 5.7.7: Schema-Migration (`tl_synapsis_read`, `tl_synapsis_like`, `tl_member.signature`), Zwei-Datei-Import inkl. `authorName` und Guards, Import-Formular (echtes Rendering), Gelesen-Funktion (ungelesen → gelesen → neuer Beitrag), „Gefällt mir" (Toggle, kein Selbst-/Gast-Like, mehrere Liker), Rendering aller vier Panel-Unteransichten und der Smiley-Leiste, Themenerstellung, Frontend-Rauchtest, 29 Unit-Tests.
+* Auf Contao 4.13.58 und 5.7.7: Schema-Migration (`tl_synapsis_read`, `tl_synapsis_like`, `tl_synapsis_settings`, `tl_member.signature`), Zwei-Datei-Import inkl. `authorName` und Guards, Import-Formular (echtes Rendering), Gelesen-Funktion (ungelesen → gelesen → neuer Beitrag), „Gefällt mir" (Toggle, kein Selbst-/Gast-Like, mehrere Liker), globale Einstellungen (Einzelsatz anlegen, Vorlagen-Pipeline, Backend-Modul), Rendering aller vier Panel-Unteransichten und der Smiley-Leiste, Themenerstellung, Frontend-Rauchtest, 34 Unit-Tests.
 * Der Avatar-Fallback (Lucide) und die Markup-Logik sind unit-getestet; die Anbindung an terminal42/contao-avatar ist nach dessen Insert-Tag-API implementiert, aber lokal nicht verifiziert (Bundle dort nicht installiert) – bei Bedarf auf Staging prüfen.
 
 ## Version 1.0.1 (2026-07-24)
