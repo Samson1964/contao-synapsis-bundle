@@ -73,6 +73,32 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                     <?php if (!empty($post['signature'])): ?>
                         <div class="synapsis-post__signature"><?= nl2br(StringUtil::specialchars($post['signature'])) ?></div>
                     <?php endif; ?>
+
+                    <div class="synapsis-post__footer">
+                        <?php if (!empty($post['canLike'])): ?>
+                            <form action="<?= $this->likeAction ?>" method="post" class="synapsis-like__form">
+                                <input type="hidden" name="FORM_SUBMIT" value="<?= $this->likeFormId ?>">
+                                <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                                <input type="hidden" name="post" value="<?= $post['id'] ?>">
+                                <button type="submit" class="synapsis-like__button<?= !empty($post['likedByMe']) ? ' is-active' : '' ?>">
+                                    <?php if (!empty($post['likedByMe'])): ?>
+                                        &#10084; <?= $GLOBALS['TL_LANG']['MSC']['synapsisUnlike'] ?? 'Gefällt mir nicht mehr' ?>
+                                    <?php else: ?>
+                                        &#9825; <?= $GLOBALS['TL_LANG']['MSC']['synapsisLike'] ?? 'Gefällt mir' ?>
+                                    <?php endif; ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+
+                        <?php if ($post['likeCount'] > 0): ?>
+                            <span class="synapsis-like__count">
+                                &#10084; <?= $post['likeCount'] ?>
+                                <?php if (!empty($post['likers'])): ?>
+                                    <span class="synapsis-like__names">&middot; <?= StringUtil::specialchars(implode(', ', $post['likers'])) ?></span>
+                                <?php endif; ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </article>
         <?php endforeach; ?>
@@ -93,6 +119,12 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                 <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
 
                 <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8"></textarea>
+
+                <?php if (!empty($this->emoticons)): ?>
+                    <div class="synapsis-smileys">
+                        <?php foreach ($this->emoticons as $emo): ?><button type="button" class="synapsis-smiley" data-emoji="<?= $emo ?>" title="Smiley einfügen"><?= $emo ?></button><?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
                 <?php if ($this->allowUploads): ?>
                     <label class="synapsis-form__upload">

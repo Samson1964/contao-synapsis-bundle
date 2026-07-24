@@ -68,3 +68,7 @@ $GLOBALS['TL_LANG']['MSC']['synapsisSave']            = 'Speichern';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoSubscriptions'] = 'Du hast keine Themen abonniert.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread']        = 'Es gibt keine ungelesenen Beiträge.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts']      = 'Du hast noch keine Beiträge geschrieben.';
+
+// Gefaellt mir (Paket C)
+$GLOBALS['TL_LANG']['MSC']['synapsisLike']   = 'Gefällt mir';
+$GLOBALS['TL_LANG']['MSC']['synapsisUnlike'] = 'Gefällt mir nicht mehr';

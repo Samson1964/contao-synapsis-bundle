@@ -11,6 +11,9 @@
 * **Pfadnavigation als Box**: Die Brotkrumen stehen jetzt als abgesetzte Box oben – auch auf der Übersicht.
 * **Gelesen-Funktion**: Für angemeldete Mitglieder wird der Lesestand je Thema gemerkt (neue Tabelle `tl_synapsis_read`). Ungelesene Themen und Foren werden in den Listen markiert (fetter Titel + Punkt). Beim Öffnen eines Themas gilt es als gelesen. Die Logik steckt in der testbaren Klasse `Frontend\ReadTracker`.
 * **Mitglieder-Bereich (untere Box)**: Für angemeldete Mitglieder eine Navigationsbox mit vier Unteransichten – **Meine Beiträge**, **Ungelesene Beiträge**, **Abonnements verwalten** (mit Abbestellen) und **Signatur bearbeiten**. Die Forensignatur (`tl_member.signature`) wird unter den Beiträgen angezeigt.
+* **„Gefällt mir" für Beiträge**: Angemeldete Mitglieder können Beiträge liken und wieder entliken (nicht den eigenen). Unter jedem Beitrag stehen Anzahl und Namen der Likenden (neue Tabelle `tl_synapsis_like`, Logik in `Frontend\LikeManager`).
+* **Smileys**: Eine Smiley-Leiste unter dem Editor fügt gängige Emoji per Klick ein (mit TinyMCE und einfacher Textarea). Zusätzlich steht im TinyMCE der Emoji-Auswahl-Button zur Verfügung.
+* **Avatare (optional)**: Ist [terminal42/contao-avatar](https://github.com/terminal42/contao-avatar) installiert, wird der Mitglieder-Avatar verwendet; sonst das bisherige farbige Standard-Icon (Lucide). Die Markup-Logik steckt in `Frontend\AvatarResolver`.
 
 ### Entfernt
 
@@ -18,7 +21,8 @@
 
 ### Verifiziert
 
-* Auf Contao 4.13.58 und 5.7.7: Schema-Migration (`tl_synapsis_read`, `tl_member.signature`), Zwei-Datei-Import inkl. `authorName` und Guards, Import-Formular (echtes Rendering), Gelesen-Funktion (ungelesen → gelesen → neuer Beitrag), Rendering aller vier Panel-Unteransichten, Themenerstellung, Frontend-Rauchtest, 22 Unit-Tests.
+* Auf Contao 4.13.58 und 5.7.7: Schema-Migration (`tl_synapsis_read`, `tl_synapsis_like`, `tl_member.signature`), Zwei-Datei-Import inkl. `authorName` und Guards, Import-Formular (echtes Rendering), Gelesen-Funktion (ungelesen → gelesen → neuer Beitrag), „Gefällt mir" (Toggle, kein Selbst-/Gast-Like, mehrere Liker), Rendering aller vier Panel-Unteransichten und der Smiley-Leiste, Themenerstellung, Frontend-Rauchtest, 29 Unit-Tests.
+* Der Avatar-Fallback (Lucide) und die Markup-Logik sind unit-getestet; die Anbindung an terminal42/contao-avatar ist nach dessen Insert-Tag-API implementiert, aber lokal nicht verifiziert (Bundle dort nicht installiert) – bei Bedarf auf Staging prüfen.
 
 ## Version 1.0.1 (2026-07-24)
 

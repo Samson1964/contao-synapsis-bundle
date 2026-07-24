@@ -24,10 +24,14 @@ use Contao\Module;
 use Contao\Pagination;
 use Contao\StringUtil;
 use Contao\System;
+use Composer\InstalledVersions;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AuthorLabel;
+use Schachbulle\ContaoSynapsisBundle\Frontend\AvatarResolver;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
+use Schachbulle\ContaoSynapsisBundle\Frontend\LikeManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ReadTracker;
+use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
 /**
  * Frontend-Modul des Synapsis-Forums.
@@ -94,6 +98,13 @@ class SynapsisForum extends Module
      * @var ReadTracker|null
      */
     private $readTracker;
+
+    /**
+     * "Gefaellt mir"-Verwaltung (lazy erzeugt).
+     *
+     * @var LikeManager|null
+     */
+    private $likeManager;
 
     /**
      * Aktive Mitglieder-Unteransicht (subs|sig|me|unread) oder '' (keine).
@@ -340,6 +351,7 @@ class SynapsisForum extends Module
 
         // Abo-Umschaltung und Antwort verarbeiten, bevor die Liste gerendert wird
         $this->handleSubscription();
+        $this->handleLike();
         $this->handlePostSubmission();
 
         // Ansichtszaehler erhoehen - aber pro Sitzung nur einmal, damit ein
@@ -388,6 +400,10 @@ class SynapsisForum extends Module
         $this->Template->isSubscribed = $this->isSubscribed($topicId);
         $this->Template->subscribeAction = $this->pageUrl(['topic' => $topicId]);
         $this->Template->subscribeFormId = 'synapsis_sub_'.$this->id;
+
+        // "Gefaellt mir": gemeinsame Formulardaten (pro Beitrag eine Schaltflaeche)
+        $this->Template->likeFormId = 'synapsis_like_'.$this->id;
+        $this->Template->likeAction = $this->pageUrl(['topic' => $topicId, 'page_p'.$this->id => $this->getCurrentPage()]);
 
         // Antwortformular in offenen Themen fuer alle Schreibberechtigten
         // (Mitglieder bzw. Gaeste mit Schreibrecht).
@@ -774,6 +790,32 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Verarbeitet das Setzen/Entfernen einer "Gefaellt mir"-Markierung und laedt
+     * die Themenansicht auf derselben Beitragsseite neu.
+     */
+    private function handleLike(): void
+    {
+        if ('synapsis_like_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        if (!$this->isMemberLoggedIn()) {
+            return;
+        }
+
+        $postId = (int) Input::post('post');
+
+        if ($postId > 0) {
+            $this->likeManager()->toggle((int) FrontendUser::getInstance()->id, $postId);
+        }
+
+        $this->redirect($this->pageUrl([
+            'topic' => (int) $this->activeTopic['id'],
+            'page_p'.$this->id => $this->getCurrentPage(),
+        ]));
+    }
+
+    /**
      * Fuegt einen Beitrag ein und verarbeitet optionale Dateianhaenge.
      */
     private function insertPost(int $topicId, int $memberId, string $authorName, string $text, int $timestamp): int
@@ -957,6 +999,16 @@ class SynapsisForum extends Module
         $post['authorName'] = $this->authorLabel($authorId, (string) ($post['authorName'] ?? ''));
         $post['authorAvatar'] = $this->avatar($authorId);
         $post['signature'] = $this->memberSignature($authorId);
+
+        // "Gefaellt mir"
+        $postId = (int) $post['id'];
+        $memberId = $this->currentAuthorId();
+        $likerIds = $this->likeManager()->likerIds($postId);
+        $post['likeCount'] = \count($likerIds);
+        $post['likers'] = $this->memberNames($likerIds);
+        $post['likedByMe'] = \in_array($memberId, $likerIds, true);
+        // Liken nur fuer angemeldete Mitglieder und nicht den eigenen Beitrag
+        $post['canLike'] = $memberId > 0 && $memberId !== $authorId;
         $post['authorPostCount'] = (int) Database::getInstance()
             ->prepare('SELECT COUNT(*) FROM tl_synapsis_post WHERE author = ? AND published = ?')
             ->execute($authorId, '1')
@@ -1072,15 +1124,35 @@ class SynapsisForum extends Module
      */
     private function avatar(int $memberId): string
     {
-        $hue = ($memberId * 47) % 360;
-        $color = 'hsl('.$hue.', 55%, 45%)';
+        $external = null;
 
-        // Lucide "circle-user-round"
-        return '<span class="synapsis-avatar" style="background:'.$color.'">'
-            .'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
-            .'<path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/><circle cx="12" cy="12" r="10"/>'
-            .'</svg></span>'
-        ;
+        // Optional: Avatar aus terminal42/contao-avatar verwenden, wenn das
+        // Bundle installiert ist. Schlaegt das fehl, greift der Lucide-Fallback.
+        if ($memberId > 0 && InstalledVersions::isInstalled('terminal42/contao-avatar')) {
+            try {
+                $external = $this->externalAvatar($memberId);
+            } catch (\Throwable $e) {
+                $external = null;
+            }
+        }
+
+        return AvatarResolver::render($memberId, $external);
+    }
+
+    /**
+     * Loest den Avatar-Insert-Tag von terminal42/contao-avatar auf (Bild-URL
+     * oder Bild-Markup). Versionsabhaengig, da Contao 5 keinen
+     * Controller::replaceInsertTags mehr hat.
+     */
+    private function externalAvatar(int $memberId): ?string
+    {
+        $tag = '{{avatar::member::'.$memberId.'::80x80xcrop}}';
+
+        if (SchachbulleContaoSynapsisBundle::isContao5()) {
+            return System::getContainer()->get('contao.insert_tag.parser')->replaceInline($tag);
+        }
+
+        return \Contao\Controller::replaceInsertTags($tag);
     }
 
     // -------------------------------------------------------------------------
@@ -1471,6 +1543,18 @@ class SynapsisForum extends Module
     }
 
     /**
+     * "Gefaellt mir"-Verwaltung (Tabelle tl_synapsis_like), lazy erzeugt.
+     */
+    private function likeManager(): LikeManager
+    {
+        if (null === $this->likeManager) {
+            $this->likeManager = new LikeManager(System::getContainer()->get('database_connection'));
+        }
+
+        return $this->likeManager;
+    }
+
+    /**
      * Markiert das Thema fuer das angemeldete Mitglied als gelesen.
      */
     private function markTopicRead(int $topicId): void
@@ -1668,6 +1752,40 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Anzeigenamen mehrerer Mitglieder (fuer die "Gefaellt mir"-Liste). Nicht
+     * mehr existierende Mitglieder werden ausgelassen.
+     *
+     * @param array<int> $ids
+     *
+     * @return array<string>
+     */
+    private function memberNames(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn ($i) => $i > 0)));
+
+        if ([] === $ids) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+
+        $rows = Database::getInstance()
+            ->prepare('SELECT firstname, lastname, username FROM tl_member WHERE id IN ('.$placeholders.')')
+            ->execute(...$ids)
+            ->fetchAllAssoc()
+        ;
+
+        $names = [];
+
+        foreach ($rows as $row) {
+            $name = trim(($row['firstname'] ?? '').' '.($row['lastname'] ?? ''));
+            $names[] = '' !== $name ? $name : (string) ($row['username'] ?? '');
+        }
+
+        return $names;
+    }
+
+    /**
      * Formatiert einen Zeitstempel im eingestellten Datums-/Zeitformat.
      */
     private function formatDate(int $timestamp): string
@@ -1709,6 +1827,12 @@ class SynapsisForum extends Module
      */
     private function enableEditor(): void
     {
+        // Smiley-Leiste: klassische Forensmilies als Unicode-Emoji. Funktioniert
+        // sowohl mit dem TinyMCE-Editor (Emoji-Auswahl gibt es zusaetzlich als
+        // Toolbar-Button) als auch mit einer einfachen Textarea.
+        $this->Template->emoticons = ['🙂', '😀', '😉', '😍', '😎', '😲', '😢', '😡', '👍', '👎', '❤️', '😂'];
+        $this->addSmileyScript();
+
         if (!$this->synapsis_editor) {
             $this->Template->editor = false;
 
@@ -1748,6 +1872,25 @@ class SynapsisForum extends Module
             .'toolbar:"bold italic | bullist numlist | link image emoticons",'
             .'branding:false'
             .'});});</script>'
+        ;
+    }
+
+    /**
+     * Bindet einmalig das Skript ein, das einen Klick auf die Smiley-Leiste
+     * verarbeitet: Der Smiley wird in den aktiven TinyMCE-Editor eingefuegt,
+     * andernfalls an der Cursorposition in die einfache Textarea.
+     */
+    private function addSmileyScript(): void
+    {
+        $GLOBALS['TL_BODY']['synapsis_smiley'] = '<script>document.addEventListener("click",function(e){'
+            .'var b=e.target.closest&&e.target.closest(".synapsis-smiley");if(!b)return;e.preventDefault();'
+            .'var emoji=b.getAttribute("data-emoji");var form=b.closest("form");if(!form)return;'
+            .'var ta=form.querySelector("textarea");if(!ta)return;'
+            .'if(window.tinymce&&ta.id){var ed=tinymce.get(ta.id);if(ed&&!ed.isHidden()){ed.insertContent(emoji);return;}}'
+            .'var s=ta.selectionStart||0,en=ta.selectionEnd||0;'
+            .'ta.value=ta.value.slice(0,s)+emoji+ta.value.slice(en);'
+            .'ta.selectionStart=ta.selectionEnd=s+emoji.length;ta.focus();'
+            .'});</script>'
         ;
     }
 }

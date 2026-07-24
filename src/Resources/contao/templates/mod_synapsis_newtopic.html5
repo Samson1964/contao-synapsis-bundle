@@ -47,6 +47,12 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
             <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="10"></textarea>
         </label>
 
+        <?php if (!empty($this->emoticons)): ?>
+            <div class="synapsis-smileys">
+                <?php foreach ($this->emoticons as $emo): ?><button type="button" class="synapsis-smiley" data-emoji="<?= $emo ?>" title="Smiley einfügen"><?= $emo ?></button><?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
         <?php if ($this->allowUploads): ?>
             <label class="synapsis-form__upload">
                 <span><?= $GLOBALS['TL_LANG']['MSC']['synapsisAttachment'] ?? 'Dateianhänge' ?></span>
