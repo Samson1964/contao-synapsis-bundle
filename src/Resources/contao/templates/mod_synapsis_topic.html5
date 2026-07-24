@@ -1,0 +1,98 @@
+<?php
+/*
+ * Beitraege eines Themas samt Antwortformular.
+ *
+ * @var array  $this->topic
+ * @var array  $this->forum
+ * @var array  $this->posts
+ * @var array  $this->breadcrumb
+ * @var string $this->pagination
+ * @var bool   $this->canReply
+ * @var bool   $this->editor
+ */
+
+use Contao\StringUtil;
+use Contao\System;
+
+$requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
+?>
+<div class="synapsis synapsis-topic<?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
+    <header class="synapsis-topic__header">
+        <h2 class="synapsis-topic__title"><?= StringUtil::specialchars($this->topic['title']) ?></h2>
+        <?php if ($this->locked): ?><span class="synapsis-badge synapsis-badge--locked"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLocked'] ?? 'Geschlossen' ?></span><?php endif; ?>
+    </header>
+
+    <div class="synapsis-posts">
+        <?php foreach ($this->posts as $post): ?>
+            <article class="synapsis-post" id="post-<?= $post['id'] ?>">
+                <aside class="synapsis-post__author">
+                    <?= $post['authorAvatar'] ?>
+                    <span class="synapsis-post__authorname"><?= $post['authorName'] ?></span>
+                    <span class="synapsis-post__authormeta"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPosts'] ?? 'Beiträge' ?>: <?= $post['authorPostCount'] ?></span>
+                </aside>
+                <div class="synapsis-post__body">
+                    <div class="synapsis-post__date"><?= $post['dateFormatted'] ?></div>
+                    <div class="synapsis-post__text"><?= $post['text'] ?></div>
+
+                    <?php if (!empty($post['attachmentList'])): ?>
+                        <div class="synapsis-post__attachments">
+                            <?php foreach ($post['attachmentList'] as $attachment): ?>
+                                <?php if ($attachment['isImage']): ?>
+                                    <a class="synapsis-attachment synapsis-attachment--image" href="<?= $attachment['path'] ?>" target="_blank" rel="noreferrer noopener">
+                                        <img src="<?= $attachment['path'] ?>" alt="<?= StringUtil::specialchars($attachment['name']) ?>" loading="lazy">
+                                    </a>
+                                <?php else: ?>
+                                    <a class="synapsis-attachment synapsis-attachment--file" href="<?= $attachment['path'] ?>" target="_blank" rel="noreferrer noopener"><?= StringUtil::specialchars($attachment['name']) ?></a>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+
+    <?= $this->pagination ?>
+
+    <?php if ($this->canReply): ?>
+        <section class="synapsis-reply">
+            <h3 class="synapsis-reply__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisReply'] ?? 'Antworten' ?></h3>
+
+            <?php if (!empty($this->formError)): ?>
+                <p class="synapsis-formerror"><?= $this->formError ?></p>
+            <?php endif; ?>
+
+            <form action="<?= $this->formAction ?>" method="post" enctype="multipart/form-data" class="synapsis-form">
+                <input type="hidden" name="FORM_SUBMIT" value="<?= $this->formId ?>">
+                <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+
+                <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8" required></textarea>
+
+                <?php if ($this->allowUploads): ?>
+                    <label class="synapsis-form__upload">
+                        <span><?= $GLOBALS['TL_LANG']['MSC']['synapsisAttachment'] ?? 'Dateianhänge' ?></span>
+                        <input type="file" name="attachment[]" multiple>
+                    </label>
+                <?php endif; ?>
+
+                <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSubmitReply'] ?? 'Antwort absenden' ?></button>
+            </form>
+        </section>
+    <?php elseif ($this->locked): ?>
+        <p class="synapsis-note"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLockedNote'] ?? 'Dieses Thema ist geschlossen. Es sind keine Antworten mehr möglich.' ?></p>
+    <?php elseif (!$this->loggedIn): ?>
+        <p class="synapsis-note"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLoginNote'] ?? 'Bitte melden Sie sich an, um zu antworten.' ?></p>
+    <?php endif; ?>
+
+    <p class="synapsis-back"><a href="<?= $this->forum['id'] ? $this->baseUrl . '?forum=' . $this->forum['id'] : $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToTopics'] ?? 'Zurück zum Forum' ?></a></p>
+
+</div>

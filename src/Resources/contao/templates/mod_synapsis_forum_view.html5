@@ -1,0 +1,91 @@
+<?php
+/*
+ * Themenliste eines Forums (mit Unterforen und Seitennummerierung).
+ *
+ * @var array  $this->forum
+ * @var array  $this->subforums
+ * @var array  $this->topics
+ * @var array  $this->breadcrumb
+ * @var string $this->newTopicUrl
+ * @var string $this->pagination
+ */
+
+use Contao\StringUtil;
+?>
+<div class="synapsis synapsis-forumview<?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
+    <header class="synapsis-forumview__header">
+        <h2 class="synapsis-forumview__title"><?= StringUtil::specialchars($this->forum['title']) ?></h2>
+        <?php if ('' !== $this->newTopicUrl): ?>
+            <a class="synapsis-button synapsis-button--primary" href="<?= $this->newTopicUrl ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNewTopic'] ?? 'Neues Thema' ?></a>
+        <?php elseif ($this->closed): ?>
+            <span class="synapsis-badge synapsis-badge--closed"><?= $GLOBALS['TL_LANG']['MSC']['synapsisClosed'] ?? 'Geschlossen' ?></span>
+        <?php endif; ?>
+    </header>
+
+    <?php if (!empty($this->subforums)): ?>
+        <ul class="synapsis-forumlist">
+            <?php foreach ($this->subforums as $forum): ?>
+                <li class="synapsis-forumlist__row">
+                    <span class="synapsis-col-forum">
+                        <span class="synapsis-forum-icon" data-icon="<?= $forum['icon'] ?>"></span>
+                        <span class="synapsis-forum-info">
+                            <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?= StringUtil::specialchars($forum['title']) ?></a>
+                            <?php if ('' !== (string) $forum['description']): ?>
+                                <span class="synapsis-forum-desc"><?= StringUtil::specialchars($forum['description']) ?></span>
+                            <?php endif; ?>
+                        </span>
+                    </span>
+                    <span class="synapsis-col-count"><?= $forum['topicCount'] ?></span>
+                    <span class="synapsis-col-count"><?= $forum['postCount'] ?></span>
+                    <span class="synapsis-col-last"></span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+
+    <?php if ($this->empty): ?>
+        <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNoTopics'] ?? 'In diesem Forum gibt es noch keine Themen.' ?></p>
+    <?php else: ?>
+        <ul class="synapsis-topiclist">
+            <li class="synapsis-topiclist__head">
+                <span class="synapsis-col-topic"><?= $GLOBALS['TL_LANG']['MSC']['synapsisTopic'] ?? 'Thema' ?></span>
+                <span class="synapsis-col-count"><?= $GLOBALS['TL_LANG']['MSC']['synapsisReplies'] ?? 'Antworten' ?></span>
+                <span class="synapsis-col-count"><?= $GLOBALS['TL_LANG']['MSC']['synapsisViews'] ?? 'Ansichten' ?></span>
+                <span class="synapsis-col-last"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLastPost'] ?? 'Letzter Beitrag' ?></span>
+            </li>
+            <?php foreach ($this->topics as $topic): ?>
+                <li class="synapsis-topiclist__row<?= $topic['sticky'] ? ' is-sticky' : '' ?>">
+                    <span class="synapsis-col-topic">
+                        <?php if ($topic['sticky']): ?><span class="synapsis-badge synapsis-badge--sticky"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSticky'] ?? 'Angeheftet' ?></span><?php endif; ?>
+                        <?php if ($topic['locked']): ?><span class="synapsis-badge synapsis-badge--locked"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLocked'] ?? 'Geschlossen' ?></span><?php endif; ?>
+                        <a class="synapsis-topic-title" href="<?= $topic['url'] ?>"><?= StringUtil::specialchars($topic['title']) ?></a>
+                        <span class="synapsis-topic-meta"><?= $topic['authorName'] ?> &middot; <?= $topic['dateFormatted'] ?></span>
+                    </span>
+                    <span class="synapsis-col-count"><?= $topic['replyCount'] ?></span>
+                    <span class="synapsis-col-count"><?= $topic['views'] ?></span>
+                    <span class="synapsis-col-last">
+                        <?php if ($topic['lastPost']): ?>
+                            <span class="synapsis-lastpost-meta"><?= $topic['lastPost']['authorName'] ?><br><?= $topic['lastPost']['dateFormatted'] ?></span>
+                        <?php else: ?>
+                            <span class="synapsis-lastpost-empty">&ndash;</span>
+                        <?php endif; ?>
+                    </span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+
+        <?= $this->pagination ?>
+    <?php endif; ?>
+
+    <p class="synapsis-back"><a href="<?= $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum'] ?? 'Zur Übersicht' ?></a></p>
+
+</div>

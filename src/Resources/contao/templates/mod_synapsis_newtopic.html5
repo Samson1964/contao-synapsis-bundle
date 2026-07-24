@@ -1,0 +1,63 @@
+<?php
+/*
+ * Formular fuer ein neues Thema.
+ *
+ * @var array  $this->forum
+ * @var array  $this->breadcrumb
+ * @var string $this->formAction
+ * @var string $this->cancelUrl
+ * @var bool   $this->editor
+ * @var bool   $this->allowUploads
+ */
+
+use Contao\StringUtil;
+use Contao\System;
+
+$requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
+?>
+<div class="synapsis synapsis-newtopic<?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
+    <header class="synapsis-newtopic__header">
+        <h2 class="synapsis-newtopic__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNewTopicIn'] ?? 'Neues Thema in' ?> &bdquo;<?= StringUtil::specialchars($this->forum['title']) ?>&ldquo;</h2>
+    </header>
+
+    <?php if (!empty($this->formError)): ?>
+        <p class="synapsis-formerror"><?= $this->formError ?></p>
+    <?php endif; ?>
+
+    <form action="<?= $this->formAction ?>" method="post" enctype="multipart/form-data" class="synapsis-form">
+        <input type="hidden" name="FORM_SUBMIT" value="<?= $this->formId ?>">
+        <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+
+        <label class="synapsis-form__field">
+            <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisTitle'] ?? 'Titel' ?></span>
+            <input type="text" name="title" maxlength="255" required value="<?= StringUtil::specialchars((string) \Contao\Input::post('title')) ?>">
+        </label>
+
+        <label class="synapsis-form__field">
+            <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisText'] ?? 'Text' ?></span>
+            <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="10" required></textarea>
+        </label>
+
+        <?php if ($this->allowUploads): ?>
+            <label class="synapsis-form__upload">
+                <span><?= $GLOBALS['TL_LANG']['MSC']['synapsisAttachment'] ?? 'Dateianhänge' ?></span>
+                <input type="file" name="attachment[]" multiple>
+            </label>
+        <?php endif; ?>
+
+        <div class="synapsis-form__actions">
+            <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisCreateTopic'] ?? 'Thema erstellen' ?></button>
+            <a class="synapsis-button" href="<?= $this->cancelUrl ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisCancel'] ?? 'Abbrechen' ?></a>
+        </div>
+    </form>
+
+</div>

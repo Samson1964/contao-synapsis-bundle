@@ -1,5 +1,32 @@
 # Synapsis Changelog
 
+## Version 0.2.0 (2026-07-24)
+
+### Frontend-Modul
+
+* Neues Frontend-Modul „Forum" (`synapsis_forum`, Modulgruppe „Synapsis-Forum") als Legacy-Modul (`extends \Contao\Module`) – läuft unter Contao 4.13 und Contao 5
+* Modul-Einstellungen in `tl_module`: Startpunkt-Auswahl (Options-Callback über getaggten Service), Einträge pro Seite, TinyMCE-Editor an/aus, Dateianhänge an/aus samt Upload-Verzeichnis
+* Eine Modulinstanz stellt alle Ansichten über URL-Parameter dar (mybb-Prinzip): Übersicht, Forum-Themenliste (`?forum=`), Thema mit Beiträgen (`?topic=`), Formular für neues Thema (`?forum=…&new=1`)
+* **Übersicht**: Kategorien mit ihren Foren (Icon, Beschreibung, Themen-/Beitragszähler, letzter Beitrag), Block „Neueste Themen" darüber, Statistiken darunter (Themen, Beiträge, aktivste Mitglieder)
+* **Forumansicht**: Unterforen und Themenliste seitenweise (angeheftete zuerst, dann nach Datum), Angeheftet-/Geschlossen-Badges, Brotkrumen-Navigation
+* **Themenansicht**: Beiträge seitenweise mit Autor, Avatar, Datum und Beitragszahl; Ansichtszähler wird erhöht; Antwortformular am Ende
+* **Zugriffsschutz** wird zur Laufzeit vererbt ausgewertet: geschützte/unveröffentlichte Bereiche werden anhand der Contao-Mitgliedergruppen ein- oder ausgeblendet (Klasse `Frontend\ForumAccess`, isoliert unit-getestet)
+* Themen anlegen und Antworten schreiben für angemeldete Mitglieder; TinyMCE-Editor (aus den Contao-Assets) mit Emoticons; optionale Dateianhänge (`FileUpload` → UUIDs), Bilder werden inline dargestellt
+* Standard-Avatar je Mitglied als Lucide-Icon mit aus der Mitglieds-ID abgeleiteter Farbe
+* Vier `.html5`-Templates und ein schlankes, responsives Stylesheet im klassischen Forenlayout (Kategorie-Kopfzeilen, Zeilen mit Icon/Zähler/letztem Beitrag)
+* Deutsche Frontend-Texte in `languages/de/default.php`
+
+### Verifiziert
+
+* Gegen die Contao-5.7-Referenzinstallation: Migration der `tl_module`-Felder, Callback-Registrierung im Container, Render-Rauchtest aller Leseansichten (Übersicht/Forum/Thema), Zugriffsschutz und Ansichtszähler
+* 12 Unit-Tests (Strukturregeln + Zugriffsvererbung) grün
+
+### Offen / nächste Schritte
+
+* Schreib-Pfad (Thema/Antwort anlegen, Upload) ist nur code-/API-geprüft, noch nicht mit echtem Login live getestet
+* TinyMCE-integrierter Bild-Upload (derzeit Bild-Einbindung über die Dateianhänge)
+* Emoticon-Auswahl im Editor feinjustieren; Zitieren/Melden von Beiträgen; RSS/Abo
+
 ## Version 0.1.0 (2026-07-23)
 
 ### Grundgerüst

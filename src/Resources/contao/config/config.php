@@ -26,6 +26,14 @@ $GLOBALS['BE_MOD']['synapsis']['forum'] = array
 );
 
 /*
+ * Frontend-Modul registrieren
+ *
+ * Ein einziges Modul stellt alle Ansichten des Forums dar. Als Legacy-Modul
+ * (extends \Contao\Module) laeuft es unter Contao 4.13 und Contao 5.
+ */
+$GLOBALS['FE_MOD']['synapsis']['synapsis_forum'] = \Schachbulle\ContaoSynapsisBundle\Modules\SynapsisForum::class;
+
+/*
  * Models registrieren
  *
  * Dadurch findet Contao zu jeder Tabelle die passende Model-Klasse, etwa bei

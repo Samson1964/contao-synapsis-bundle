@@ -32,8 +32,24 @@ Darunter hängen die Inhalte:
 * `tl_synapsis_topic` – Themen eines Forums (Autor = Contao-Mitglied)
 * `tl_synapsis_post` – Beiträge eines Themas (Text mit TinyMCE, Dateianhänge)
 
-Mehrere Startpunkte können nebeneinander bestehen; das Frontend-Modul wählt später einen
-davon aus.
+Mehrere Startpunkte können nebeneinander bestehen; das Frontend-Modul wählt einen davon aus.
+
+## Frontend-Modul
+
+Das Modul „Forum" (`synapsis_forum`) zeigt einen Startpunkt im Frontend an. Eine einzige
+Modulinstanz stellt über URL-Parameter alle Ansichten dar:
+
+| URL | Ansicht |
+|-----|---------|
+| (ohne Parameter) | Übersicht: Kategorien mit Foren, neueste Themen, Statistiken |
+| `?forum=<id>` | Themenliste eines Forums (seitenweise) |
+| `?topic=<id>` | Beiträge eines Themas samt Antwortformular |
+| `?forum=<id>&new=1` | Formular für ein neues Thema |
+
+Einstellungen des Moduls: Startpunkt, Einträge pro Seite, TinyMCE-Editor (mit Emoticons),
+Dateianhänge samt Upload-Verzeichnis. Themen anlegen und Antworten schreiben ist
+angemeldeten Contao-Mitgliedern vorbehalten; der Zugriffsschutz der Struktur wird dabei
+vererbt ausgewertet. Jedes Mitglied erhält ein Lucide-Standard-Avatar.
 
 ## Zugriffsschutz
 

@@ -1,0 +1,110 @@
+<?php
+/*
+ * Uebersicht des Startpunkts: Kategorien mit Foren, neueste Themen, Statistik.
+ *
+ * @var array $this->categories
+ * @var array $this->newestTopics
+ * @var array $this->statistics
+ */
+
+use Contao\StringUtil;
+?>
+<div class="synapsis synapsis-index<?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if ($this->headline): ?>
+        <<?= $this->hl ?> class="synapsis-headline"><?= $this->headline ?></<?= $this->hl ?>>
+    <?php endif; ?>
+
+    <?php if (!empty($this->newestTopics)): ?>
+        <section class="synapsis-latest">
+            <h3 class="synapsis-latest__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLatest'] ?? 'Neueste Themen' ?></h3>
+            <ul class="synapsis-latest__list">
+                <?php foreach ($this->newestTopics as $topic): ?>
+                    <li class="synapsis-latest__item">
+                        <a href="<?= $topic['url'] ?>"><?= StringUtil::specialchars($topic['title']) ?></a>
+                        <span class="synapsis-latest__meta"><?= $topic['authorName'] ?> &middot; <?= $topic['dateFormatted'] ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
+    <?php endif; ?>
+
+    <?php foreach ($this->categories as $category): ?>
+        <section class="synapsis-category">
+            <?php if ('' !== $category['title']): ?>
+                <header class="synapsis-category__header">
+                    <h3><?= StringUtil::specialchars($category['title']) ?></h3>
+                    <?php if ('' !== (string) $category['description']): ?>
+                        <p class="synapsis-category__desc"><?= StringUtil::specialchars($category['description']) ?></p>
+                    <?php endif; ?>
+                </header>
+            <?php endif; ?>
+
+            <?php if (empty($category['forums'])): ?>
+                <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNoForums'] ?? 'Keine Foren vorhanden.' ?></p>
+            <?php else: ?>
+                <ul class="synapsis-forumlist">
+                    <li class="synapsis-forumlist__head">
+                        <span class="synapsis-col-forum"><?= $GLOBALS['TL_LANG']['MSC']['synapsisForum'] ?? 'Forum' ?></span>
+                        <span class="synapsis-col-count"><?= $GLOBALS['TL_LANG']['MSC']['synapsisTopics'] ?? 'Themen' ?></span>
+                        <span class="synapsis-col-count"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPosts'] ?? 'Beiträge' ?></span>
+                        <span class="synapsis-col-last"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLastPost'] ?? 'Letzter Beitrag' ?></span>
+                    </li>
+                    <?php foreach ($category['forums'] as $forum): ?>
+                        <li class="synapsis-forumlist__row">
+                            <span class="synapsis-col-forum">
+                                <span class="synapsis-forum-icon" data-icon="<?= $forum['icon'] ?>"></span>
+                                <span class="synapsis-forum-info">
+                                    <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?= StringUtil::specialchars($forum['title']) ?></a>
+                                    <?php if ('' !== (string) $forum['description']): ?>
+                                        <span class="synapsis-forum-desc"><?= StringUtil::specialchars($forum['description']) ?></span>
+                                    <?php endif; ?>
+                                </span>
+                            </span>
+                            <span class="synapsis-col-count"><?= $forum['topicCount'] ?></span>
+                            <span class="synapsis-col-count"><?= $forum['postCount'] ?></span>
+                            <span class="synapsis-col-last">
+                                <?php if ($forum['lastPost']): ?>
+                                    <?php if ('' !== $forum['lastPost']['url']): ?>
+                                        <a href="<?= $forum['lastPost']['url'] ?>"><?= StringUtil::specialchars($forum['lastPost']['title']) ?></a>
+                                    <?php endif; ?>
+                                    <span class="synapsis-lastpost-meta"><?= $forum['lastPost']['authorName'] ?> &middot; <?= $forum['lastPost']['dateFormatted'] ?></span>
+                                <?php else: ?>
+                                    <span class="synapsis-lastpost-empty">&ndash;</span>
+                                <?php endif; ?>
+                            </span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+    <?php endforeach; ?>
+
+    <section class="synapsis-stats">
+        <h3 class="synapsis-stats__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisStats'] ?? 'Statistiken' ?></h3>
+        <div class="synapsis-stats__grid">
+            <div class="synapsis-stat">
+                <span class="synapsis-stat__value"><?= $this->statistics['topics'] ?></span>
+                <span class="synapsis-stat__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisTopics'] ?? 'Themen' ?></span>
+            </div>
+            <div class="synapsis-stat">
+                <span class="synapsis-stat__value"><?= $this->statistics['posts'] ?></span>
+                <span class="synapsis-stat__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPosts'] ?? 'Beiträge' ?></span>
+            </div>
+        </div>
+
+        <?php if (!empty($this->statistics['topPosters'])): ?>
+            <h4 class="synapsis-stats__subtitle"><?= $GLOBALS['TL_LANG']['MSC']['synapsisTopPosters'] ?? 'Aktivste Mitglieder' ?></h4>
+            <ul class="synapsis-topposters">
+                <?php foreach ($this->statistics['topPosters'] as $poster): ?>
+                    <li class="synapsis-topposters__item">
+                        <?= $poster['avatar'] ?>
+                        <span class="synapsis-topposters__name"><?= $poster['name'] ?></span>
+                        <span class="synapsis-topposters__count"><?= $poster['count'] ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </section>
+
+</div>

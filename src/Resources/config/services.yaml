@@ -35,3 +35,9 @@ services:
         class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\PostListener
         tags:
             - { name: contao.callback, table: tl_synapsis_post, target: list.sorting.child_record, method: renderPost }
+
+    # --- Modul-Konfiguration (tl_module) -------------------------------------
+    schachbulle_contao_synapsis.listener.data_container.module:
+        class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\ModuleListener
+        tags:
+            - { name: contao.callback, table: tl_module, target: fields.synapsis_root.options, method: getRootOptions }
