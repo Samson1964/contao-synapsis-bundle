@@ -69,6 +69,10 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
+
+                    <?php if (!empty($post['signature'])): ?>
+                        <div class="synapsis-post__signature"><?= nl2br(StringUtil::specialchars($post['signature'])) ?></div>
+                    <?php endif; ?>
                 </div>
             </article>
         <?php endforeach; ?>

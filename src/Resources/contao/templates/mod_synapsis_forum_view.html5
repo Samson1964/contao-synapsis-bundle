@@ -63,8 +63,9 @@ use Contao\StringUtil;
                 <span class="synapsis-col-last"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLastPost'] ?? 'Letzter Beitrag' ?></span>
             </li>
             <?php foreach ($this->topics as $topic): ?>
-                <li class="synapsis-topiclist__row<?= $topic['sticky'] ? ' is-sticky' : '' ?>">
+                <li class="synapsis-topiclist__row<?= $topic['sticky'] ? ' is-sticky' : '' ?><?= !empty($topic['unread']) ? ' is-unread' : '' ?>">
                     <span class="synapsis-col-topic">
+                        <?php if (!empty($topic['unread'])): ?><span class="synapsis-unread-dot" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesen' ?>"></span><?php endif; ?>
                         <?php if ($topic['sticky']): ?><span class="synapsis-badge synapsis-badge--sticky"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSticky'] ?? 'Angeheftet' ?></span><?php endif; ?>
                         <?php if ($topic['locked']): ?><span class="synapsis-badge synapsis-badge--locked"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLocked'] ?? 'Geschlossen' ?></span><?php endif; ?>
                         <a class="synapsis-topic-title" href="<?= $topic['url'] ?>"><?= StringUtil::specialchars($topic['title']) ?></a>

@@ -8,6 +8,9 @@
 
 * **Autorname wird gespeichert** (`authorName` in `tl_synapsis_topic` und `tl_synapsis_post`): Beim Schreiben eines Themas/Beitrags wird der Benutzername als Momentaufnahme mitgespeichert. Existiert das Konto später nicht mehr, wird der Autor als **„Gast (früherer Benutzername)"** angezeigt statt als „Unbekannt". Das gilt auch für Importe aus Fremdsystemen (Autor-ID 0 mit ursprünglichem Namen). Die Anzeigelogik steckt in der testbaren Klasse `Frontend\AuthorLabel` (7 Unit-Tests).
 * **CSV-Import aus zwei Dateien**: Eine Datei mit **Kategorien/Foren** (Struktur) und eine mit **Themen/Beiträgen** (Inhalt). Themen verweisen über die Forum-Referenz auf die Struktur, Beiträge über die Themen-Referenz auf ihr Thema – passt zu Fremdsystem-IDs (z. B. phpBB `forum_id`/`topic_id`). Die Inhalt-Datei ist optional; Themen unter Kategorien und verwaiste Beiträge werden übersprungen. Der Import läuft in einer Transaktion (Rollback bei Fehler).
+* **Pfadnavigation als Box**: Die Brotkrumen stehen jetzt als abgesetzte Box oben – auch auf der Übersicht.
+* **Gelesen-Funktion**: Für angemeldete Mitglieder wird der Lesestand je Thema gemerkt (neue Tabelle `tl_synapsis_read`). Ungelesene Themen und Foren werden in den Listen markiert (fetter Titel + Punkt). Beim Öffnen eines Themas gilt es als gelesen. Die Logik steckt in der testbaren Klasse `Frontend\ReadTracker`.
+* **Mitglieder-Bereich (untere Box)**: Für angemeldete Mitglieder eine Navigationsbox mit vier Unteransichten – **Meine Beiträge**, **Ungelesene Beiträge**, **Abonnements verwalten** (mit Abbestellen) und **Signatur bearbeiten**. Die Forensignatur (`tl_member.signature`) wird unter den Beiträgen angezeigt.
 
 ### Entfernt
 
@@ -15,7 +18,7 @@
 
 ### Verifiziert
 
-* Auf Contao 4.13.58 und 5.7.7: Schema-Migration, Zwei-Datei-Import inkl. `authorName` und Guards, Import-Formular (echtes Rendering), Themenerstellung, Frontend-Rauchtest, 22 Unit-Tests.
+* Auf Contao 4.13.58 und 5.7.7: Schema-Migration (`tl_synapsis_read`, `tl_member.signature`), Zwei-Datei-Import inkl. `authorName` und Guards, Import-Formular (echtes Rendering), Gelesen-Funktion (ungelesen → gelesen → neuer Beitrag), Rendering aller vier Panel-Unteransichten, Themenerstellung, Frontend-Rauchtest, 22 Unit-Tests.
 
 ## Version 1.0.1 (2026-07-24)
 

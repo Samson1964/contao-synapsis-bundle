@@ -56,3 +56,15 @@ $GLOBALS['TL_LANG']['MSC']['synapsisSubscribe']     = 'Thema abonnieren';
 $GLOBALS['TL_LANG']['MSC']['synapsisUnsubscribe']   = 'Abo beenden';
 $GLOBALS['TL_LANG']['MSC']['synapsisNotifySubject'] = 'Neue Antwort im Thema "%s"';
 $GLOBALS['TL_LANG']['MSC']['synapsisNotifyBody']    = "Hallo %s,\n\nim Thema \"%s\" wurde eine neue Antwort verfasst.\n\n%s\n";
+
+// Gelesen-Markierung und Mitglieder-Bereich (Paket B)
+$GLOBALS['TL_LANG']['MSC']['synapsisUnread']          = 'Ungelesene Beiträge';
+$GLOBALS['TL_LANG']['MSC']['synapsisMemberArea']      = 'Mein Bereich';
+$GLOBALS['TL_LANG']['MSC']['synapsisMyPosts']         = 'Meine Beiträge';
+$GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions']   = 'Abonnements';
+$GLOBALS['TL_LANG']['MSC']['synapsisSignature']       = 'Signatur';
+$GLOBALS['TL_LANG']['MSC']['synapsisSignatureLabel']  = 'Deine Signatur (reiner Text)';
+$GLOBALS['TL_LANG']['MSC']['synapsisSave']            = 'Speichern';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoSubscriptions'] = 'Du hast keine Themen abonniert.';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoUnread']        = 'Es gibt keine ungelesenen Beiträge.';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts']      = 'Du hast noch keine Beiträge geschrieben.';

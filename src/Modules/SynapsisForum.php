@@ -27,6 +27,7 @@ use Contao\System;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AuthorLabel;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
+use Schachbulle\ContaoSynapsisBundle\Frontend\ReadTracker;
 
 /**
  * Frontend-Modul des Synapsis-Forums.
@@ -88,6 +89,20 @@ class SynapsisForum extends Module
     private $access;
 
     /**
+     * Lesestand-Verwaltung (lazy erzeugt).
+     *
+     * @var ReadTracker|null
+     */
+    private $readTracker;
+
+    /**
+     * Aktive Mitglieder-Unteransicht (subs|sig|me|unread) oder '' (keine).
+     *
+     * @var string
+     */
+    private $panel = '';
+
+    /**
      * Erzeugt das Modul bzw. im Backend eine Platzhalterdarstellung.
      */
     public function generate(): string
@@ -129,6 +144,16 @@ class SynapsisForum extends Module
         $this->Template->baseUrl = $this->pageUrl([]);
         $this->Template->loggedIn = $this->isMemberLoggedIn();
 
+        // Mitglieder-Navigation (untere Box): nur fuer angemeldete Mitglieder
+        $this->Template->memberNav = $this->isMemberLoggedIn()
+            ? [
+                'me' => $this->pageUrl(['panel' => 'me']),
+                'unread' => $this->pageUrl(['panel' => 'unread']),
+                'subs' => $this->pageUrl(['panel' => 'subs']),
+                'sig' => $this->pageUrl(['panel' => 'sig']),
+            ]
+            : [];
+
         switch ($this->view) {
             case 'forum':
                 $this->compileForum();
@@ -142,6 +167,10 @@ class SynapsisForum extends Module
                 $this->compileNewTopic();
                 break;
 
+            case 'panel':
+                $this->compilePanel();
+                break;
+
             default:
                 $this->compileIndex();
         }
@@ -153,6 +182,17 @@ class SynapsisForum extends Module
      */
     private function resolveView(): void
     {
+        // Mitglieder-Unteransichten (Abos, Signatur, Meine/Ungelesene Beitraege)
+        $panel = (string) Input::get('panel');
+
+        if ('' !== $panel && $this->isMemberLoggedIn() && \in_array($panel, ['subs', 'sig', 'me', 'unread'], true)) {
+            $this->panel = $panel;
+            $this->view = 'panel';
+            $this->strTemplate = 'mod_synapsis_panel';
+
+            return;
+        }
+
         $topicId = (int) Input::get('topic');
         $forumId = (int) Input::get('forum');
 
@@ -232,6 +272,7 @@ class SynapsisForum extends Module
             }
         }
 
+        $this->Template->breadcrumb = $this->buildBreadcrumb(0);
         $this->Template->categories = $categories;
         $this->Template->newestTopics = $this->findNewestTopics(10);
         $this->Template->statistics = $this->buildStatistics();
@@ -339,6 +380,9 @@ class SynapsisForum extends Module
         $this->Template->posts = $rows;
         $this->Template->pagination = $pagination->generate("\n");
 
+        // Thema fuer das angemeldete Mitglied als gelesen markieren
+        $this->markTopicRead($topicId);
+
         // Abonnement-Schaltflaeche fuer angemeldete Mitglieder
         $this->Template->canSubscribe = $this->isMemberLoggedIn();
         $this->Template->isSubscribed = $this->isSubscribed($topicId);
@@ -378,6 +422,233 @@ class SynapsisForum extends Module
         $this->Template->formAction = $this->pageUrl(['forum' => $forumId, 'new' => 1]);
         $this->Template->formId = 'synapsis_topic_'.$this->id;
         $this->Template->cancelUrl = $this->pageUrl(['forum' => $forumId]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Mitglieder-Unteransichten (untere Navigationsbox)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Baut die gewaehlte Mitglieder-Unteransicht auf.
+     */
+    private function compilePanel(): void
+    {
+        $labels = [
+            'me' => $GLOBALS['TL_LANG']['MSC']['synapsisMyPosts'] ?? 'Meine Beiträge',
+            'unread' => $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge',
+            'subs' => $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions'] ?? 'Abonnements',
+            'sig' => $GLOBALS['TL_LANG']['MSC']['synapsisSignature'] ?? 'Signatur',
+        ];
+
+        $breadcrumb = $this->buildBreadcrumb(0);
+        $breadcrumb[] = ['title' => $labels[$this->panel] ?? '', 'url' => ''];
+
+        $this->Template->panel = $this->panel;
+        $this->Template->panelTitle = $labels[$this->panel] ?? '';
+        $this->Template->breadcrumb = $breadcrumb;
+        $this->Template->items = [];
+
+        switch ($this->panel) {
+            case 'subs':
+                $this->compilePanelSubscriptions();
+                break;
+
+            case 'sig':
+                $this->compilePanelSignature();
+                break;
+
+            case 'me':
+                $this->compilePanelMyPosts();
+                break;
+
+            case 'unread':
+                $this->compilePanelUnread();
+                break;
+        }
+    }
+
+    /**
+     * Abonnements des Mitglieds auflisten und Abbestellungen verarbeiten.
+     */
+    private function compilePanelSubscriptions(): void
+    {
+        $memberId = (int) FrontendUser::getInstance()->id;
+
+        if ('synapsis_unsub_'.$this->id === Input::post('FORM_SUBMIT')) {
+            $topicId = (int) Input::post('topic');
+
+            if ($topicId > 0) {
+                Database::getInstance()
+                    ->prepare('DELETE FROM tl_synapsis_subscription WHERE member = ? AND topic = ?')
+                    ->execute($memberId, $topicId)
+                ;
+                $this->redirect($this->pageUrl(['panel' => 'subs']));
+            }
+        }
+
+        $rows = Database::getInstance()
+            ->prepare('SELECT t.id, t.title, t.pid FROM tl_synapsis_subscription s INNER JOIN tl_synapsis_topic t ON t.id = s.topic WHERE s.member = ? AND t.published = ? ORDER BY s.tstamp DESC')
+            ->execute($memberId, '1')
+        ;
+
+        $items = [];
+
+        while ($rows->next()) {
+            if (!$this->isVisible((int) $rows->pid)) {
+                continue;
+            }
+
+            $items[] = [
+                'topicId' => (int) $rows->id,
+                'title' => (string) $rows->title,
+                'url' => $this->pageUrl(['topic' => (int) $rows->id]),
+                'forumTitle' => $this->forumTitle((int) $rows->pid),
+            ];
+        }
+
+        $this->Template->items = $items;
+        $this->Template->unsubFormId = 'synapsis_unsub_'.$this->id;
+        $this->Template->formAction = $this->pageUrl(['panel' => 'subs']);
+    }
+
+    /**
+     * Signatur des Mitglieds anzeigen und speichern.
+     */
+    private function compilePanelSignature(): void
+    {
+        $memberId = (int) FrontendUser::getInstance()->id;
+
+        if ('synapsis_sig_'.$this->id === Input::post('FORM_SUBMIT')) {
+            $signature = $this->cleanSignature((string) Input::post('signature'));
+            Database::getInstance()
+                ->prepare('UPDATE tl_member SET signature = ? WHERE id = ?')
+                ->execute($signature, $memberId)
+            ;
+            $this->redirect($this->pageUrl(['panel' => 'sig']));
+        }
+
+        $row = Database::getInstance()
+            ->prepare('SELECT signature FROM tl_member WHERE id = ?')
+            ->execute($memberId)
+            ->row(true)
+        ;
+
+        $this->Template->signature = \is_array($row) ? (string) ($row[0] ?? '') : '';
+        $this->Template->sigFormId = 'synapsis_sig_'.$this->id;
+        $this->Template->formAction = $this->pageUrl(['panel' => 'sig']);
+        $this->Template->sigMaxLength = 500;
+    }
+
+    /**
+     * Themen auflisten, in denen das Mitglied selbst geschrieben hat.
+     */
+    private function compilePanelMyPosts(): void
+    {
+        $memberId = (int) FrontendUser::getInstance()->id;
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
+
+        $sql = 'SELECT t.id, t.title, t.pid, MAX(p.date) AS lastOwn, COUNT(*) AS ownPosts'
+            .' FROM tl_synapsis_post p INNER JOIN tl_synapsis_topic t ON t.id = p.pid'
+            .' WHERE p.author = ? AND p.published = ? AND t.published = ? AND t.pid IN ('.$placeholders.')'
+            .' GROUP BY t.id, t.title, t.pid ORDER BY lastOwn DESC';
+
+        $rows = Database::getInstance()
+            ->prepare($sql)
+            ->limit(100)
+            ->execute(...array_merge([$memberId, '1', '1'], $forumIds))
+        ;
+
+        $items = [];
+
+        while ($rows->next()) {
+            $items[] = [
+                'title' => (string) $rows->title,
+                'url' => $this->pageUrl(['topic' => (int) $rows->id]),
+                'forumTitle' => $this->forumTitle((int) $rows->pid),
+                'ownPosts' => (int) $rows->ownPosts,
+                'dateFormatted' => $this->formatDate((int) $rows->lastOwn),
+            ];
+        }
+
+        $this->Template->items = $items;
+    }
+
+    /**
+     * Fuer das Mitglied ungelesene Themen auflisten.
+     */
+    private function compilePanelUnread(): void
+    {
+        $memberId = (int) FrontendUser::getInstance()->id;
+        $topicIds = $this->readTracker()->unreadTopicIds($memberId, $this->readableForumIds());
+
+        $items = [];
+
+        foreach ($topicIds as $topicId) {
+            $topic = $this->findTopic($topicId);
+
+            if (null === $topic) {
+                continue;
+            }
+
+            $lastPost = $this->findLastPost([], $topicId);
+
+            $items[] = [
+                'title' => (string) $topic['title'],
+                'url' => $this->pageUrl(['topic' => $topicId]),
+                'forumTitle' => $this->forumTitle((int) $topic['pid']),
+                'lastAuthor' => (string) ($lastPost['authorName'] ?? ''),
+                'dateFormatted' => (string) ($lastPost['dateFormatted'] ?? ''),
+            ];
+        }
+
+        $this->Template->items = $items;
+    }
+
+    /**
+     * Titel eines Forums (leer, wenn nicht gefunden).
+     */
+    private function forumTitle(int $forumId): string
+    {
+        $row = Database::getInstance()
+            ->prepare('SELECT title FROM tl_synapsis_forum WHERE id = ?')
+            ->execute($forumId)
+            ->row(true)
+        ;
+
+        return \is_array($row) ? (string) ($row[0] ?? '') : '';
+    }
+
+    /**
+     * Bereinigt eine Signatur: reiner Text, gekuerzt auf 500 Zeichen.
+     */
+    private function cleanSignature(string $text): string
+    {
+        $text = trim(strip_tags($text));
+
+        if (mb_strlen($text) > 500) {
+            $text = mb_substr($text, 0, 500);
+        }
+
+        return $text;
+    }
+
+    /**
+     * Signatur eines Mitglieds (leer bei Gaesten oder ohne Signatur).
+     */
+    private function memberSignature(int $memberId): string
+    {
+        if ($memberId <= 0) {
+            return '';
+        }
+
+        $row = Database::getInstance()
+            ->prepare('SELECT signature FROM tl_member WHERE id = ?')
+            ->execute($memberId)
+            ->row(true)
+        ;
+
+        return \is_array($row) ? (string) ($row[0] ?? '') : '';
     }
 
     // -------------------------------------------------------------------------
@@ -595,6 +866,7 @@ class SynapsisForum extends Module
         $forum['topicCount'] = $topicCount;
         $forum['postCount'] = $postCount;
         $forum['lastPost'] = $this->findLastPost($forumIds);
+        $forum['hasUnread'] = $this->forumHasUnread($forumIds);
         // Vererbtes, im Backend eingestelltes Lucide-Icon als fertiges Inline-SVG
         // (kein Icon-Name im Markup, damit keine fremde Icon-Schrift der Seite
         // eingreift). Geschlossene Foren werden zusaetzlich per CSS-Klasse
@@ -661,7 +933,12 @@ class SynapsisForum extends Module
             ->execute($topicId, '1')
             ->row(true)[0] - 1)
         ;
-        $topic['lastPost'] = $this->findLastPost([], $topicId);
+        $lastPost = $this->findLastPost([], $topicId);
+        $topic['lastPost'] = $lastPost;
+
+        // Ungelesen-Markierung (nur fuer angemeldete Mitglieder)
+        $latestTs = (int) ($lastPost['timestamp'] ?? $topic['date'] ?? 0);
+        $topic['unread'] = $this->isTopicUnread($topicId, $latestTs);
 
         return $topic;
     }
@@ -679,6 +956,7 @@ class SynapsisForum extends Module
 
         $post['authorName'] = $this->authorLabel($authorId, (string) ($post['authorName'] ?? ''));
         $post['authorAvatar'] = $this->avatar($authorId);
+        $post['signature'] = $this->memberSignature($authorId);
         $post['authorPostCount'] = (int) Database::getInstance()
             ->prepare('SELECT COUNT(*) FROM tl_synapsis_post WHERE author = ? AND published = ?')
             ->execute($authorId, '1')
@@ -984,6 +1262,7 @@ class SynapsisForum extends Module
         return [
             'authorName' => $this->authorLabel((int) $row['author'], (string) ($row['authorName'] ?? '')),
             'dateFormatted' => $this->formatDate((int) $row['date']),
+            'timestamp' => (int) $row['date'],
             'title' => $row['title'] ?? '',
             'url' => isset($row['topicId']) ? $this->pageUrl(['topic' => (int) $row['topicId']]) : '',
         ];
@@ -1177,6 +1456,45 @@ class SynapsisForum extends Module
         $session->set('synapsis_viewed', $viewed);
 
         return true;
+    }
+
+    /**
+     * Lesestand-Verwaltung (Tabelle tl_synapsis_read), lazy erzeugt.
+     */
+    private function readTracker(): ReadTracker
+    {
+        if (null === $this->readTracker) {
+            $this->readTracker = new ReadTracker(System::getContainer()->get('database_connection'));
+        }
+
+        return $this->readTracker;
+    }
+
+    /**
+     * Markiert das Thema fuer das angemeldete Mitglied als gelesen.
+     */
+    private function markTopicRead(int $topicId): void
+    {
+        $this->readTracker()->markRead($this->currentAuthorId(), $topicId);
+    }
+
+    /**
+     * Ungelesen fuer das angemeldete Mitglied? $latestTs = Datum des neuesten
+     * Beitrags im Thema.
+     */
+    private function isTopicUnread(int $topicId, int $latestTs): bool
+    {
+        return $this->readTracker()->isUnread($this->currentAuthorId(), $topicId, $latestTs);
+    }
+
+    /**
+     * Enthaelt einer der Foren (inkl. Unterforen) ein ungelesenes Thema?
+     *
+     * @param array<int> $forumIds
+     */
+    private function forumHasUnread(array $forumIds): bool
+    {
+        return $this->readTracker()->forumHasUnread($this->currentAuthorId(), $forumIds);
     }
 
     /**

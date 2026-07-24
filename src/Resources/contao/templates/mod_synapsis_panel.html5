@@ -1,0 +1,99 @@
+<?php
+/*
+ * Mitglieder-Unteransichten: Meine Beitraege, Ungelesene, Abonnements, Signatur.
+ *
+ * @var string $this->panel
+ * @var string $this->panelTitle
+ * @var array  $this->breadcrumb
+ * @var array  $this->items
+ */
+
+use Contao\StringUtil;
+use Contao\System;
+
+$requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
+?>
+<div class="synapsis synapsis-panel synapsis-panel--<?= $this->panel ?><?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
+    <header class="synapsis-panel__header">
+        <h2 class="synapsis-panel__title"><?= StringUtil::specialchars($this->panelTitle) ?></h2>
+    </header>
+
+    <?php if ('sig' === $this->panel): ?>
+
+        <form action="<?= $this->formAction ?>" method="post" class="synapsis-form">
+            <input type="hidden" name="FORM_SUBMIT" value="<?= $this->sigFormId ?>">
+            <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+            <label class="synapsis-form__field">
+                <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSignatureLabel'] ?? 'Deine Signatur (reiner Text)' ?></span>
+                <textarea name="signature" rows="4" maxlength="<?= $this->sigMaxLength ?>" class="synapsis-form__textarea"><?= StringUtil::specialchars($this->signature) ?></textarea>
+            </label>
+            <div class="synapsis-form__actions">
+                <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSave'] ?? 'Speichern' ?></button>
+            </div>
+        </form>
+
+    <?php elseif ('subs' === $this->panel): ?>
+
+        <?php if (empty($this->items)): ?>
+            <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNoSubscriptions'] ?? 'Du hast keine Themen abonniert.' ?></p>
+        <?php else: ?>
+            <ul class="synapsis-panel__list">
+                <?php foreach ($this->items as $item): ?>
+                    <li class="synapsis-panel__item">
+                        <span class="synapsis-panel__main">
+                            <a class="synapsis-panel__link" href="<?= $item['url'] ?>"><?= StringUtil::specialchars($item['title']) ?></a>
+                            <span class="synapsis-panel__meta"><?= StringUtil::specialchars($item['forumTitle']) ?></span>
+                        </span>
+                        <form action="<?= $this->formAction ?>" method="post" class="synapsis-panel__form">
+                            <input type="hidden" name="FORM_SUBMIT" value="<?= $this->unsubFormId ?>">
+                            <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                            <input type="hidden" name="topic" value="<?= $item['topicId'] ?>">
+                            <button type="submit" class="synapsis-button synapsis-button--secondary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisUnsubscribe'] ?? 'Abbestellen' ?></button>
+                        </form>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+
+    <?php else: ?>
+
+        <?php if (empty($this->items)): ?>
+            <p class="synapsis-empty">
+                <?php if ('unread' === $this->panel): ?>
+                    <?= $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread'] ?? 'Es gibt keine ungelesenen Beiträge.' ?>
+                <?php else: ?>
+                    <?= $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts'] ?? 'Du hast noch keine Beiträge geschrieben.' ?>
+                <?php endif; ?>
+            </p>
+        <?php else: ?>
+            <ul class="synapsis-panel__list">
+                <?php foreach ($this->items as $item): ?>
+                    <li class="synapsis-panel__item">
+                        <span class="synapsis-panel__main">
+                            <a class="synapsis-panel__link" href="<?= $item['url'] ?>"><?= StringUtil::specialchars($item['title']) ?></a>
+                            <span class="synapsis-panel__meta">
+                                <?= StringUtil::specialchars($item['forumTitle']) ?>
+                                <?php if (!empty($item['dateFormatted'])): ?>&middot; <?= $item['dateFormatted'] ?><?php endif; ?>
+                                <?php if (!empty($item['lastAuthor'])): ?>&middot; <?= $item['lastAuthor'] ?><?php endif; ?>
+                                <?php if (isset($item['ownPosts'])): ?>&middot; <?= $item['ownPosts'] ?> <?= $GLOBALS['TL_LANG']['MSC']['synapsisPosts'] ?? 'Beiträge' ?><?php endif; ?>
+                            </span>
+                        </span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+
+    <?php endif; ?>
+
+    <p class="synapsis-back"><a href="<?= $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum'] ?? 'Zur Übersicht' ?></a></p>
+
+</div>

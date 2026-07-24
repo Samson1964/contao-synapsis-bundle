@@ -15,6 +15,14 @@ use Contao\StringUtil;
         <<?= $this->hl ?> class="synapsis-headline"><?= $this->headline ?></<?= $this->hl ?>>
     <?php endif; ?>
 
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
     <?php if (!empty($this->newestTopics)): ?>
         <section class="synapsis-latest">
             <h3 class="synapsis-latest__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLatest'] ?? 'Neueste Themen' ?></h3>
@@ -51,11 +59,11 @@ use Contao\StringUtil;
                         <span class="synapsis-col-last"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLastPost'] ?? 'Letzter Beitrag' ?></span>
                     </li>
                     <?php foreach ($category['forums'] as $forum): ?>
-                        <li class="synapsis-forumlist__row">
+                        <li class="synapsis-forumlist__row<?= !empty($forum['hasUnread']) ? ' is-unread' : '' ?>">
                             <span class="synapsis-col-forum">
                                 <span class="synapsis-forum-icon<?= $forum['closed'] ? ' is-locked' : '' ?>"><?= $forum['iconSvg'] ?></span>
                                 <span class="synapsis-forum-info">
-                                    <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?= StringUtil::specialchars($forum['title']) ?></a>
+                                    <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?php if (!empty($forum['hasUnread'])): ?><span class="synapsis-unread-dot" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge' ?>"></span><?php endif; ?><?= StringUtil::specialchars($forum['title']) ?></a>
                                     <?php if ('' !== (string) $forum['description']): ?>
                                         <span class="synapsis-forum-desc"><?= StringUtil::specialchars($forum['description']) ?></span>
                                     <?php endif; ?>
@@ -106,5 +114,15 @@ use Contao\StringUtil;
             </ul>
         <?php endif; ?>
     </section>
+
+    <?php if (!empty($this->memberNav)): ?>
+        <nav class="synapsis-membernav">
+            <span class="synapsis-membernav__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisMemberArea'] ?? 'Mein Bereich' ?></span>
+            <a class="synapsis-membernav__link" href="<?= $this->memberNav['me'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisMyPosts'] ?? 'Meine Beiträge' ?></a>
+            <a class="synapsis-membernav__link" href="<?= $this->memberNav['unread'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge' ?></a>
+            <a class="synapsis-membernav__link" href="<?= $this->memberNav['subs'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions'] ?? 'Abonnements' ?></a>
+            <a class="synapsis-membernav__link" href="<?= $this->memberNav['sig'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSignature'] ?? 'Signatur' ?></a>
+        </nav>
+    <?php endif; ?>
 
 </div>
