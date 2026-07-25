@@ -1,7 +1,7 @@
 {
     "name": "schachbulle/contao-synapsis-bundle",
     "type": "contao-bundle",
-    "description": "Synapsis - Forum fuer Contao 4.13 und Contao 5.",
+    "description": "Synapsis-Forum für Contao 4.13 und Contao 5",
     "keywords": [
         "contao",
         "forum",

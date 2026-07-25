@@ -575,18 +575,26 @@ class SynapsisForum extends Module
         $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
         $like = '%'.$this->escapeLike($term).'%';
 
-        // Themen, deren Titel passt ODER die einen passenden Beitrag enthalten.
+        // Themen, deren Titel passt, die einen passenden Beitrag enthalten ODER
+        // deren Umfrage (Frage bzw. eine Antwortmoeglichkeit) passt.
         $sql = 'SELECT DISTINCT t.id, t.title, t.pid, t.date'
             .' FROM tl_synapsis_topic t'
             .' LEFT JOIN tl_synapsis_post p ON p.pid = t.id AND p.published = ?'
             .' WHERE t.published = ? AND t.pid IN ('.$placeholders.')'
-            .' AND (t.title LIKE ? OR p.text LIKE ?)'
+            .' AND ('
+            .'t.title LIKE ?'
+            .' OR p.text LIKE ?'
+            .' OR EXISTS (SELECT 1 FROM tl_synapsis_poll pl WHERE pl.pid = t.id AND pl.question LIKE ?)'
+            .' OR EXISTS (SELECT 1 FROM tl_synapsis_poll pl2'
+            .' INNER JOIN tl_synapsis_poll_option po ON po.pid = pl2.id'
+            .' WHERE pl2.pid = t.id AND po.label LIKE ?)'
+            .')'
             .' ORDER BY t.date DESC';
 
         $rows = Database::getInstance()
             ->prepare($sql)
             ->limit(100)
-            ->execute(...array_merge(['1', '1'], $forumIds, [$like, $like]))
+            ->execute(...array_merge(['1', '1'], $forumIds, [$like, $like, $like, $like]))
         ;
 
         $items = [];

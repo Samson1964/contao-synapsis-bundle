@@ -1,5 +1,11 @@
 # Synapsis Changelog
 
+## Version 1.3.1 (unveröffentlicht – Entwicklung auf dev-main)
+
+### Behoben
+
+* **Suche findet jetzt auch Umfragen**: Die Forensuche durchsucht zusätzlich zur Themen- und Beitragsebene die **Umfrage-Frage und die Antwortmöglichkeiten**. Ein Thema wird also auch gefunden, wenn der Suchbegriff nur in seiner Umfrage vorkommt. (Keine Schema-Änderung.)
+
 ## Version 1.3.0 (2026-07-24)
 
 > Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Umfrage-Tabellen, Rollen-/Umfrage-Felder in `tl_synapsis_forum` sowie `modCanPin` in den Einstellungen).
