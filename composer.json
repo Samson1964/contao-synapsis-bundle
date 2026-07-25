@@ -1,7 +1,7 @@
 {
     "name": "schachbulle/contao-synapsis-bundle",
     "type": "contao-bundle",
-    "description": "Synapsis-Forum für Contao 4.13 und Contao 5",
+    "description": "Synapsis-Forum für Contao 4.13 und Contao 5. Die Software wurde mit Claude Code (Opus 4.8, Fable 5) programmiert.",
     "keywords": [
         "contao",
         "forum",

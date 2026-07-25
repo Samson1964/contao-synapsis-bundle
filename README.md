@@ -220,7 +220,9 @@ Das Modul kennt vier Ansichten, die es automatisch über URL-Parameter umschalte
 | `?topic=<id>`         | **Thema**: Beiträge mit Antwortformular, Umfrage usw.                |
 | `?forum=<id>&new=1`   | **Neues Thema** anlegen                                              |
 
-Auf jeder Seite gibt es außerdem eine **Pfadnavigation** (Brotkrumen) und eine **Suchbox**.
+Auf jeder Seite gibt es außerdem eine **Pfadnavigation** (Brotkrumen) und eine **Suchbox**. In
+der Pfadnavigation sind sowohl Foren als auch **Kategorien verlinkt** – eine Kategorie lässt
+sich so auch einzeln aufrufen (zeigt dann nur ihre Foren).
 
 ### Themen und Beiträge (für Mitglieder)
 
@@ -341,7 +343,8 @@ mitgegeben werden:
 
 * **Frage** und **Antwortmöglichkeiten** (eine pro Zeile, mindestens zwei).
 * **Einfachauswahl** (eine Antwort) oder **Mehrfachauswahl** (mehrere Antworten).
-* **Umfrageende** (Datum, Pflicht) – danach ist keine Stimmabgabe mehr möglich.
+* **Umfrageende** (Datum **und Uhrzeit**, Pflicht) – danach ist keine Stimmabgabe mehr möglich.
+  Ohne Uhrzeitangabe gilt das Ende des gewählten Tages.
 * Option **„Ergebnisse erst nach Umfrageende anzeigen"** – sonst erscheinen sie direkt nach der
   eigenen Stimmabgabe. Nach dem Ende sind die Ergebnisse immer sichtbar.
 

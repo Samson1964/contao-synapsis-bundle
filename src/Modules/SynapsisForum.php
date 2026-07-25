@@ -91,6 +91,13 @@ class SynapsisForum extends Module
     private $activeTopic;
 
     /**
+     * Datensatz der aktiven Kategorie (Ansicht category).
+     *
+     * @var array<string, mixed>|null
+     */
+    private $activeCategory;
+
+    /**
      * Zugriffshelfer fuer die Vererbung von Schutz und Veroeffentlichung.
      *
      * @var ForumAccess
@@ -203,6 +210,10 @@ class SynapsisForum extends Module
         $this->Template->memberNavTitle = $GLOBALS['TL_LANG']['MSC']['synapsisMemberArea'] ?? 'Mein Bereich';
 
         switch ($this->view) {
+            case 'category':
+                $this->compileCategory();
+                break;
+
             case 'forum':
                 $this->compileForum();
                 break;
@@ -293,6 +304,17 @@ class SynapsisForum extends Module
             return;
         }
 
+        // Einzelne Kategorie (ueber die Pfadnavigation aufrufbar)
+        $categoryId = (int) Input::get('category');
+
+        if ($categoryId > 0 && null !== ($category = $this->findCategory($categoryId))) {
+            $this->activeCategory = $category;
+            $this->view = 'category';
+            $this->strTemplate = 'mod_synapsis_category';
+
+            return;
+        }
+
         $topicId = (int) Input::get('topic');
         $forumId = (int) Input::get('forum');
 
@@ -376,6 +398,76 @@ class SynapsisForum extends Module
         $this->Template->categories = $categories;
         $this->Template->newestTopics = $this->findNewestTopics(10);
         $this->Template->statistics = $this->buildStatistics();
+    }
+
+    /**
+     * Einzelansicht einer Kategorie: listet nur deren (lesbare) Foren. Ueber die
+     * Pfadnavigation (Brotkrumen) erreichbar, damit eine Kategorie auch separat
+     * aufgerufen werden kann.
+     */
+    private function compileCategory(): void
+    {
+        $categoryId = (int) $this->activeCategory['id'];
+
+        $forums = [];
+
+        foreach ($this->findChildren($categoryId) as $child) {
+            if ('forum' === $child['type'] && $this->isVisible((int) $child['id'])) {
+                $forums[] = $this->decorateForum($child);
+            }
+        }
+
+        $this->Template->category = $this->activeCategory;
+        $this->Template->breadcrumb = $this->buildBreadcrumb($categoryId);
+        $this->Template->forums = $forums;
+        $this->Template->empty = [] === $forums;
+    }
+
+    /**
+     * Laedt eine veroeffentlichte Kategorie dieses Startpunkts (oder null). Die
+     * Zugehoerigkeit zum Startpunkt wird ueber die Knotenliste geprueft, damit
+     * keine fremde Kategorie aufgerufen werden kann.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function findCategory(int $id): ?array
+    {
+        $row = Database::getInstance()
+            ->prepare("SELECT * FROM tl_synapsis_forum WHERE id = ? AND type = 'category' AND published = ?")
+            ->execute($id, '1')
+            ->row()
+        ;
+
+        if (empty($row) || !$this->belongsToRoot($id)) {
+            return null;
+        }
+
+        return $row;
+    }
+
+    /**
+     * Prueft, ob ein Knoten (ueber die pid-Kette) zum Startpunkt dieses Moduls
+     * gehoert.
+     */
+    private function belongsToRoot(int $id): bool
+    {
+        $currentId = $id;
+        $guard = 0;
+
+        while ($currentId > 0 && $guard < 100) {
+            if ($currentId === $this->rootId) {
+                return true;
+            }
+
+            $currentId = (int) Database::getInstance()
+                ->prepare('SELECT pid FROM tl_synapsis_forum WHERE id = ?')
+                ->execute($currentId)
+                ->row(true)[0]
+            ;
+            ++$guard;
+        }
+
+        return false;
     }
 
     /**
@@ -1697,8 +1789,10 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Wandelt die Enddatum-Eingabe (YYYY-MM-DD) in einen Zeitstempel am Ende des
-     * Tages um (23:59:59). Leere/ungueltige Eingabe liefert 0.
+     * Wandelt die Enddatum-Eingabe in einen Zeitstempel um. Aus dem Feld
+     * `datetime-local` kommt "YYYY-MM-DDTHH:MM" - dann wird die angegebene
+     * Uhrzeit verwendet. Fehlt die Uhrzeit (nur "YYYY-MM-DD"), gilt das Ende des
+     * Tages (23:59:59). Leere/ungueltige Eingabe liefert 0.
      */
     private function parseCloseDate(string $value): int
     {
@@ -1708,9 +1802,16 @@ class SynapsisForum extends Module
             return 0;
         }
 
-        // Nur das Datum verwenden (evtl. Uhrzeit aus datetime-local abschneiden).
-        $date = substr($value, 0, 10);
-        $timestamp = strtotime($date.' 23:59:59');
+        // datetime-local liefert "YYYY-MM-DDTHH:MM" - das T durch ein Leerzeichen
+        // ersetzen, damit strtotime es sicher versteht.
+        $value = str_replace('T', ' ', $value);
+
+        // Enthaelt die Eingabe eine Uhrzeit? Dann diese verwenden, sonst Tagesende.
+        if (preg_match('/^\d{4}-\d{2}-\d{2}[ ]\d{1,2}:\d{2}/', $value)) {
+            $timestamp = strtotime($value);
+        } else {
+            $timestamp = strtotime(substr($value, 0, 10).' 23:59:59');
+        }
 
         return false !== $timestamp ? (int) $timestamp : 0;
     }
@@ -2513,9 +2614,19 @@ class SynapsisForum extends Module
                 break;
             }
 
+            // Foren verlinken auf ihre Themenliste, Kategorien auf ihre
+            // Einzelansicht - so lassen sich beide separat aufrufen.
+            if ('forum' === $node['type']) {
+                $url = $this->pageUrl(['forum' => (int) $node['id']]);
+            } elseif ('category' === $node['type']) {
+                $url = $this->pageUrl(['category' => (int) $node['id']]);
+            } else {
+                $url = '';
+            }
+
             array_unshift($items, [
                 'title' => (string) $node['title'],
-                'url' => 'forum' === $node['type'] ? $this->pageUrl(['forum' => (int) $node['id']]) : '',
+                'url' => $url,
             ]);
 
             $currentId = (int) $node['pid'];

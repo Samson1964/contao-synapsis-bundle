@@ -1,0 +1,74 @@
+<?php
+/*
+ * Einzelansicht einer Kategorie: deren Foren als Liste.
+ *
+ * @var array $this->category
+ * @var array $this->forums
+ * @var array $this->breadcrumb
+ * @var bool  $this->empty
+ */
+
+use Contao\StringUtil;
+?>
+<div class="synapsis synapsis-categoryview<?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
+    <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
+
+    <header class="synapsis-category__header">
+        <h2><?= StringUtil::specialchars($this->category['title']) ?></h2>
+        <?php if ('' !== (string) $this->category['description']): ?>
+            <p class="synapsis-category__desc"><?= StringUtil::specialchars($this->category['description']) ?></p>
+        <?php endif; ?>
+    </header>
+
+    <?php if ($this->empty): ?>
+        <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNoForums'] ?? 'Keine Foren vorhanden.' ?></p>
+    <?php else: ?>
+        <ul class="synapsis-forumlist">
+            <li class="synapsis-forumlist__head">
+                <span class="synapsis-col-forum"><?= $GLOBALS['TL_LANG']['MSC']['synapsisForum'] ?? 'Forum' ?></span>
+                <span class="synapsis-col-count"><?= $GLOBALS['TL_LANG']['MSC']['synapsisTopics'] ?? 'Themen' ?></span>
+                <span class="synapsis-col-count"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPosts'] ?? 'Beiträge' ?></span>
+                <span class="synapsis-col-last"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLastPost'] ?? 'Letzter Beitrag' ?></span>
+            </li>
+            <?php foreach ($this->forums as $forum): ?>
+                <li class="synapsis-forumlist__row<?= !empty($forum['hasUnread']) ? ' is-unread' : '' ?>">
+                    <span class="synapsis-col-forum">
+                        <span class="synapsis-forum-icon<?= $forum['closed'] ? ' is-locked' : '' ?>"><?= $forum['iconSvg'] ?></span>
+                        <span class="synapsis-forum-info">
+                            <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?php if (!empty($forum['hasUnread'])): ?><span class="synapsis-unread-dot" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge' ?>"></span><?php endif; ?><?= StringUtil::specialchars($forum['title']) ?></a>
+                            <?php if ('' !== (string) $forum['description']): ?>
+                                <span class="synapsis-forum-desc"><?= StringUtil::specialchars($forum['description']) ?></span>
+                            <?php endif; ?>
+                        </span>
+                    </span>
+                    <span class="synapsis-col-count"><?= $forum['topicCount'] ?></span>
+                    <span class="synapsis-col-count"><?= $forum['postCount'] ?></span>
+                    <span class="synapsis-col-last">
+                        <?php if ($forum['lastPost']): ?>
+                            <?php if ('' !== $forum['lastPost']['url']): ?>
+                                <a href="<?= $forum['lastPost']['url'] ?>"><?= StringUtil::specialchars($forum['lastPost']['title']) ?></a>
+                            <?php endif; ?>
+                            <span class="synapsis-lastpost-meta"><?= $forum['lastPost']['authorName'] ?> &middot; <?= $forum['lastPost']['dateFormatted'] ?></span>
+                        <?php else: ?>
+                            <span class="synapsis-lastpost-empty">&ndash;</span>
+                        <?php endif; ?>
+                    </span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+
+    <p class="synapsis-back"><a href="<?= $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum'] ?? 'Zur Übersicht' ?></a></p>
+
+    <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
+
+</div>

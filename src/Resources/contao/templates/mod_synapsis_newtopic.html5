@@ -81,7 +81,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                     </label>
                     <label class="synapsis-form__field">
                         <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollClose'] ?? 'Umfrageende (danach kann nicht mehr abgestimmt werden)' ?></span>
-                        <input type="date" name="poll_close" class="synapsis-search__input">
+                        <input type="datetime-local" name="poll_close" class="synapsis-search__input">
                     </label>
                     <label class="synapsis-pollform__hide">
                         <input type="checkbox" name="poll_hide" value="1">

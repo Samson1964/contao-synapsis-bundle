@@ -1,5 +1,20 @@
 # Synapsis Changelog
 
+## Version 1.4.1 (2026-07-25)
+
+> Keine Schema-Änderung gegenüber 1.4.0 – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (kein `contao:migrate` nötig).
+
+### Geändert / Behoben
+
+* **Beitrags-Aktionen einheitlich als Buttons**: „Zitieren", „Bearbeiten", „Melden" und „Löschen" werden jetzt durchgängig als Buttons (gleiche Pill-Optik wie „Gefällt mir") dargestellt – vorher waren einige davon Textlinks. Das Löschen-Layout ist damit ebenfalls sauber.
+* **Umfrageende mit Uhrzeit**: Das Umfrageende lässt sich jetzt auf **Datum und Uhrzeit** genau festlegen (Feld `datetime-local`). Ohne Uhrzeitangabe gilt weiterhin das Ende des gewählten Tages.
+* **Kategorien in der Pfadnavigation verlinkt**: Kategorien in den Brotkrumen sind jetzt anklickbar und öffnen eine **Einzelansicht der Kategorie** (nur ihre Foren) über `?category=<id>`.
+* **„Mein Bereich"** trägt jetzt einen Doppelpunkt und ist farblich hervorgehoben.
+
+### Hinweis
+
+* Die Alt-Spalte `option` in `tl_synapsis_poll_vote` (aus dem früheren Umfrage-Umbau) ist ungenutzt und wird von `contao:migrate` nicht automatisch entfernt – sie kann ignoriert werden.
+
 ## Version 1.4.0 (2026-07-25)
 
 > Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabellen `tl_synapsis_report`, `tl_synapsis_forum_sub`, `tl_synapsis_notification`; Felder `editedAt`/`editedBy` in `tl_synapsis_post`; neue Moderations- und Team-Benachrichtigungs-Felder in den Einstellungen).

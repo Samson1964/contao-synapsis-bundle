@@ -554,8 +554,8 @@
 }
 
 .synapsis-membernav__title {
-    font-weight: 600;
-    color: var(--syn-muted);
+    font-weight: 700;
+    color: var(--syn-accent);
     margin-right: 0.25rem;
 }
 
@@ -712,23 +712,40 @@
     color: var(--syn-muted);
 }
 
-/* --- Beitrags-Aktionen (Zitieren/Bearbeiten/Löschen) und Moderation ----- */
+/* --- Beitrags-Aktionen (Zitieren/Bearbeiten/Melden/Löschen) und Moderation -
+   Einheitlich als Buttons (gleiche Pill-Optik wie der Like-Button), egal ob
+   das Steuerelement ein <a> (Zitieren/Bearbeiten/Melden) oder ein <button>
+   (Löschen) ist. */
 .synapsis-post__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.7rem;
     font-size: 0.82rem;
+    line-height: 1.2;
     color: var(--syn-accent);
     background: transparent;
-    border: 0;
-    padding: 0;
+    border: 1px solid var(--syn-border);
+    border-radius: 999px;
     cursor: pointer;
     text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .synapsis-post__action:hover {
-    text-decoration: underline;
+    background: var(--syn-panel, #f3f4f6);
+    text-decoration: none;
 }
 
 .synapsis-post__action--danger {
     color: #b3261e;
+    border-color: #e6b4af;
+}
+
+.synapsis-post__action--danger:hover {
+    color: #fff;
+    background: #b3261e;
+    border-color: #b3261e;
 }
 
 .synapsis-post__delete {

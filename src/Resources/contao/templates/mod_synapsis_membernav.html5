@@ -10,7 +10,7 @@
 ?>
 <?php if (!empty($this->memberNav)): ?>
     <nav class="synapsis-membernav">
-        <span class="synapsis-membernav__title"><?= $this->memberNavTitle ?></span>
+        <span class="synapsis-membernav__title"><?= $this->memberNavTitle ?>:</span>
         <?php foreach ($this->memberNav as $item): ?>
             <?php $badge = !empty($item['badge']) ? '<span class="synapsis-membernav__badge">'.(int) $item['badge'].'</span>' : ''; ?>
             <?php if (!empty($item['active'])): ?>
