@@ -413,6 +413,13 @@
     margin-bottom: 1rem;
 }
 
+.synapsis-forumview__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 /* Buttons koennen <a> oder <button> sein. Die Selektoren sind bewusst mit
    Element + Klasse qualifiziert, damit sie die allgemeine Link-Formatierung der
    umgebenden Website (Farbe/Unterstreichung) sicher uebertreffen. */
@@ -570,6 +577,21 @@
     cursor: default;
 }
 
+/* Zahl-Badge fuer ungelesene Benachrichtigungen */
+.synapsis-membernav__badge {
+    display: inline-block;
+    min-width: 1.2rem;
+    margin-left: 0.35rem;
+    padding: 0 0.35rem;
+    border-radius: 0.75rem;
+    background: var(--syn-accent);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2rem;
+    text-align: center;
+}
+
 /* --- Mitglieder-Unteransichten (Panel) --------------------------------- */
 .synapsis-panel__header {
     margin-bottom: 1rem;
@@ -595,6 +617,15 @@
 
 .synapsis-panel__item:last-child {
     border-bottom: 0;
+}
+
+/* Ungelesene Benachrichtigung dezent hervorheben (ohne farbigen Seitenbalken) */
+.synapsis-notification.is-unread {
+    background: var(--syn-panel, #f3f4f6);
+}
+
+.synapsis-notification.is-unread .synapsis-panel__link {
+    font-weight: 700;
 }
 
 .synapsis-panel__main {
@@ -679,6 +710,90 @@
 
 .synapsis-like__names {
     color: var(--syn-muted);
+}
+
+/* --- Beitrags-Aktionen (Zitieren/Bearbeiten/Löschen) und Moderation ----- */
+.synapsis-post__action {
+    font-size: 0.82rem;
+    color: var(--syn-accent);
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.synapsis-post__action:hover {
+    text-decoration: underline;
+}
+
+.synapsis-post__action--danger {
+    color: #b3261e;
+}
+
+.synapsis-post__delete {
+    display: inline;
+    margin: 0;
+}
+
+.synapsis-post__edited {
+    margin-top: 0.6rem;
+    font-size: 0.78rem;
+    color: var(--syn-muted);
+    font-style: italic;
+}
+
+.synapsis-editform {
+    margin: 1rem 0 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--syn-accent);
+    border-radius: var(--syn-radius);
+    background: var(--syn-panel, #f3f4f6);
+}
+
+.synapsis-move {
+    display: inline-flex;
+    gap: 0.35rem;
+    margin: 0;
+}
+
+.synapsis-move__select {
+    max-width: 14rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--syn-border);
+    border-radius: var(--syn-radius);
+    font-size: 0.85rem;
+}
+
+/* --- Beitraege melden --------------------------------------------------- */
+.synapsis-reportform {
+    margin: 1rem 0 1.5rem;
+    padding: 1rem;
+    border: 1px solid #d9a441;
+    border-radius: var(--syn-radius);
+    background: #fff8ec;
+}
+
+.synapsis-form__hint {
+    margin: 0 0 0.6rem;
+    font-size: 0.85rem;
+    color: var(--syn-muted);
+}
+
+.synapsis-report {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.synapsis-report__reason {
+    display: block;
+    margin-top: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--syn-border);
+    border-radius: var(--syn-radius);
+    background: var(--syn-panel, #f3f4f6);
+    font-size: 0.9rem;
 }
 
 /* --- Umfragen ----------------------------------------------------------- */

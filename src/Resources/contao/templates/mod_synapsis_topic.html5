@@ -44,6 +44,30 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                     </button>
                 </form>
             <?php endif; ?>
+            <?php if ($this->canLock): ?>
+                <form action="<?= $this->moderateAction ?>" method="post" class="synapsis-pin">
+                    <input type="hidden" name="FORM_SUBMIT" value="<?= $this->lockFormId ?>">
+                    <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                    <button type="submit" class="synapsis-button<?= $this->locked ? ' synapsis-button--active' : '' ?>">
+                        <?= $this->locked
+                            ? ($GLOBALS['TL_LANG']['MSC']['synapsisReopen'] ?? 'Wieder öffnen')
+                            : ($GLOBALS['TL_LANG']['MSC']['synapsisClose'] ?? 'Thema schließen') ?>
+                    </button>
+                </form>
+            <?php endif; ?>
+            <?php if ($this->canMove && !empty($this->moveTargets)): ?>
+                <form action="<?= $this->moderateAction ?>" method="post" class="synapsis-move">
+                    <input type="hidden" name="FORM_SUBMIT" value="<?= $this->moveFormId ?>">
+                    <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                    <select name="move_target" class="synapsis-move__select" aria-label="<?= $GLOBALS['TL_LANG']['MSC']['synapsisMoveTo'] ?? 'Verschieben nach' ?>">
+                        <option value=""><?= $GLOBALS['TL_LANG']['MSC']['synapsisMoveTo'] ?? 'Verschieben nach …' ?></option>
+                        <?php foreach ($this->moveTargets as $target): ?>
+                            <option value="<?= $target['id'] ?>"><?= StringUtil::specialchars($target['title']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit" class="synapsis-button"><?= $GLOBALS['TL_LANG']['MSC']['synapsisMove'] ?? 'Verschieben' ?></button>
+                </form>
+            <?php endif; ?>
             <?php if ($this->canSubscribe): ?>
                 <form action="<?= $this->subscribeAction ?>" method="post" class="synapsis-subscribe">
                     <input type="hidden" name="FORM_SUBMIT" value="<?= $this->subscribeFormId ?>">
@@ -101,6 +125,40 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         </section>
     <?php endif; ?>
 
+    <?php if ($this->editPost): ?>
+        <form action="<?= $this->editPost['action'] ?>" method="post" enctype="multipart/form-data" class="synapsis-form synapsis-editform">
+            <input type="hidden" name="FORM_SUBMIT" value="<?= $this->editPost['formId'] ?>">
+            <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+            <input type="hidden" name="post" value="<?= $this->editPost['id'] ?>">
+            <h3 class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisEditPost'] ?? 'Beitrag bearbeiten' ?></h3>
+            <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8"><?= StringUtil::specialchars($this->editPost['text']) ?></textarea>
+            <?php if (!empty($this->emoticons)): ?>
+                <div class="synapsis-smileys">
+                    <?php foreach ($this->emoticons as $emo): ?><button type="button" class="synapsis-smiley" data-emoji="<?= $emo ?>" title="Smiley einfügen"><?= $emo ?></button><?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <div class="synapsis-form__actions">
+                <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSave'] ?? 'Speichern' ?></button>
+                <a class="synapsis-button" href="<?= $this->editPost['cancelUrl'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisCancel'] ?? 'Abbrechen' ?></a>
+            </div>
+        </form>
+    <?php endif; ?>
+
+    <?php if ($this->reportPost): ?>
+        <form action="<?= $this->reportPost['action'] ?>" method="post" class="synapsis-form synapsis-reportform">
+            <input type="hidden" name="FORM_SUBMIT" value="<?= $this->reportFormId ?>">
+            <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+            <input type="hidden" name="post" value="<?= $this->reportPost['id'] ?>">
+            <h3 class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisReport'] ?? 'Beitrag melden' ?></h3>
+            <p class="synapsis-form__hint"><?= $GLOBALS['TL_LANG']['MSC']['synapsisReportHint'] ?? 'Bitte beschreibe kurz, warum dieser Beitrag gemeldet wird. Die Moderation prüft die Meldung.' ?></p>
+            <textarea name="reason" rows="4" placeholder="<?= StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['synapsisReportReason'] ?? 'Grund der Meldung') ?>"></textarea>
+            <div class="synapsis-form__actions">
+                <button type="submit" class="synapsis-button synapsis-button--primary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisReportSubmit'] ?? 'Meldung absenden' ?></button>
+                <a class="synapsis-button" href="<?= $this->reportPost['cancelUrl'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisCancel'] ?? 'Abbrechen' ?></a>
+            </div>
+        </form>
+    <?php endif; ?>
+
     <div class="synapsis-posts">
         <?php foreach ($this->posts as $post): ?>
             <article class="synapsis-post" id="post-<?= $post['id'] ?>">
@@ -127,11 +185,30 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                         </div>
                     <?php endif; ?>
 
+                    <?php if (!empty($post['editedLabel'])): ?>
+                        <div class="synapsis-post__edited"><?= StringUtil::specialchars($post['editedLabel']) ?></div>
+                    <?php endif; ?>
+
                     <?php if (!empty($post['signature'])): ?>
                         <div class="synapsis-post__signature"><?= $post['signature'] ?></div>
                     <?php endif; ?>
 
                     <div class="synapsis-post__footer">
+                        <?php if ($this->canReply): ?>
+                            <a class="synapsis-post__action" href="<?= $post['quoteUrl'] ?>#synapsis-reply"><?= $GLOBALS['TL_LANG']['MSC']['synapsisQuote'] ?? 'Zitieren' ?></a>
+                        <?php endif; ?>
+                        <?php if (!empty($post['canReport'])): ?>
+                            <a class="synapsis-post__action" href="<?= $post['reportUrl'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisReport'] ?? 'Melden' ?></a>
+                        <?php endif; ?>
+                        <?php if (!empty($post['canModify'])): ?>
+                            <a class="synapsis-post__action" href="<?= $post['editUrl'] ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisEdit'] ?? 'Bearbeiten' ?></a>
+                            <form action="<?= $this->moderateAction ?>" method="post" class="synapsis-post__delete" onsubmit="return confirm('<?= $GLOBALS['TL_LANG']['MSC']['synapsisDeleteConfirm'] ?? 'Diesen Beitrag wirklich löschen?' ?>');">
+                                <input type="hidden" name="FORM_SUBMIT" value="<?= $this->deleteFormId ?>">
+                                <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                                <input type="hidden" name="post" value="<?= $post['id'] ?>">
+                                <button type="submit" class="synapsis-post__action synapsis-post__action--danger"><?= $GLOBALS['TL_LANG']['MSC']['synapsisDelete'] ?? 'Löschen' ?></button>
+                            </form>
+                        <?php endif; ?>
                         <?php if (!empty($post['canLike'])): ?>
                             <form action="<?= $this->likeAction ?>" method="post" class="synapsis-like__form">
                                 <input type="hidden" name="FORM_SUBMIT" value="<?= $this->likeFormId ?>">
@@ -164,7 +241,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
     <?= $this->pagination ?>
 
     <?php if ($this->canReply): ?>
-        <section class="synapsis-reply">
+        <section class="synapsis-reply" id="synapsis-reply">
             <h3 class="synapsis-reply__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisReply'] ?? 'Antworten' ?></h3>
 
             <?php if (!empty($this->formError)): ?>
@@ -174,8 +251,9 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
             <form action="<?= $this->formAction ?>" method="post" enctype="multipart/form-data" class="synapsis-form">
                 <input type="hidden" name="FORM_SUBMIT" value="<?= $this->formId ?>">
                 <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                <?php if (!empty($this->quotePost)): ?><input type="hidden" name="quote_post" value="<?= (int) $this->quotePost ?>"><?php endif; ?>
 
-                <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8"></textarea>
+                <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8"><?= StringUtil::specialchars($this->replyPrefill) ?></textarea>
 
                 <?php if (!empty($this->emoticons)): ?>
                     <div class="synapsis-smileys">

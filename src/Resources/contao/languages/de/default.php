@@ -69,10 +69,47 @@ $GLOBALS['TL_LANG']['MSC']['synapsisNoSubscriptions'] = 'Du hast keine Themen ab
 $GLOBALS['TL_LANG']['MSC']['synapsisNoUnread']        = 'Es gibt keine ungelesenen Beiträge.';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts']      = 'Du hast noch keine Beiträge geschrieben.';
 
-// Anpinnen (Moderatoren/Administratoren)
+// Moderation (Moderatoren/Administratoren)
 $GLOBALS['TL_LANG']['MSC']['synapsisPin']    = 'Oben anpinnen';
 $GLOBALS['TL_LANG']['MSC']['synapsisUnpin']  = 'Nicht mehr anpinnen';
 $GLOBALS['TL_LANG']['MSC']['synapsisPinned'] = 'Angepinnt';
+$GLOBALS['TL_LANG']['MSC']['synapsisClose']  = 'Thema schließen';
+$GLOBALS['TL_LANG']['MSC']['synapsisReopen'] = 'Wieder öffnen';
+$GLOBALS['TL_LANG']['MSC']['synapsisMove']   = 'Verschieben';
+$GLOBALS['TL_LANG']['MSC']['synapsisMoveTo'] = 'Verschieben nach …';
+
+// Beiträge: bearbeiten, löschen, zitieren
+$GLOBALS['TL_LANG']['MSC']['synapsisEdit']          = 'Bearbeiten';
+$GLOBALS['TL_LANG']['MSC']['synapsisEditPost']      = 'Beitrag bearbeiten';
+$GLOBALS['TL_LANG']['MSC']['synapsisDelete']        = 'Löschen';
+$GLOBALS['TL_LANG']['MSC']['synapsisDeleteConfirm'] = 'Diesen Beitrag wirklich löschen?';
+$GLOBALS['TL_LANG']['MSC']['synapsisEditedBy']      = 'Zuletzt bearbeitet von %s am %s';
+$GLOBALS['TL_LANG']['MSC']['synapsisQuote']         = 'Zitieren';
+$GLOBALS['TL_LANG']['MSC']['synapsisWrote']         = '%s schrieb:';
+
+// Beiträge melden (Meldungen an die Moderation)
+$GLOBALS['TL_LANG']['MSC']['synapsisReport']        = 'Melden';
+$GLOBALS['TL_LANG']['MSC']['synapsisReports']       = 'Meldungen';
+$GLOBALS['TL_LANG']['MSC']['synapsisReportHint']    = 'Bitte beschreibe kurz, warum dieser Beitrag gemeldet wird. Die Moderation prüft die Meldung.';
+$GLOBALS['TL_LANG']['MSC']['synapsisReportReason']  = 'Grund der Meldung';
+$GLOBALS['TL_LANG']['MSC']['synapsisReportSubmit']  = 'Meldung absenden';
+$GLOBALS['TL_LANG']['MSC']['synapsisReportBy']      = 'gemeldet von';
+$GLOBALS['TL_LANG']['MSC']['synapsisResolve']       = 'Erledigt';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoReports']     = 'Es liegen keine offenen Meldungen vor.';
+
+// Benachrichtigungscenter ("Mein Bereich")
+$GLOBALS['TL_LANG']['MSC']['synapsisNotifications']   = 'Benachrichtigungen';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoNotifications'] = 'Du hast keine Benachrichtigungen.';
+$GLOBALS['TL_LANG']['MSC']['synapsisNotifyReply']     = '%s hat auf dein Thema geantwortet.';
+$GLOBALS['TL_LANG']['MSC']['synapsisNotifyQuote']     = '%s hat deinen Beitrag zitiert.';
+$GLOBALS['TL_LANG']['MSC']['synapsisNotifyMention']   = '%s hat dich erwähnt.';
+$GLOBALS['TL_LANG']['MSC']['synapsisNotifyReport']    = '%s hat einen Beitrag gemeldet.';
+
+// Forum-Abonnement (E-Mail bei neuem Thema)
+$GLOBALS['TL_LANG']['MSC']['synapsisForumSubscribe']   = 'Forum abonnieren';
+$GLOBALS['TL_LANG']['MSC']['synapsisForumUnsubscribe'] = 'Forum-Abo beenden';
+$GLOBALS['TL_LANG']['MSC']['synapsisNewTopicSubject']  = 'Neues Thema im Forum "##forum##"';
+$GLOBALS['TL_LANG']['MSC']['synapsisNewTopicBody']     = "Hallo ##name##,\n\nim Forum \"##forum##\" wurde ein neues Thema erstellt: \"##topic##\".\n\n##url##\n";
 
 // Umfragen
 $GLOBALS['TL_LANG']['MSC']['synapsisAddPoll']       = 'Umfrage hinzufügen';

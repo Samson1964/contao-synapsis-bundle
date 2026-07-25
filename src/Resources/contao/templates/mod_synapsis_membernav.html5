@@ -12,10 +12,11 @@
     <nav class="synapsis-membernav">
         <span class="synapsis-membernav__title"><?= $this->memberNavTitle ?></span>
         <?php foreach ($this->memberNav as $item): ?>
+            <?php $badge = !empty($item['badge']) ? '<span class="synapsis-membernav__badge">'.(int) $item['badge'].'</span>' : ''; ?>
             <?php if (!empty($item['active'])): ?>
-                <span class="synapsis-membernav__link is-active" aria-current="page"><?= $item['label'] ?></span>
+                <span class="synapsis-membernav__link is-active" aria-current="page"><?= $item['label'] ?><?= $badge ?></span>
             <?php else: ?>
-                <a class="synapsis-membernav__link" href="<?= $item['url'] ?>"><?= $item['label'] ?></a>
+                <a class="synapsis-membernav__link" href="<?= $item['url'] ?>"><?= $item['label'] ?><?= $badge ?></a>
             <?php endif; ?>
         <?php endforeach; ?>
     </nav>

@@ -1,5 +1,28 @@
 # Synapsis Changelog
 
+## Version 1.4.0 (2026-07-25)
+
+> Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabellen `tl_synapsis_report`, `tl_synapsis_forum_sub`, `tl_synapsis_notification`; Felder `editedAt`/`editedBy` in `tl_synapsis_post`; neue Moderations- und Team-Benachrichtigungs-Felder in den Einstellungen).
+
+### Hinzugefügt – Beiträge & Moderation
+
+* **Beiträge bearbeiten und löschen**: Mitglieder dürfen ihre **eigenen** Beiträge bearbeiten/löschen, solange das Thema offen ist; nach dem Bearbeiten erscheint ein Hinweis „Zuletzt bearbeitet von … am …". Moderatoren/Administratoren dürfen fremde Beiträge bearbeiten/löschen (durch Einstellung geregelt). Beim Löschen des ersten Beitrags wird das ganze Thema samt Umfrage und Meldungen entfernt.
+* **Zitieren**: „Zitieren" übernimmt den Beitrag als Zitat ins Antwortfeld; die zitierte Person wird benachrichtigt.
+* **Thema schließen/öffnen und verschieben**: Neue Moderationsaktionen in der Themenansicht (Verschieben nur innerhalb desselben Startpunkts).
+* **Beiträge melden**: Mitglieder können Beiträge mit Begründung der Moderation melden. Das zuständige Team sieht offene Meldungen unter „Mein Bereich → Meldungen" und schließt sie mit „Erledigt" ab.
+* **Erweiterte Moderatoren-Rechte**: Die globalen Einstellungen steuern nun getrennt, ob Moderatoren anpinnen, schließen, verschieben und Beiträge bearbeiten/löschen dürfen (Administratoren immer).
+
+### Hinzugefügt – Benachrichtigungen
+
+* **Benachrichtigungscenter**: Neuer Menüpunkt „Benachrichtigungen" in „Mein Bereich" mit Ungelesen-Zähler (Badge). Anlässe: Antwort auf das eigene Thema, Zitat des eigenen Beitrags, `@Erwähnung` sowie neue Meldungen (für das Team). Startpunkt-gebunden wie alle Zähler.
+* **@Erwähnungen**: `@Benutzername` im Beitrag benachrichtigt das genannte Mitglied.
+* **Forum abonnieren**: Zusätzlich zum Themen-Abo lässt sich ein ganzes Forum abonnieren – E-Mail an die Abonnenten bei jedem neuen Thema.
+* **Team-Benachrichtigung per E-Mail**: Administratoren und/oder Moderatoren eines Forums können bei neuen Themen, Antworten oder beidem per E-Mail informiert werden (mit eigener Betreff-/Text-Vorlage; Platzhalter `##forum##`, `##topic##`, `##author##`, `##url##`).
+
+### Geändert
+
+* Das Handbuch (README) wurde um die Abschnitte **Moderation** und **Benachrichtigungen** erweitert; die globalen Einstellungen sind vollständig dokumentiert.
+
 ## Version 1.3.1 (2026-07-25)
 
 ### Behoben

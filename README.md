@@ -18,12 +18,13 @@ die im Backend ein Forum einrichten, sowie für die Mitglieder, die es im Fronte
 7. [Das Frontend-Modul einrichten](#das-frontend-modul-einrichten)
 8. [Ansichten und Bedienung im Frontend](#ansichten-und-bedienung-im-frontend)
 9. [Mein Bereich (persönliche Ansichten)](#mein-bereich)
-10. [Moderation: Rollen und Anpinnen](#moderation-rollen-und-anpinnen)
-11. [Umfragen](#umfragen)
-12. [Globale Einstellungen](#globale-einstellungen)
-13. [Import aus anderen Foren (CSV)](#import-aus-anderen-foren-csv)
-14. [Warum wird mein Forum nicht angezeigt? (Checkliste)](#warum-wird-mein-forum-nicht-angezeigt)
-15. [Für Entwickler](#für-entwickler)
+10. [Moderation: Rollen, Anpinnen, Schließen, Verschieben, Melden](#moderation)
+11. [Benachrichtigungen](#benachrichtigungen)
+12. [Umfragen](#umfragen)
+13. [Globale Einstellungen](#globale-einstellungen)
+14. [Import aus anderen Foren (CSV)](#import-aus-anderen-foren-csv)
+15. [Warum wird mein Forum nicht angezeigt? (Checkliste)](#warum-wird-mein-forum-nicht-angezeigt)
+16. [Für Entwickler](#für-entwickler)
 
 ---
 
@@ -166,7 +167,8 @@ Für **nicht angemeldete Besucher** (Gäste) getrennt regelbar und ebenfalls ver
 Je Knoten lassen sich – über **Mitgliedergruppen** und/oder **einzelne Mitglieder** –
 **Administratoren** und **Moderatoren** festlegen. Beide Rollen vererben sich nach unten. Was
 Moderatoren dürfen, wird global in den [Einstellungen](#globale-einstellungen) geregelt
-(derzeit: Themen anpinnen); Administratoren dürfen dies immer.
+(Themen anpinnen, schließen, verschieben, Beiträge bearbeiten/löschen); **Administratoren**
+dürfen dies immer. Details siehe [Moderation](#moderation).
 
 ### Umfragen erstellen
 
@@ -230,10 +232,22 @@ Auf jeder Seite gibt es außerdem eine **Pfadnavigation** (Brotkrumen) und eine 
   „Gast (früherer Benutzername)", damit die Beiträge zuordenbar bleiben.
 * **Gefällt mir** – Beiträge können mit „Gefällt mir" markiert werden (nicht der eigene). Unter
   dem Beitrag stehen Anzahl und Namen.
-* **Abonnieren** – Ein Thema lässt sich abonnieren; bei neuen Antworten gibt es eine E-Mail.
+* **Zitieren** – Über „Zitieren" wird der Beitrag als Zitat ins Antwortfeld übernommen; die
+  zitierte Person erhält eine [Benachrichtigung](#benachrichtigungen).
+* **Bearbeiten / Löschen** – Den **eigenen** Beitrag darf man nachträglich bearbeiten oder
+  löschen, solange das Thema offen ist. Nach dem Bearbeiten erscheint ein Hinweis „Zuletzt
+  bearbeitet von … am …". Moderatoren/Administratoren dürfen fremde Beiträge bearbeiten/löschen,
+  sofern es die globalen Einstellungen erlauben.
+* **Melden** – Verstößt ein Beitrag gegen die Regeln, kann er der **Moderation gemeldet**
+  werden (mit kurzer Begründung). Die zuständigen Moderatoren/Administratoren sehen die Meldung
+  unter „Mein Bereich → Meldungen".
+* **@Erwähnungen** – Wird im Text `@Benutzername` geschrieben, erhält das genannte Mitglied
+  eine [Benachrichtigung](#benachrichtigungen).
+* **Abonnieren** – Ein **Thema** lässt sich abonnieren (E-Mail bei neuer Antwort); ein ganzes
+  **Forum** ebenso (E-Mail bei jedem neuen Thema).
 * **Gelesen/Ungelesen** – Für angemeldete Mitglieder werden ungelesene Themen und Foren
   markiert; die ungelesenen Beiträge sind über „Mein Bereich" abrufbar.
-* **Suche** – Die Suchbox durchsucht Themen-Titel und Beitragstexte **innerhalb des
+* **Suche** – Die Suchbox durchsucht Themen-Titel, Beitragstexte und Umfragen **innerhalb des
   Startpunkts**.
 
 ### Avatare
@@ -249,6 +263,9 @@ wird stattdessen der dort gepflegte Mitglieder-Avatar verwendet.
 Angemeldete Mitglieder finden auf jeder Forenseite unten die Box **„Mein Bereich"** mit
 persönlichen Ansichten:
 
+* **Benachrichtigungen** – Das persönliche Postfach (Antworten, Zitate, Erwähnungen). Neben dem
+  Menüpunkt zeigt ein **Zähler** die ungelesenen Benachrichtigungen an; beim Öffnen gelten sie
+  als gelesen. Siehe [Benachrichtigungen](#benachrichtigungen).
 * **Meine Beiträge** – Themen, in denen man selbst geschrieben hat.
 * **Ungelesene Beiträge** – Themen mit noch nicht gelesenen Beiträgen.
 * **Gefällt mir** – Themen mit von einem selbst markierten Beiträgen.
@@ -256,18 +273,64 @@ persönlichen Ansichten:
 * **Signatur** – Die eigene Signatur bearbeiten. Erlaubt sind einfache **BB-Codes**
   (`[b]`, `[i]`, `[u]`, `[s]`, `[url]`, `[color]`) über bequeme Einfüge-Buttons; die Signatur
   erscheint unter den eigenen Beiträgen.
+* **Meldungen** – Nur für **Moderatoren/Administratoren** sichtbar: offene Beitragsmeldungen mit
+  Begründung; jede lässt sich mit „Erledigt" abschließen.
 
 ---
 
-## Moderation: Rollen und Anpinnen
+## Moderation
 
 Wer in einem Bereich **Administrator** oder **Moderator** ist, wird je Knoten festgelegt (siehe
-[Einstellungen je Knoten](#einstellungen-je-knoten)) und vererbt sich nach unten.
+[Einstellungen je Knoten](#einstellungen-je-knoten)) und vererbt sich nach unten. In der
+Themenansicht stehen Berechtigten oben die Moderationsschaltflächen zur Verfügung:
 
-* **Anpinnen** – In der Themenansicht können Berechtigte ein Thema **oben anpinnen** bzw. wieder
-  lösen. Angepinnte Themen erscheinen in der Themenliste zuoberst und tragen ein Badge.
-* **Administratoren** dürfen immer anpinnen. **Moderatoren** dürfen es nur, wenn es in den
-  globalen Einstellungen erlaubt ist.
+* **Anpinnen** – Ein Thema **oben anpinnen** bzw. wieder lösen. Angepinnte Themen erscheinen in
+  der Themenliste zuoberst und tragen ein Badge.
+* **Schließen / Öffnen** – Ein geschlossenes Thema kann gelesen, aber nicht mehr beantwortet
+  werden. Jederzeit wieder zu öffnen.
+* **Verschieben** – Ein Thema in ein anderes Forum **desselben Startpunkts** verschieben (Auswahl
+  des Zielforums).
+* **Beiträge bearbeiten / löschen** – Fremde Beiträge korrigieren oder entfernen. Wird der erste
+  Beitrag eines Themas gelöscht, wird das gesamte Thema mit allen Beiträgen, Umfragen und
+  Meldungen entfernt.
+* **Meldungen bearbeiten** – Von Mitgliedern gemeldete Beiträge erscheinen unter
+  **„Mein Bereich → Meldungen"** (nur für das zuständige Team des jeweiligen Forums, inkl.
+  Begründung und Verweis auf den Beitrag). Erledigte Meldungen werden per „Erledigt" geschlossen.
+
+**Regel:** **Administratoren** dürfen all das immer. **Moderatoren** dürfen die einzelnen
+Aktionen nur, wenn sie in den [globalen Einstellungen](#globale-einstellungen) freigeschaltet
+sind.
+
+---
+
+## Benachrichtigungen
+
+Synapsis benachrichtigt auf zwei Wegen: **im Forum** (persönliches Postfach) und **per E-Mail**.
+
+### Im Forum: das Benachrichtigungscenter
+
+Unter **„Mein Bereich → Benachrichtigungen"** sammelt jedes Mitglied seine persönlichen
+Hinweise. Neben dem Menüpunkt zeigt ein **Zähler** die ungelesenen an; beim Öffnen der Ansicht
+gelten sie als gelesen. Es gibt vier Anlässe:
+
+* **Antwort** – jemand hat auf ein **eigenes Thema** geantwortet.
+* **Zitat** – jemand hat einen **eigenen Beitrag zitiert**.
+* **Erwähnung** – jemand hat einen im Text mit `@Benutzername` **namentlich erwähnt**.
+* **Meldung** – für das Team: ein Beitrag wurde **gemeldet**.
+
+### Per E-Mail
+
+* **Thema abonnieren** – E-Mail an alle Abonnenten, sobald im Thema eine **neue Antwort**
+  erscheint.
+* **Forum abonnieren** – E-Mail an alle Abonnenten, sobald im Forum ein **neues Thema** angelegt
+  wird (Schaltfläche „Forum abonnieren" in der Themenliste).
+* **Team-Benachrichtigung** – Optional erhalten **Administratoren und/oder Moderatoren** eines
+  Forums eine E-Mail bei neuen Beiträgen. Ob Admins, Moderatoren oder beide benachrichtigt
+  werden, ob bei **neuen Themen, Antworten oder beidem**, sowie die Betreff-/Text-Vorlage werden
+  in den [globalen Einstellungen](#globale-einstellungen) festgelegt.
+
+Alle E-Mail-Benachrichtigungen lassen sich global über **„E-Mail-Benachrichtigungen aktiv"**
+ein- und ausschalten. Der Verfasser selbst wird nie über den eigenen Beitrag benachrichtigt.
 
 ---
 
@@ -291,11 +354,18 @@ mit Prozent und Teilnehmerzahl angezeigt. Doppelt abstimmen ist ausgeschlossen.
 
 Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunkte hinweg):
 
-* **E-Mail bei neuer Antwort** – An/aus, sowie **Betreff- und Text-Vorlage** für die
-  Benachrichtigung an Abonnenten. Platzhalter: `##topic##` (Thementitel), `##name##`
-  (Empfänger), `##url##` (Adresse des Themas).
+* **E-Mail-Benachrichtigungen** – Zentraler An/aus-Schalter für **alle** E-Mails, sowie
+  **Betreff- und Text-Vorlage** für die Antwort-Benachrichtigung an Themen-Abonnenten.
+  Platzhalter: `##topic##` (Thementitel), `##name##` (Empfänger), `##url##` (Adresse des Themas).
+* **Team-Benachrichtigung** – Bei neuen Beiträgen zusätzlich das **Team** informieren:
+  * **Administratoren benachrichtigen** und/oder **Moderatoren benachrichtigen** (jeweils an/aus).
+  * **Auslöser** – bei **neuen Themen**, **Antworten** oder **beidem**.
+  * **Betreff- und Text-Vorlage** mit den Platzhaltern `##forum##`, `##topic##`, `##author##`
+    (Verfasser) und `##url##`.
 * **Absender** (optional) – Name und E-Mail; leer = Contao-Standardabsender.
-* **Rechte der Moderatoren** – u. a. **„Moderatoren dürfen Themen anpinnen"**.
+* **Rechte der Moderatoren** – Feinsteuerung, was Moderatoren (nicht aber Administratoren, die
+  dürfen immer) tun dürfen: **Themen anpinnen**, **Themen schließen**, **Themen verschieben** und
+  **Beiträge bearbeiten/löschen**.
 
 ---
 

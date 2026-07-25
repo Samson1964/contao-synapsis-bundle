@@ -11,6 +11,9 @@
  */
 
 use Contao\StringUtil;
+use Contao\System;
+
+$requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
 ?>
 <div class="synapsis synapsis-forumview<?= $this->class ?>"<?= $this->cssID ?>>
 
@@ -26,11 +29,24 @@ use Contao\StringUtil;
 
     <header class="synapsis-forumview__header">
         <h2 class="synapsis-forumview__title"><?= StringUtil::specialchars($this->forum['title']) ?></h2>
-        <?php if ('' !== $this->newTopicUrl): ?>
-            <a class="synapsis-button synapsis-button--primary" href="<?= $this->newTopicUrl ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNewTopic'] ?? 'Neues Thema' ?></a>
-        <?php elseif ($this->closed): ?>
-            <span class="synapsis-badge synapsis-badge--closed"><?= $GLOBALS['TL_LANG']['MSC']['synapsisClosed'] ?? 'Geschlossen' ?></span>
-        <?php endif; ?>
+        <div class="synapsis-forumview__actions">
+            <?php if ($this->canSubscribeForum): ?>
+                <form action="<?= $this->forumSubscribeAction ?>" method="post" class="synapsis-subscribe">
+                    <input type="hidden" name="FORM_SUBMIT" value="<?= $this->forumSubscribeFormId ?>">
+                    <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                    <button type="submit" class="synapsis-button<?= $this->isForumSubscribed ? ' synapsis-button--active' : '' ?>">
+                        <?= $this->isForumSubscribed
+                            ? ($GLOBALS['TL_LANG']['MSC']['synapsisForumUnsubscribe'] ?? 'Forum-Abo beenden')
+                            : ($GLOBALS['TL_LANG']['MSC']['synapsisForumSubscribe'] ?? 'Forum abonnieren') ?>
+                    </button>
+                </form>
+            <?php endif; ?>
+            <?php if ('' !== $this->newTopicUrl): ?>
+                <a class="synapsis-button synapsis-button--primary" href="<?= $this->newTopicUrl ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNewTopic'] ?? 'Neues Thema' ?></a>
+            <?php elseif ($this->closed): ?>
+                <span class="synapsis-badge synapsis-badge--closed"><?= $GLOBALS['TL_LANG']['MSC']['synapsisClosed'] ?? 'Geschlossen' ?></span>
+            <?php endif; ?>
+        </div>
     </header>
 
     <?php if (!empty($this->subforums)): ?>

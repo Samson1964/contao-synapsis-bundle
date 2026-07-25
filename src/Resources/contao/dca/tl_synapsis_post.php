@@ -136,6 +136,15 @@ $GLOBALS['TL_DCA']['tl_synapsis_post'] = array
             'eval'      => array('rgxp' => 'datim', 'datepicker' => true, 'mandatory' => true, 'tl_class' => 'w50 wizard'),
             'sql'       => "int(10) unsigned NULL",
         ),
+        // Zeitpunkt und Bearbeiter der letzten Aenderung (0 = nie bearbeitet)
+        'editedAt' => array
+        (
+            'sql' => "int(10) unsigned NOT NULL default 0",
+        ),
+        'editedBy' => array
+        (
+            'sql' => "int(10) unsigned NOT NULL default 0",
+        ),
         'text' => array
         (
             'exclude'   => true,

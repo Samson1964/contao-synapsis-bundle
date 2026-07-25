@@ -45,7 +45,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
 
     'palettes' => array
     (
-        'default' => '{notify_legend},notifyEnabled,notifySubject,notifyBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin',
+        'default' => '{notify_legend},notifyEnabled,notifySubject,notifyBody;{team_legend},teamNotifyAdmins,teamNotifyMods,teamNotifyOn,teamSubject,teamBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin,modCanLock,modCanMove,modCanEditPosts',
     ),
 
     'fields' => array
@@ -93,13 +93,73 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
             'eval'      => array('rgxp' => 'email', 'maxlength' => 255, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
         ),
-        // Duerfen Moderatoren Themen anpinnen? (Administratoren duerfen immer.)
+        // --- Rechte der Moderatoren (Administratoren duerfen immer alles) ---
         'modCanPin' => array
         (
             'exclude'   => true,
             'inputType' => 'checkbox',
             'eval'      => array('tl_class' => 'w50 m12'),
             'sql'       => "char(1) NOT NULL default '1'",
+        ),
+        'modCanLock' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default '1'",
+        ),
+        'modCanMove' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default '1'",
+        ),
+        'modCanEditPosts' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default '1'",
+        ),
+
+        // --- Benachrichtigung an das Team (Admins/Moderatoren) ---
+        'teamNotifyAdmins' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default ''",
+        ),
+        'teamNotifyMods' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default ''",
+        ),
+        'teamNotifyOn' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'select',
+            'options'   => array('topic', 'reply', 'both'),
+            'reference' => &$GLOBALS['TL_LANG']['tl_synapsis_settings']['teamNotifyOnRef'],
+            'eval'      => array('tl_class' => 'w50'),
+            'sql'       => "varchar(8) NOT NULL default 'both'",
+        ),
+        'teamSubject' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'text',
+            'eval'      => array('maxlength' => 255, 'tl_class' => 'clr long', 'decodeEntities' => true),
+            'sql'       => "varchar(255) NOT NULL default ''",
+        ),
+        'teamBody' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'textarea',
+            'eval'      => array('rows' => 6, 'tl_class' => 'clr', 'decodeEntities' => true),
+            'sql'       => "text NULL",
         ),
     ),
 );

@@ -40,6 +40,12 @@ class SettingsListener
                     'notifySubject' => 'Neue Antwort im Thema "##topic##"',
                     'notifyBody' => "Hallo ##name##,\n\nim Thema \"##topic##\" wurde eine neue Antwort verfasst.\n\n##url##\n",
                     'modCanPin' => '1',
+                    'modCanLock' => '1',
+                    'modCanMove' => '1',
+                    'modCanEditPosts' => '1',
+                    'teamNotifyOn' => 'both',
+                    'teamSubject' => 'Forum: neuer Beitrag im Thema "##topic##"',
+                    'teamBody' => "Im Forum \"##forum##\" hat ##author## im Thema \"##topic##\" geschrieben.\n\n##url##\n",
                 ])
                 ->execute()
             ;

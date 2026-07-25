@@ -147,6 +147,13 @@ class SynapsisForum extends Module
     private $readableForumIdsCache;
 
     /**
+     * Zwischenspeicher: darf der Besucher irgendwo im Startpunkt moderieren?
+     *
+     * @var bool|null
+     */
+    private $canSeeReportsCache;
+
+    /**
      * Erzeugt das Modul bzw. im Backend eine Platzhalterdarstellung.
      */
     public function generate(): string
@@ -230,12 +237,21 @@ class SynapsisForum extends Module
     private function buildMemberNav(): array
     {
         $items = [
+            'notify' => $GLOBALS['TL_LANG']['MSC']['synapsisNotifications'] ?? 'Benachrichtigungen',
             'me' => $GLOBALS['TL_LANG']['MSC']['synapsisMyPosts'] ?? 'Meine Beiträge',
             'unread' => $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge',
             'liked' => $GLOBALS['TL_LANG']['MSC']['synapsisLikedPosts'] ?? 'Gefällt mir',
             'subs' => $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions'] ?? 'Abonnements',
             'sig' => $GLOBALS['TL_LANG']['MSC']['synapsisSignature'] ?? 'Signatur',
         ];
+
+        // "Meldungen" nur fuer Mitglieder, die irgendwo moderieren duerfen.
+        if ($this->canSeeReports()) {
+            $items['reports'] = $GLOBALS['TL_LANG']['MSC']['synapsisReports'] ?? 'Meldungen';
+        }
+
+        // Ungelesene Benachrichtigungen als Zahl-Badge am Punkt "Benachrichtigungen".
+        $unread = $this->unreadNotificationCount();
 
         $nav = [];
 
@@ -245,6 +261,7 @@ class SynapsisForum extends Module
                 'label' => $label,
                 'url' => $this->pageUrl(['panel' => $key]),
                 'active' => 'panel' === $this->view && $this->panel === $key,
+                'badge' => 'notify' === $key && $unread > 0 ? $unread : 0,
             ];
         }
 
@@ -260,7 +277,7 @@ class SynapsisForum extends Module
         // Mitglieder-Unteransichten (Abos, Signatur, Meine/Ungelesene Beitraege)
         $panel = (string) Input::get('panel');
 
-        if ('' !== $panel && $this->isMemberLoggedIn() && \in_array($panel, ['subs', 'sig', 'me', 'unread', 'liked'], true)) {
+        if ('' !== $panel && $this->isMemberLoggedIn() && \in_array($panel, ['subs', 'sig', 'me', 'unread', 'liked', 'reports', 'notify'], true)) {
             $this->panel = $panel;
             $this->view = 'panel';
             $this->strTemplate = 'mod_synapsis_panel';
@@ -368,12 +385,21 @@ class SynapsisForum extends Module
     {
         $forumId = (int) $this->activeForum['id'];
 
+        // Forum-Abonnement (E-Mail bei neuem Thema) umschalten, bevor gerendert wird.
+        $this->handleForumSubscription();
+
         $this->Template->forum = $this->activeForum;
         $this->Template->breadcrumb = $this->buildBreadcrumb($forumId);
         $this->Template->newTopicUrl = (!$this->activeForum['closed'] && $this->canWrite($forumId))
             ? $this->pageUrl(['forum' => $forumId, 'new' => 1])
             : '';
         $this->Template->closed = (bool) $this->activeForum['closed'];
+
+        // Forum abonnieren: nur fuer angemeldete Mitglieder anbieten.
+        $this->Template->canSubscribeForum = $this->isMemberLoggedIn();
+        $this->Template->isForumSubscribed = $this->isForumSubscribed($forumId);
+        $this->Template->forumSubscribeAction = $this->pageUrl(['forum' => $forumId]);
+        $this->Template->forumSubscribeFormId = 'synapsis_fsub_'.$this->id;
 
         // Unterforen
         $subforums = [];
@@ -426,6 +452,11 @@ class SynapsisForum extends Module
         $this->handleLike();
         $this->handleVote();
         $this->handlePin();
+        $this->handleLock();
+        $this->handleMove();
+        $this->handleEdit();
+        $this->handleDelete();
+        $this->handleReport();
         $this->handlePostSubmission();
 
         // Ansichtszaehler erhoehen - aber pro Sitzung nur einmal, damit ein
@@ -482,11 +513,58 @@ class SynapsisForum extends Module
         // Umfrage zum Thema (falls vorhanden)
         $this->Template->poll = $this->buildPoll($topicId);
 
-        // Anpinnen (nur fuer Administratoren/berechtigte Moderatoren)
-        $this->Template->canPin = $this->canPin((int) $this->activeForum['id']);
+        // Moderation (nur fuer Administratoren/berechtigte Moderatoren)
+        $moderatedForum = (int) $this->activeForum['id'];
+        $this->Template->canPin = $this->canModerate($moderatedForum, 'pin');
         $this->Template->isPinned = (bool) $this->activeTopic['sticky'];
         $this->Template->pinFormId = 'synapsis_pin_'.$this->id;
         $this->Template->pinAction = $this->pageUrl(['topic' => $topicId]);
+
+        $this->Template->canLock = $this->canModerate($moderatedForum, 'lock');
+        $this->Template->lockFormId = 'synapsis_lock_'.$this->id;
+
+        $canMove = $this->canModerate($moderatedForum, 'move');
+        $this->Template->canMove = $canMove;
+        $this->Template->moveFormId = 'synapsis_move_'.$this->id;
+        $this->Template->moveTargets = $canMove ? $this->moveTargets($moderatedForum) : [];
+        $this->Template->moderateAction = $this->pageUrl(['topic' => $topicId]);
+        $this->Template->deleteFormId = 'synapsis_delete_'.$this->id;
+
+        // Melde-Formular, wenn ein Beitrag gemeldet werden soll
+        $this->Template->reportPost = null;
+        $this->Template->reportFormId = 'synapsis_report_'.$this->id;
+        $reportId = (int) Input::get('report');
+
+        if ($reportId > 0 && $this->currentAuthorId() > 0) {
+            $reportable = $this->findPostInTopic($reportId);
+
+            if (null !== $reportable && (int) $reportable['author'] !== $this->currentAuthorId()) {
+                $this->Template->reportPost = [
+                    'id' => $reportId,
+                    'action' => $this->pageUrl(['topic' => $topicId, 'report' => $reportId]),
+                    'cancelUrl' => $this->pageUrl(['topic' => $topicId]),
+                ];
+            }
+        }
+
+        // Bearbeiten-Formular, wenn ein Beitrag zum Bearbeiten aufgerufen wurde
+        $this->Template->editPost = null;
+        $editId = (int) Input::get('edit');
+
+        if ($editId > 0) {
+            $editable = $this->findPostInTopic($editId);
+
+            if (null !== $editable && $this->canModifyPost($editable)) {
+                $this->enableEditor();
+                $this->Template->editPost = [
+                    'id' => $editId,
+                    'text' => (string) $editable['text'],
+                    'action' => $this->pageUrl(['topic' => $topicId, 'edit' => $editId]),
+                    'formId' => 'synapsis_edit_'.$this->id,
+                    'cancelUrl' => $this->pageUrl(['topic' => $topicId]),
+                ];
+            }
+        }
 
         // Antwortformular in offenen Themen fuer alle Schreibberechtigten
         // (Mitglieder bzw. Gaeste mit Schreibrecht).
@@ -496,12 +574,46 @@ class SynapsisForum extends Module
         $this->Template->canReply = $canReply;
         $this->Template->locked = (bool) $this->activeTopic['locked'];
 
+        $this->Template->replyPrefill = '';
+        $this->Template->quotePost = 0;
+
         if ($canReply) {
             $this->enableEditor();
             $this->Template->allowUploads = (bool) $this->synapsis_allowUploads;
             $this->Template->formAction = $this->pageUrl(['topic' => $topicId]);
             $this->Template->formId = 'synapsis_reply_'.$this->id;
+            $this->Template->replyPrefill = $this->buildQuotePrefill();
+
+            // Beim Zitieren die Beitrags-ID mitfuehren, damit der Autor benachrichtigt wird.
+            $quoteId = (int) Input::get('quote');
+            $this->Template->quotePost = ($quoteId > 0 && null !== $this->findPostInTopic($quoteId)) ? $quoteId : 0;
         }
+    }
+
+    /**
+     * Baut den vorbelegten Antworttext, wenn ein Beitrag zitiert wird
+     * (URL-Parameter quote). Leer, wenn nichts zu zitieren ist.
+     */
+    private function buildQuotePrefill(): string
+    {
+        $quoteId = (int) Input::get('quote');
+
+        if ($quoteId <= 0) {
+            return '';
+        }
+
+        $post = $this->findPostInTopic($quoteId);
+
+        if (null === $post) {
+            return '';
+        }
+
+        $author = $this->authorLabel((int) $post['author'], (string) ($post['authorName'] ?? ''));
+        $intro = sprintf($GLOBALS['TL_LANG']['MSC']['synapsisWrote'] ?? '%s schrieb:', $author);
+
+        return '<blockquote><p><strong>'.htmlspecialchars($intro, ENT_QUOTES).'</strong></p>'
+            .(string) $post['text']
+            .'</blockquote><p><br></p>';
     }
 
     /**
@@ -630,11 +742,13 @@ class SynapsisForum extends Module
     private function compilePanel(): void
     {
         $labels = [
+            'notify' => $GLOBALS['TL_LANG']['MSC']['synapsisNotifications'] ?? 'Benachrichtigungen',
             'me' => $GLOBALS['TL_LANG']['MSC']['synapsisMyPosts'] ?? 'Meine Beiträge',
             'unread' => $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge',
             'liked' => $GLOBALS['TL_LANG']['MSC']['synapsisLikedPosts'] ?? 'Gefällt mir',
             'subs' => $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions'] ?? 'Abonnements',
             'sig' => $GLOBALS['TL_LANG']['MSC']['synapsisSignature'] ?? 'Signatur',
+            'reports' => $GLOBALS['TL_LANG']['MSC']['synapsisReports'] ?? 'Meldungen',
         ];
 
         $breadcrumb = $this->buildBreadcrumb(0);
@@ -664,6 +778,14 @@ class SynapsisForum extends Module
 
             case 'liked':
                 $this->compilePanelLiked();
+                break;
+
+            case 'reports':
+                $this->compilePanelReports();
+                break;
+
+            case 'notify':
+                $this->compilePanelNotifications();
                 break;
         }
     }
@@ -841,6 +963,185 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Offene Meldungen der Foren auflisten, die der Besucher moderiert, und das
+     * Erledigen (Loeschen) einer Meldung verarbeiten.
+     */
+    private function compilePanelReports(): void
+    {
+        $this->Template->items = [];
+
+        if (!$this->canSeeReports()) {
+            return;
+        }
+
+        // Erledigen verarbeiten
+        if ('synapsis_resolve_'.$this->id === Input::post('FORM_SUBMIT')) {
+            $reportId = (int) Input::post('report');
+
+            if ($reportId > 0) {
+                $rep = Database::getInstance()->prepare('SELECT forum FROM tl_synapsis_report WHERE id = ?')->execute($reportId)->row();
+
+                if (!empty($rep) && $this->isTeamMember((int) $rep['forum'])) {
+                    Database::getInstance()->prepare('DELETE FROM tl_synapsis_report WHERE id = ?')->execute($reportId);
+                }
+            }
+
+            $this->redirect($this->pageUrl(['panel' => 'reports']));
+        }
+
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
+
+        $rows = Database::getInstance()
+            ->prepare('SELECT * FROM tl_synapsis_report WHERE forum IN ('.$placeholders.') ORDER BY tstamp DESC')
+            ->limit(200)
+            ->execute(...$forumIds)
+        ;
+
+        $items = [];
+
+        while ($rows->next()) {
+            $report = $rows->row();
+
+            if (!$this->isTeamMember((int) $report['forum'])) {
+                continue;
+            }
+
+            $topicRow = Database::getInstance()->prepare('SELECT title FROM tl_synapsis_topic WHERE id = ?')->execute((int) $report['topic'])->row();
+
+            $items[] = [
+                'reason' => (string) ($report['reason'] ?? ''),
+                'reporter' => $this->authorLabel((int) $report['member'], ''),
+                'topicTitle' => (string) ($topicRow['title'] ?? ''),
+                'forumTitle' => $this->forumTitle((int) $report['forum']),
+                'url' => $this->pageUrl(['topic' => (int) $report['topic']]).'#post-'.(int) $report['post'],
+                'dateFormatted' => $this->formatDate((int) $report['tstamp']),
+                'resolveId' => (int) $report['id'],
+            ];
+        }
+
+        $this->Template->items = $items;
+        $this->Template->resolveFormId = 'synapsis_resolve_'.$this->id;
+        $this->Template->formAction = $this->pageUrl(['panel' => 'reports']);
+    }
+
+    /**
+     * Benachrichtigungscenter: listet die persoenlichen Benachrichtigungen des
+     * Mitglieds (neueste zuerst) und markiert sie beim Oeffnen als gelesen.
+     */
+    private function compilePanelNotifications(): void
+    {
+        $this->Template->items = [];
+
+        if (!$this->isMemberLoggedIn()) {
+            return;
+        }
+
+        $memberId = (int) FrontendUser::getInstance()->id;
+        $db = Database::getInstance();
+
+        // Nur Benachrichtigungen aus diesem Startpunkt (dessen Themen-Links hier aufloesen).
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, \count($forumIds), '?'));
+
+        $rows = $db
+            ->prepare('SELECT * FROM tl_synapsis_notification WHERE member = ? AND forum IN ('.$placeholders.') ORDER BY tstamp DESC, id DESC')
+            ->limit(100)
+            ->execute(...array_merge([$memberId], $forumIds))
+            ->fetchAllAssoc()
+        ;
+
+        $labels = [
+            'reply' => $GLOBALS['TL_LANG']['MSC']['synapsisNotifyReply'] ?? '%s hat auf dein Thema geantwortet.',
+            'quote' => $GLOBALS['TL_LANG']['MSC']['synapsisNotifyQuote'] ?? '%s hat deinen Beitrag zitiert.',
+            'mention' => $GLOBALS['TL_LANG']['MSC']['synapsisNotifyMention'] ?? '%s hat dich erwähnt.',
+            'report' => $GLOBALS['TL_LANG']['MSC']['synapsisNotifyReport'] ?? '%s hat einen Beitrag gemeldet.',
+        ];
+
+        $items = [];
+
+        foreach ($rows as $row) {
+            $type = (string) $row['type'];
+            $from = $this->authorLabel((int) $row['fromMember'], '');
+            $topicRow = $db->prepare('SELECT title FROM tl_synapsis_topic WHERE id = ?')->execute((int) $row['topic'])->row();
+
+            $items[] = [
+                'text' => sprintf($labels[$type] ?? '%s', $from),
+                'topicTitle' => (string) ($topicRow['title'] ?? ''),
+                'url' => $this->pageUrl(['topic' => (int) $row['topic']]).'#post-'.(int) $row['post'],
+                'dateFormatted' => $this->formatDate((int) $row['tstamp']),
+                'isRead' => '1' === (string) $row['isRead'],
+            ];
+        }
+
+        $this->Template->items = $items;
+
+        // Beim Ansehen die angezeigten (dieses Startpunkts) als gelesen markieren.
+        $db->prepare("UPDATE tl_synapsis_notification SET isRead = '1' WHERE member = ? AND isRead = '' AND forum IN (".$placeholders.')')
+            ->execute(...array_merge([$memberId], $forumIds))
+        ;
+    }
+
+    /**
+     * Zahl der ungelesenen Benachrichtigungen des angemeldeten Mitglieds
+     * (0, wenn nicht angemeldet).
+     */
+    private function unreadNotificationCount(): int
+    {
+        if (!$this->isMemberLoggedIn()) {
+            return 0;
+        }
+
+        // Zaehler nur fuer diesen Startpunkt (konsistent mit dem Center).
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, \count($forumIds), '?'));
+
+        return (int) Database::getInstance()
+            ->prepare("SELECT COUNT(*) FROM tl_synapsis_notification WHERE member = ? AND isRead = '' AND forum IN (".$placeholders.')')
+            ->execute(...array_merge([(int) FrontendUser::getInstance()->id], $forumIds))
+            ->row(true)[0]
+        ;
+    }
+
+    /**
+     * Legt eine persoenliche Benachrichtigung an. Selbstbenachrichtigung und
+     * ungueltige Empfaenger werden uebersprungen; Doppelungen desselben
+     * Ereignisses (gleicher Empfaenger, Typ und Beitrag) werden vermieden.
+     */
+    private function createNotification(int $recipient, string $type, int $topicId, int $postId, int $forumId, int $fromMember): void
+    {
+        if ($recipient <= 0 || $recipient === $fromMember) {
+            return;
+        }
+
+        $db = Database::getInstance();
+
+        $exists = $db
+            ->prepare('SELECT id FROM tl_synapsis_notification WHERE member = ? AND type = ? AND post = ?')
+            ->execute($recipient, $type, $postId)
+            ->numRows
+        ;
+
+        if ($exists) {
+            return;
+        }
+
+        $db->prepare('INSERT INTO tl_synapsis_notification %s')
+            ->set([
+                'tstamp' => time(),
+                'member' => $recipient,
+                'fromMember' => $fromMember,
+                'type' => $type,
+                'topic' => $topicId,
+                'post' => $postId,
+                'forum' => $forumId,
+                'isRead' => '',
+            ])
+            ->execute()
+        ;
+    }
+
+    /**
      * Titel eines Forums (leer, wenn nicht gefunden).
      */
     private function forumTitle(int $forumId): string
@@ -932,7 +1233,7 @@ class SynapsisForum extends Module
             ->insertId
         ;
 
-        $this->insertPost($topicId, $memberId, $authorName, $text, $now);
+        $firstPostId = $this->insertPost($topicId, $memberId, $authorName, $text, $now);
 
         // Optionale Umfrage anlegen - nur wenn das Mitglied hier dazu berechtigt
         // ist (das Recht wird im Baum vererbt).
@@ -945,6 +1246,9 @@ class SynapsisForum extends Module
 
             $this->pollManager()->create($topicId, $question, $multiple, $options, $closeDate, $hideResults);
         }
+
+        // E-Mail an Forum-Abonnenten/Team und Erwaehnungs-Benachrichtigungen
+        $this->afterNewTopic($topicId, (int) $this->activeForum['id'], $memberId, $title, $firstPostId, $text);
 
         $this->redirect($this->pageUrl(['topic' => $topicId]));
     }
@@ -973,18 +1277,23 @@ class SynapsisForum extends Module
         $now = time();
         $memberId = $this->currentAuthorId();
         $authorName = $this->memberUsername($memberId);
-        $this->insertPost((int) $this->activeTopic['id'], $memberId, $authorName, $text, $now);
+        $topicId = (int) $this->activeTopic['id'];
+        $postId = $this->insertPost($topicId, $memberId, $authorName, $text, $now);
 
         // Thema als aktualisiert markieren
         Database::getInstance()
             ->prepare('UPDATE tl_synapsis_topic SET tstamp = ? WHERE id = ?')
-            ->execute($now, (int) $this->activeTopic['id'])
+            ->execute($now, $topicId)
         ;
 
         // Abonnenten benachrichtigen (ausser dem Verfasser)
-        $this->notifySubscribers((int) $this->activeTopic['id'], $memberId);
+        $this->notifySubscribers($topicId, $memberId);
 
-        $this->redirect($this->pageUrl(['topic' => (int) $this->activeTopic['id'], 'page_p'.$this->id => $this->lastPostPage()]));
+        // Persoenliche Benachrichtigungen (Erwaehnung/Zitat/Antwort) und Team-E-Mail
+        $quotePostId = (int) Input::post('quote_post');
+        $this->afterReply($postId, $topicId, (int) $this->activeForum['id'], $memberId, $text, $quotePostId);
+
+        $this->redirect($this->pageUrl(['topic' => $topicId, 'page_p'.$this->id => $this->lastPostPage()]));
     }
 
     /**
@@ -1094,6 +1403,297 @@ class SynapsisForum extends Module
         ;
 
         $this->redirect($this->pageUrl(['topic' => $topicId]));
+    }
+
+    /**
+     * Schaltet die Sperre (locked) des aktiven Themas um - nur fuer
+     * Administratoren bzw. berechtigte Moderatoren.
+     */
+    private function handleLock(): void
+    {
+        if ('synapsis_lock_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        if (!$this->canModerate((int) $this->activeForum['id'], 'lock')) {
+            return;
+        }
+
+        $topicId = (int) $this->activeTopic['id'];
+        $new = $this->activeTopic['locked'] ? '' : '1';
+
+        Database::getInstance()
+            ->prepare('UPDATE tl_synapsis_topic SET locked = ? WHERE id = ?')
+            ->execute($new, $topicId)
+        ;
+
+        $this->redirect($this->pageUrl(['topic' => $topicId]));
+    }
+
+    /**
+     * Verschiebt das aktive Thema in ein anderes (lesbares) Forum desselben
+     * Startpunkts - nur fuer Administratoren bzw. berechtigte Moderatoren.
+     */
+    private function handleMove(): void
+    {
+        if ('synapsis_move_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        $currentForum = (int) $this->activeForum['id'];
+
+        if (!$this->canModerate($currentForum, 'move')) {
+            return;
+        }
+
+        $topicId = (int) $this->activeTopic['id'];
+        $target = (int) Input::post('move_target');
+
+        // Ziel muss ein lesbares Forum dieses Startpunkts sein (nicht das aktuelle).
+        if ($target > 0 && $target !== $currentForum && \in_array($target, $this->readableForumIds(), true)) {
+            Database::getInstance()
+                ->prepare('UPDATE tl_synapsis_topic SET pid = ? WHERE id = ?')
+                ->execute($target, $topicId)
+            ;
+            $this->redirect($this->pageUrl(['topic' => $topicId]));
+        }
+
+        $this->redirect($this->pageUrl(['topic' => $topicId]));
+    }
+
+    /**
+     * Liste der moeglichen Verschiebe-Ziele (lesbare Foren des Startpunkts ohne
+     * das aktuelle).
+     *
+     * @return array<int, array{id:int, title:string}>
+     */
+    private function moveTargets(int $excludeForumId): array
+    {
+        $targets = [];
+
+        foreach ($this->readableForumIds() as $id) {
+            if ($id === $excludeForumId || $id <= 0) {
+                continue;
+            }
+
+            $targets[] = ['id' => $id, 'title' => $this->forumTitle($id)];
+        }
+
+        return $targets;
+    }
+
+    /**
+     * Darf das angemeldete Mitglied diesen Beitrag bearbeiten oder loeschen?
+     * Berechtigte Moderatoren/Administratoren immer; der Verfasser nur, solange
+     * das Thema offen und das Forum nicht geschlossen ist.
+     *
+     * @param array<string, mixed> $post
+     */
+    private function canModifyPost(array $post): bool
+    {
+        $memberId = $this->currentAuthorId();
+
+        if ($memberId <= 0) {
+            return false;
+        }
+
+        if ($this->canModerate((int) $this->activeForum['id'], 'edit')) {
+            return true;
+        }
+
+        if ((int) $post['author'] !== $memberId) {
+            return false;
+        }
+
+        return !$this->activeTopic['locked'] && !$this->activeForum['closed'];
+    }
+
+    /**
+     * Laedt einen Beitrag des aktiven Themas (oder null).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function findPostInTopic(int $postId): ?array
+    {
+        $row = Database::getInstance()
+            ->prepare('SELECT * FROM tl_synapsis_post WHERE id = ? AND pid = ?')
+            ->execute($postId, (int) $this->activeTopic['id'])
+            ->row()
+        ;
+
+        return empty($row) ? null : $row;
+    }
+
+    /**
+     * Speichert die Bearbeitung eines Beitrags (vermerkt Zeitpunkt und Bearbeiter).
+     */
+    private function handleEdit(): void
+    {
+        if ('synapsis_edit_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        $postId = (int) Input::post('post');
+        $post = $this->findPostInTopic($postId);
+
+        if (null === $post || !$this->canModifyPost($post)) {
+            return;
+        }
+
+        $text = $this->cleanText((string) Input::postHtml('text', true));
+
+        if ('' === strip_tags($text)) {
+            return;
+        }
+
+        Database::getInstance()
+            ->prepare('UPDATE tl_synapsis_post SET text = ?, editedAt = ?, editedBy = ? WHERE id = ?')
+            ->execute($text, time(), $this->currentAuthorId(), $postId)
+        ;
+
+        $this->redirect($this->pageUrl(['topic' => (int) $this->activeTopic['id']]));
+    }
+
+    /**
+     * Loescht einen Beitrag. Bleibt das Thema danach leer, wird es vollstaendig
+     * entfernt (samt Umfrage, Abonnements und Lesestaenden).
+     */
+    private function handleDelete(): void
+    {
+        if ('synapsis_delete_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        $postId = (int) Input::post('post');
+        $post = $this->findPostInTopic($postId);
+
+        if (null === $post || !$this->canModifyPost($post)) {
+            return;
+        }
+
+        $topicId = (int) $this->activeTopic['id'];
+        $db = Database::getInstance();
+
+        $db->prepare('DELETE FROM tl_synapsis_like WHERE post = ?')->execute($postId);
+        $db->prepare('DELETE FROM tl_synapsis_report WHERE post = ?')->execute($postId);
+        $db->prepare('DELETE FROM tl_synapsis_notification WHERE post = ?')->execute($postId);
+        $db->prepare('DELETE FROM tl_synapsis_post WHERE id = ?')->execute($postId);
+
+        $remaining = (int) $db->prepare('SELECT COUNT(*) FROM tl_synapsis_post WHERE pid = ?')
+            ->execute($topicId)
+            ->row(true)[0]
+        ;
+
+        if (0 === $remaining) {
+            $this->deleteTopicCompletely($topicId);
+            $this->redirect($this->pageUrl(['forum' => (int) $this->activeForum['id']]));
+        }
+
+        $this->redirect($this->pageUrl(['topic' => $topicId]));
+    }
+
+    /**
+     * Entfernt ein Thema mit allen abhaengigen Daten (Umfrage samt Optionen und
+     * Stimmen, Abonnements, Lesestaende).
+     */
+    private function deleteTopicCompletely(int $topicId): void
+    {
+        $db = Database::getInstance();
+
+        $polls = $db->prepare('SELECT id FROM tl_synapsis_poll WHERE pid = ?')->execute($topicId)->fetchAllAssoc();
+
+        foreach ($polls as $poll) {
+            $pollId = (int) $poll['id'];
+            $db->prepare('DELETE FROM tl_synapsis_poll_option WHERE pid = ?')->execute($pollId);
+            $db->prepare('DELETE FROM tl_synapsis_poll_vote WHERE poll = ?')->execute($pollId);
+            $db->prepare('DELETE FROM tl_synapsis_poll WHERE id = ?')->execute($pollId);
+        }
+
+        $db->prepare('DELETE FROM tl_synapsis_subscription WHERE topic = ?')->execute($topicId);
+        $db->prepare('DELETE FROM tl_synapsis_read WHERE topic = ?')->execute($topicId);
+        $db->prepare('DELETE FROM tl_synapsis_report WHERE topic = ?')->execute($topicId);
+        $db->prepare('DELETE FROM tl_synapsis_notification WHERE topic = ?')->execute($topicId);
+        $db->prepare('DELETE FROM tl_synapsis_topic WHERE id = ?')->execute($topicId);
+    }
+
+    /**
+     * Verarbeitet eine Meldung eines Beitrags durch ein Mitglied.
+     */
+    private function handleReport(): void
+    {
+        if ('synapsis_report_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        $memberId = $this->currentAuthorId();
+
+        if ($memberId <= 0) {
+            return;
+        }
+
+        $postId = (int) Input::post('post');
+        $post = $this->findPostInTopic($postId);
+
+        if (null === $post || (int) $post['author'] === $memberId) {
+            return;
+        }
+
+        $reason = trim(strip_tags((string) Input::post('reason', true)));
+        $db = Database::getInstance();
+
+        // Doppelte Meldung desselben Mitglieds vermeiden.
+        $exists = $db->prepare('SELECT id FROM tl_synapsis_report WHERE member = ? AND post = ?')
+            ->execute($memberId, $postId)
+            ->numRows
+        ;
+
+        if (!$exists) {
+            $topicId = (int) $this->activeTopic['id'];
+            $forumId = (int) $this->activeForum['id'];
+
+            $db->prepare('INSERT INTO tl_synapsis_report %s')
+                ->set([
+                    'tstamp' => time(),
+                    'post' => $postId,
+                    'topic' => $topicId,
+                    'forum' => $forumId,
+                    'member' => $memberId,
+                    'reason' => mb_substr($reason, 0, 1000),
+                ])
+                ->execute()
+            ;
+
+            // Team (Admins/Moderatoren) im Benachrichtigungscenter informieren.
+            foreach ($this->teamMemberIds($forumId, true, true) as $teamId) {
+                $this->createNotification($teamId, 'report', $topicId, $postId, $forumId, $memberId);
+            }
+        }
+
+        $this->redirect($this->pageUrl(['topic' => (int) $this->activeTopic['id']]));
+    }
+
+    /**
+     * Darf der Besucher irgendwo in diesem Startpunkt moderieren (und damit
+     * Meldungen sehen)? Ergebnis wird zwischengespeichert.
+     */
+    private function canSeeReports(): bool
+    {
+        if (null !== $this->canSeeReportsCache) {
+            return $this->canSeeReportsCache;
+        }
+
+        $result = false;
+
+        if ($this->isMemberLoggedIn()) {
+            foreach ($this->readableForumIds() as $forumId) {
+                if ($this->isTeamMember($forumId)) {
+                    $result = true;
+                    break;
+                }
+            }
+        }
+
+        return $this->canSeeReportsCache = $result;
     }
 
     /**
@@ -1379,6 +1979,22 @@ class SynapsisForum extends Module
         // Startpunkte hinweg).
         $post['authorPostCount'] = $this->authorPostCountInRoot($authorId);
         $post['dateFormatted'] = $this->formatDate((int) $post['date']);
+
+        // Bearbeiten/Loeschen und Hinweis auf letzte Aenderung
+        $editedAt = (int) ($post['editedAt'] ?? 0);
+        $post['editedLabel'] = $editedAt > 0
+            ? sprintf(
+                $GLOBALS['TL_LANG']['MSC']['synapsisEditedBy'] ?? 'Zuletzt bearbeitet von %s am %s',
+                $this->authorLabel((int) ($post['editedBy'] ?? 0), ''),
+                $this->formatDate($editedAt)
+            )
+            : '';
+        $post['canModify'] = $this->canModifyPost($post);
+        $post['editUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'edit' => (int) $post['id']]);
+        $post['quoteUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'quote' => (int) $post['id']]);
+        // Melden: angemeldete Mitglieder, aber nicht den eigenen Beitrag
+        $post['canReport'] = $this->currentAuthorId() > 0 && $authorId !== $this->currentAuthorId();
+        $post['reportUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'report' => (int) $post['id']]);
         $post['attachmentList'] = $this->renderAttachments($post['attachments'] ?? null);
 
         return $post;
@@ -1805,11 +2421,31 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Darf das angemeldete Mitglied Themen in diesem Forum anpinnen?
-     * Administratoren immer; Moderatoren nur, wenn die globale Einstellung
-     * "Moderatoren duerfen anpinnen" aktiv ist.
+     * Ist das angemeldete Mitglied Administrator oder Moderator dieses Forums?
+     * (Vererbte Rollen; siehe RoleAccess.)
      */
-    private function canPin(int $forumId): bool
+    private function isTeamMember(int $forumId): bool
+    {
+        if (!$this->isMemberLoggedIn()) {
+            return false;
+        }
+
+        $chain = $this->buildChain($forumId);
+        $groups = $this->getMemberGroupIds();
+        $memberId = (int) FrontendUser::getInstance()->id;
+
+        return $this->roleAccess->isAdmin($chain, $groups, $memberId)
+            || $this->roleAccess->isModerator($chain, $groups, $memberId);
+    }
+
+    /**
+     * Darf das angemeldete Mitglied in diesem Forum eine Moderationsaktion
+     * ausfuehren? Administratoren duerfen immer alles; Moderatoren nur, wenn die
+     * zugehoerige globale Einstellung aktiv ist.
+     *
+     * @param string $capability pin|lock|move|edit
+     */
+    private function canModerate(int $forumId, string $capability): bool
     {
         if (!$this->isMemberLoggedIn()) {
             return false;
@@ -1823,13 +2459,32 @@ class SynapsisForum extends Module
             return true;
         }
 
-        if ($this->roleAccess->isModerator($chain, $groups, $memberId)) {
-            $settings = $this->forumSettings();
-
-            return '1' === (string) ($settings['modCanPin'] ?? '1');
+        if (!$this->roleAccess->isModerator($chain, $groups, $memberId)) {
+            return false;
         }
 
-        return false;
+        $map = [
+            'pin' => 'modCanPin',
+            'lock' => 'modCanLock',
+            'move' => 'modCanMove',
+            'edit' => 'modCanEditPosts',
+        ];
+
+        if (!isset($map[$capability])) {
+            return false;
+        }
+
+        $settings = $this->forumSettings();
+
+        return '1' === (string) ($settings[$map[$capability]] ?? '1');
+    }
+
+    /**
+     * Darf das angemeldete Mitglied Themen in diesem Forum anpinnen?
+     */
+    private function canPin(int $forumId): bool
+    {
+        return $this->canModerate($forumId, 'pin');
     }
 
     /**
@@ -2135,6 +2790,347 @@ class SynapsisForum extends Module
             } catch (\Exception $e) {
                 // Einzelne fehlgeschlagene Zustellung darf den Beitrag nicht verhindern
             }
+        }
+    }
+
+    /**
+     * Prueft, ob das angemeldete Mitglied das ganze Forum abonniert hat.
+     */
+    private function isForumSubscribed(int $forumId): bool
+    {
+        if (!$this->isMemberLoggedIn()) {
+            return false;
+        }
+
+        return (bool) Database::getInstance()
+            ->prepare('SELECT id FROM tl_synapsis_forum_sub WHERE member = ? AND forum = ?')
+            ->execute((int) FrontendUser::getInstance()->id, $forumId)
+            ->numRows
+        ;
+    }
+
+    /**
+     * Schaltet das Abonnement des aktiven Forums fuer das angemeldete Mitglied
+     * um (an/aus) und laedt die Themenliste neu. Abonnenten erhalten eine
+     * E-Mail, sobald in diesem Forum ein neues Thema erstellt wird.
+     */
+    private function handleForumSubscription(): void
+    {
+        if ('synapsis_fsub_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        if (!$this->isMemberLoggedIn()) {
+            return;
+        }
+
+        $memberId = (int) FrontendUser::getInstance()->id;
+        $forumId = (int) $this->activeForum['id'];
+
+        if ($this->isForumSubscribed($forumId)) {
+            Database::getInstance()
+                ->prepare('DELETE FROM tl_synapsis_forum_sub WHERE member = ? AND forum = ?')
+                ->execute($memberId, $forumId)
+            ;
+        } else {
+            Database::getInstance()
+                ->prepare('INSERT INTO tl_synapsis_forum_sub %s')
+                ->set(['member' => $memberId, 'forum' => $forumId, 'tstamp' => time()])
+                ->execute()
+            ;
+        }
+
+        $this->redirect($this->pageUrl(['forum' => $forumId]));
+    }
+
+    /**
+     * Benachrichtigt die Abonnenten eines Forums per E-Mail ueber ein neues
+     * Thema - mit Ausnahme des Verfassers.
+     */
+    private function notifyForumSubscribers(int $forumId, int $topicId, string $title, int $excludeMemberId): void
+    {
+        $settings = $this->forumSettings();
+
+        if ('1' !== (string) ($settings['notifyEnabled'] ?? '1')) {
+            return;
+        }
+
+        $subscribers = Database::getInstance()
+            ->prepare('SELECT m.email, m.firstname, m.lastname FROM tl_synapsis_forum_sub s INNER JOIN tl_member m ON m.id = s.member WHERE s.forum = ? AND s.member != ?')
+            ->execute($forumId, $excludeMemberId)
+            ->fetchAllAssoc()
+        ;
+
+        if (empty($subscribers)) {
+            return;
+        }
+
+        $forumTitle = $this->forumTitle($forumId);
+        $url = $this->absoluteUrl(['topic' => $topicId]);
+        $subjectTpl = $GLOBALS['TL_LANG']['MSC']['synapsisNewTopicSubject'] ?? 'Neues Thema im Forum "##forum##"';
+        $bodyTpl = $GLOBALS['TL_LANG']['MSC']['synapsisNewTopicBody'] ?? "Hallo ##name##,\n\nim Forum \"##forum##\" wurde ein neues Thema erstellt: \"##topic##\".\n\n##url##\n";
+
+        foreach ($subscribers as $subscriber) {
+            $tokens = [
+                'forum' => $forumTitle,
+                'topic' => $title,
+                'name' => trim(($subscriber['firstname'] ?? '').' '.($subscriber['lastname'] ?? '')),
+                'url' => $url,
+            ];
+
+            $this->sendMail(
+                (string) $subscriber['email'],
+                NotificationTemplate::render($subjectTpl, $tokens),
+                NotificationTemplate::render($bodyTpl, $tokens),
+                $settings
+            );
+        }
+    }
+
+    /**
+     * Benachrichtigt das Team (Administratoren und/oder Moderatoren) eines Forums
+     * per E-Mail ueber einen neuen Beitrag. Umfang und Vorlage stammen aus den
+     * globalen Foreneinstellungen.
+     *
+     * @param string $event topic (neues Thema) oder reply (Antwort)
+     */
+    private function notifyTeam(int $forumId, string $event, int $topicId, string $title, string $authorName): void
+    {
+        $settings = $this->forumSettings();
+
+        if ('1' !== (string) ($settings['notifyEnabled'] ?? '1')) {
+            return;
+        }
+
+        $wantAdmins = '1' === (string) ($settings['teamNotifyAdmins'] ?? '');
+        $wantMods = '1' === (string) ($settings['teamNotifyMods'] ?? '');
+
+        if (!$wantAdmins && !$wantMods) {
+            return;
+        }
+
+        $on = (string) ($settings['teamNotifyOn'] ?? 'both');
+
+        if ('both' !== $on && $on !== $event) {
+            return;
+        }
+
+        $ids = array_diff($this->teamMemberIds($forumId, $wantAdmins, $wantMods), [$this->currentAuthorId()]);
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $subjectTpl = '' !== (string) ($settings['teamSubject'] ?? '') ? (string) $settings['teamSubject'] : 'Forum: neuer Beitrag im Thema "##topic##"';
+        $bodyTpl = '' !== (string) ($settings['teamBody'] ?? '') ? (string) $settings['teamBody'] : "Im Forum \"##forum##\" hat ##author## im Thema \"##topic##\" geschrieben.\n\n##url##\n";
+
+        $tokens = [
+            'forum' => $this->forumTitle($forumId),
+            'topic' => $title,
+            'author' => $authorName,
+            'url' => $this->absoluteUrl(['topic' => $topicId]),
+        ];
+
+        $subject = NotificationTemplate::render($subjectTpl, $tokens);
+        $body = NotificationTemplate::render($bodyTpl, $tokens);
+
+        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+        $recipients = Database::getInstance()
+            ->prepare("SELECT email FROM tl_member WHERE id IN ($placeholders) AND email != '' AND disable = ''")
+            ->execute(...array_values($ids))
+            ->fetchAllAssoc()
+        ;
+
+        foreach ($recipients as $recipient) {
+            $this->sendMail((string) $recipient['email'], $subject, $body, $settings);
+        }
+    }
+
+    /**
+     * Ermittelt die Mitglieder-IDs, die in einem Forum Administrator und/oder
+     * Moderator sind (inklusive vererbter Rechte aus der Kette). Gruppenrechte
+     * werden ueber die Gruppenzugehoerigkeit der Mitglieder aufgeloest.
+     *
+     * @return array<int>
+     */
+    private function teamMemberIds(int $forumId, bool $wantAdmins, bool $wantMods): array
+    {
+        $chain = $this->buildChain($forumId);
+
+        if ([] === $chain) {
+            return [];
+        }
+
+        $groupIds = [];
+        $memberIds = [];
+
+        foreach ($chain as $node) {
+            if ($wantAdmins) {
+                $groupIds = array_merge($groupIds, $this->deserializeIds($node['adminGroups'] ?? null));
+                $memberIds = array_merge($memberIds, $this->deserializeIds($node['adminMembers'] ?? null));
+            }
+
+            if ($wantMods) {
+                $groupIds = array_merge($groupIds, $this->deserializeIds($node['modGroups'] ?? null));
+                $memberIds = array_merge($memberIds, $this->deserializeIds($node['modMembers'] ?? null));
+            }
+        }
+
+        $groupIds = array_values(array_unique(array_filter($groupIds)));
+
+        // Mitgliedergruppen -> einzelne Mitglieder aufloesen.
+        if ([] !== $groupIds) {
+            $candidates = Database::getInstance()
+                ->prepare("SELECT id, groups FROM tl_member WHERE groups IS NOT NULL AND groups != ''")
+                ->execute()
+                ->fetchAllAssoc()
+            ;
+
+            foreach ($candidates as $candidate) {
+                $memberGroups = array_map('intval', StringUtil::deserialize($candidate['groups'], true));
+
+                if ([] !== array_intersect($memberGroups, $groupIds)) {
+                    $memberIds[] = (int) $candidate['id'];
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter(array_map('intval', $memberIds))));
+    }
+
+    /**
+     * Fuehrt einen (evtl. serialisierten) Wert in eine Liste von Integer-IDs
+     * ueber - fuer die Rollenfelder der Forenkette.
+     *
+     * @param mixed $value
+     *
+     * @return array<int>
+     */
+    private function deserializeIds($value): array
+    {
+        $array = StringUtil::deserialize($value, true);
+
+        return array_values(array_filter(array_map('intval', $array)));
+    }
+
+    /**
+     * Erkennt @Benutzername-Erwaehnungen im Beitragstext und liefert die
+     * zugehoerigen Mitglieds-IDs (hoechstens zehn, um Missbrauch zu begrenzen).
+     *
+     * @return array<int>
+     */
+    private function detectMentions(string $text): array
+    {
+        $plain = strip_tags($text);
+
+        if (!preg_match_all('/@([A-Za-z0-9._\x{00C0}-\x{024F}-]{2,64})/u', $plain, $matches)) {
+            return [];
+        }
+
+        $names = array_values(array_unique($matches[1]));
+        $names = \array_slice($names, 0, 10);
+
+        if ([] === $names) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, \count($names), '?'));
+        $rows = Database::getInstance()
+            ->prepare("SELECT id FROM tl_member WHERE username IN ($placeholders) AND username != ''")
+            ->execute(...$names)
+            ->fetchAllAssoc()
+        ;
+
+        return array_map('intval', array_column($rows, 'id'));
+    }
+
+    /**
+     * Nachbereitung einer Antwort: persoenliche Benachrichtigungen (Erwaehnung,
+     * Zitat, Antwort auf das eigene Thema) und E-Mail an das Team.
+     */
+    private function afterReply(int $postId, int $topicId, int $forumId, int $authorId, string $text, int $quotePostId): void
+    {
+        $notified = [$authorId => true];
+
+        // @Erwaehnungen im Text
+        foreach ($this->detectMentions($text) as $mentionId) {
+            if (isset($notified[$mentionId])) {
+                continue;
+            }
+
+            $this->createNotification($mentionId, 'mention', $topicId, $postId, $forumId, $authorId);
+            $notified[$mentionId] = true;
+        }
+
+        // Zitierter Beitrag -> dessen Autor benachrichtigen
+        if ($quotePostId > 0) {
+            $quoted = $this->findPostInTopic($quotePostId);
+
+            if (null !== $quoted) {
+                $quotedAuthor = (int) $quoted['author'];
+
+                if ($quotedAuthor > 0 && !isset($notified[$quotedAuthor])) {
+                    $this->createNotification($quotedAuthor, 'quote', $topicId, $postId, $forumId, $authorId);
+                    $notified[$quotedAuthor] = true;
+                }
+            }
+        }
+
+        // Antwort auf das eigene Thema -> Themenersteller benachrichtigen
+        $topicAuthor = (int) ($this->activeTopic['author'] ?? 0);
+
+        if ($topicAuthor > 0 && !isset($notified[$topicAuthor])) {
+            $this->createNotification($topicAuthor, 'reply', $topicId, $postId, $forumId, $authorId);
+        }
+
+        $this->notifyTeam($forumId, 'reply', $topicId, (string) $this->activeTopic['title'], $this->memberUsername($authorId));
+    }
+
+    /**
+     * Nachbereitung eines neuen Themas: E-Mail an Forum-Abonnenten und Team,
+     * persoenliche Erwaehnungs-Benachrichtigungen aus dem ersten Beitrag.
+     */
+    private function afterNewTopic(int $topicId, int $forumId, int $authorId, string $title, int $firstPostId, string $text): void
+    {
+        $this->notifyForumSubscribers($forumId, $topicId, $title, $authorId);
+
+        foreach ($this->detectMentions($text) as $mentionId) {
+            $this->createNotification($mentionId, 'mention', $topicId, $firstPostId, $forumId, $authorId);
+        }
+
+        $this->notifyTeam($forumId, 'topic', $topicId, $title, $this->memberUsername($authorId));
+    }
+
+    /**
+     * Versendet eine Forum-E-Mail mit den Absenderangaben aus den
+     * Foreneinstellungen. Fehlerhafte Einzelzustellungen werden verschluckt.
+     *
+     * @param array<string, mixed> $settings
+     */
+    private function sendMail(string $to, string $subject, string $body, array $settings): void
+    {
+        if ('' === $to) {
+            return;
+        }
+
+        try {
+            $email = new Email();
+            $senderEmail = (string) ($settings['senderEmail'] ?? '');
+            $senderName = (string) ($settings['senderName'] ?? '');
+
+            if ('' !== $senderEmail) {
+                $email->from = $senderEmail;
+            }
+
+            if ('' !== $senderName) {
+                $email->fromName = $senderName;
+            }
+
+            $email->subject = $subject;
+            $email->text = $body;
+            $email->sendTo($to);
+        } catch (\Exception $e) {
+            // Einzelne fehlgeschlagene Zustellung darf den Beitrag nicht verhindern
         }
     }
 
