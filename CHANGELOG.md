@@ -1,10 +1,14 @@
 # Synapsis Changelog
 
-## Version 1.3.1 (unveröffentlicht – Entwicklung auf dev-main)
+## Version 1.3.1 (2026-07-25)
 
 ### Behoben
 
 * **Suche findet jetzt auch Umfragen**: Die Forensuche durchsucht zusätzlich zur Themen- und Beitragsebene die **Umfrage-Frage und die Antwortmöglichkeiten**. Ein Thema wird also auch gefunden, wenn der Suchbegriff nur in seiner Umfrage vorkommt. (Keine Schema-Änderung.)
+
+### Geändert
+
+* Bei Umfrageergebnissen heißt es jetzt „%d Teilnehmer" statt „Teilnehmende".
 
 ## Version 1.3.0 (2026-07-24)
 

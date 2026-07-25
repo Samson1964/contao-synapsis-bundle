@@ -94,7 +94,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                         </li>
                     <?php endforeach; ?>
                 </ul>
-                <p class="synapsis-poll__total"><?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisPollTotal'] ?? '%d Teilnehmende', (int) $this->poll['total']) ?></p>
+                <p class="synapsis-poll__total"><?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisPollTotal'] ?? '%d Teilnehmer', (int) $this->poll['total']) ?></p>
             <?php else: ?>
                 <p class="synapsis-poll__pending"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPollPending'] ?? 'Die Ergebnisse werden nach dem Umfrageende angezeigt.' ?></p>
             <?php endif; ?>
