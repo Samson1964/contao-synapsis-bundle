@@ -61,9 +61,12 @@ class PhpbbImporter
      *
      * @return array<string, int> Kennzahlen des Imports
      *
+     * @param array<int>|null $onlyForumIds Nur diese phpBB-forum_id importieren
+     *                                       (null = alle echten Foren)
+     *
      * @throws \RuntimeException bei ungueltigem Ziel oder fehlenden Pflichtdateien
      */
-    public function import(array $csv, int $targetCategoryId): array
+    public function import(array $csv, int $targetCategoryId, ?array $onlyForumIds = null): array
     {
         $targetType = (string) $this->connection->fetchOne('SELECT type FROM tl_synapsis_forum WHERE id = ?', [$targetCategoryId]);
 
@@ -85,12 +88,14 @@ class PhpbbImporter
             throw new \RuntimeException('Die Beitraege-Datei (phpbb_posts) fehlt oder ist leer.');
         }
 
+        $filter = null !== $onlyForumIds ? array_flip(array_map('intval', $onlyForumIds)) : null;
+
         $stats = ['forums' => 0, 'topics' => 0, 'posts' => 0, 'polls' => 0, 'votes' => 0, 'skipped' => 0];
 
         $this->connection->beginTransaction();
 
         try {
-            $forumMap = $this->importForums($forums, $targetCategoryId, $stats);
+            $forumMap = $this->importForums($forums, $targetCategoryId, $filter, $stats);
             $topicMap = $this->importTopics($topics, $forumMap, $users, $stats);
             $this->importPosts($posts, $topicMap, $users, $stats);
             $this->importPolls($topics, $topicMap, $pollOptions, $stats);
@@ -106,16 +111,39 @@ class PhpbbImporter
     }
 
     /**
+     * Liefert die auswaehlbaren phpBB-Foren (nur forum_type = 1) aus dem
+     * Foren-CSV - fuer die Auswahl "welche Foren importieren".
+     *
+     * @return array<int, array{id:int, name:string}> nach left_id sortiert
+     */
+    public function listForums(string $forumsCsv): array
+    {
+        $rows = $this->parse($forumsCsv);
+        usort($rows, static fn ($a, $b) => (int) ($a['left_id'] ?? 0) <=> (int) ($b['left_id'] ?? 0));
+
+        $forums = [];
+
+        foreach ($rows as $row) {
+            if (1 === (int) ($row['forum_type'] ?? 0)) {
+                $forums[] = ['id' => (int) ($row['forum_id'] ?? 0), 'name' => (string) ($row['forum_name'] ?? '')];
+            }
+        }
+
+        return $forums;
+    }
+
+    /**
      * Legt fuer jedes echte phpBB-Forum (forum_type = 1) ein Synapsis-Forum unter
      * der Zielkategorie an. phpBB-Kategorien (Container, type 0) und Links
      * (type 2) werden uebersprungen.
      *
      * @param array<int, array<string, string>> $rows
+     * @param array<int, int>|null              $filter phpBB-forum_id => 1 (nur diese) oder null
      * @param array<string, int>                $stats
      *
      * @return array<int, int> phpBB forum_id => Synapsis-Forum-ID
      */
-    private function importForums(array $rows, int $targetId, array &$stats): array
+    private function importForums(array $rows, int $targetId, ?array $filter, array &$stats): array
     {
         // Nach left_id sortieren, damit die Reihenfolge der Baumdarstellung passt.
         usort($rows, static fn ($a, $b) => (int) ($a['left_id'] ?? 0) <=> (int) ($b['left_id'] ?? 0));
@@ -125,6 +153,11 @@ class PhpbbImporter
 
         foreach ($rows as $row) {
             if (1 !== (int) ($row['forum_type'] ?? 0)) {
+                continue;
+            }
+
+            // Optional nur ausgewaehlte Foren importieren.
+            if (null !== $filter && !isset($filter[(int) ($row['forum_id'] ?? 0)])) {
                 continue;
             }
 
@@ -260,7 +293,9 @@ class PhpbbImporter
 
         foreach ($topics as $topic) {
             $phpbbTopicId = (int) ($topic['topic_id'] ?? 0);
-            $question = trim((string) ($topic['poll_title'] ?? ''));
+            // Umfrage-Texte sind reiner Text; phpBB 3.x umgibt sie mit einem
+            // benutzerdefinierten <t>…</t> (bzw. <r>…), das hier entfernt wird.
+            $question = $this->plainText((string) ($topic['poll_title'] ?? ''));
 
             if ('' === $question || !isset($topicMap[$phpbbTopicId]) || empty($optionsByTopic[$phpbbTopicId])) {
                 continue;
@@ -290,7 +325,7 @@ class PhpbbImporter
                     'pid' => $pollId,
                     'tstamp' => $now,
                     'sorting' => $sorting += 128,
-                    'label' => (string) ($opt['poll_option_text'] ?? ''),
+                    'label' => $this->plainText((string) ($opt['poll_option_text'] ?? '')),
                 ]);
                 $choiceId = (int) $this->connection->lastInsertId();
 
@@ -309,6 +344,17 @@ class PhpbbImporter
                 }
             }
         }
+    }
+
+    /**
+     * Liefert reinen Text aus einem phpBB-Feld: erst die phpBB-Auszeichnung
+     * (auch das benutzerdefinierte <t>/<r>) aufloesen, dann alle Tags entfernen.
+     * Fuer Umfrage-Frage und -Antworten (die im Frontend als Text ausgegeben
+     * werden).
+     */
+    private function plainText(string $value): string
+    {
+        return trim(strip_tags(PhpbbTextConverter::toHtml($value, '')));
     }
 
     /**

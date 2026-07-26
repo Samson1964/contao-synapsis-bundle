@@ -727,30 +727,6 @@
     margin: 0;
 }
 
-.synapsis-like__button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.25rem 0.7rem;
-    font-size: 0.82rem;
-    color: var(--syn-accent);
-    background: transparent;
-    border: 1px solid var(--syn-border);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-.synapsis-like__button:hover {
-    background: var(--syn-panel, #f3f4f6);
-}
-
-.synapsis-like__button.is-active {
-    color: #fff;
-    background: var(--syn-accent);
-    border-color: var(--syn-accent);
-}
-
 .synapsis-like__count {
     font-size: 0.82rem;
     color: var(--syn-muted);
@@ -760,37 +736,61 @@
     color: var(--syn-muted);
 }
 
-/* --- Beitrags-Aktionen (Zitieren/Bearbeiten/Melden/Löschen) und Moderation -
-   Einheitlich als Buttons (gleiche Pill-Optik wie der Like-Button), egal ob
-   das Steuerelement ein <a> (Zitieren/Bearbeiten/Melden) oder ein <button>
-   (Löschen) ist. */
-.synapsis-post__action {
+/* --- Beitrags-Aktionen: Zitieren, Melden, Bearbeiten, Löschen und "Gefällt mir"
+   -----------------------------------------------------------------------------
+   Alle als EINHEITLICHE Pill-Buttons. Bewusst mit Vorfahr (.synapsis) UND
+   Element (a/button) qualifiziert und mit Reset-Eigenschaften (font, appearance,
+   text-decoration, margin) versehen, damit das Synapsis-CSS die Oberhand ueber
+   die Button-/Link-Regeln der umgebenden Website behaelt (sonst faellt z. B.
+   "Gefällt mir" durch Theme-Rahmen/Unterstreichung aus dem Rahmen). */
+.synapsis a.synapsis-post__action,
+.synapsis button.synapsis-post__action,
+.synapsis button.synapsis-like__button {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+    box-sizing: border-box;
+    margin: 0;
     padding: 0.25rem 0.7rem;
+    font: inherit;
     font-size: 0.82rem;
+    font-weight: 400;
     line-height: 1.2;
     color: var(--syn-accent);
     background: transparent;
     border: 1px solid var(--syn-border);
     border-radius: 999px;
-    cursor: pointer;
     text-decoration: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.synapsis-post__action:hover {
+.synapsis a.synapsis-post__action:hover,
+.synapsis button.synapsis-post__action:hover,
+.synapsis button.synapsis-like__button:hover {
+    color: var(--syn-accent);
     background: var(--syn-panel, #f3f4f6);
+    border-color: var(--syn-border);
     text-decoration: none;
 }
 
-.synapsis-post__action--danger {
+/* "Gefällt mir" bereits gesetzt */
+.synapsis button.synapsis-like__button.is-active,
+.synapsis button.synapsis-like__button.is-active:hover {
+    color: #fff;
+    background: var(--syn-accent);
+    border-color: var(--syn-accent);
+}
+
+/* Löschen (Gefahr) */
+.synapsis button.synapsis-post__action--danger {
     color: #b3261e;
     border-color: #e6b4af;
 }
 
-.synapsis-post__action--danger:hover {
+.synapsis button.synapsis-post__action--danger:hover {
     color: #fff;
     background: #b3261e;
     border-color: #b3261e;

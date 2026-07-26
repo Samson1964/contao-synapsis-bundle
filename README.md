@@ -101,7 +101,7 @@ Modulen:
 | Modul             | Zweck                                                                        |
 |-------------------|------------------------------------------------------------------------------|
 | **Forum**         | Die Forenstruktur (Startpunkte, Kategorien, Foren) und ihre Themen/Beiträge  |
-| **phpBB Import**  | Foren, Themen, Beiträge und Umfragen aus einem phpBB-CSV-Export übernehmen    |
+| **Import**        | Ein Fremdsystem-Forum übernehmen (derzeit phpBB-CSV-Export): Foren, Themen, Beiträge, Umfragen |
 | **Einstellungen** | Globale Einstellungen (E-Mail-Vorlagen, Rechte der Moderatoren)              |
 
 ---
@@ -381,7 +381,7 @@ Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunk
 
 ## Import aus phpBB
 
-Über **Synapsis-Forum → phpBB Import** lässt sich ein bestehendes **phpBB-Forum** übernehmen.
+Über **Synapsis-Forum → Import** lässt sich ein bestehendes **phpBB-Forum** übernehmen.
 Grundlage ist ein **CSV-Export der phpBB-Tabellen** (in phpMyAdmin je Tabelle als CSV
 exportieren). Der Import wird immer in eine **Kategorie** eingehängt: die phpBB-Foren entstehen
 als Foren darunter.
@@ -389,7 +389,9 @@ als Foren darunter.
 **Ablauf:**
 
 1. Im Backend unter **Forum** einen Startpunkt und darin die **Ziel-Kategorie** anlegen.
-2. Unter **phpBB Import** die Ziel-Kategorie wählen und die CSV-Dateien hochladen.
+2. Unter **Import** die Ziel-Kategorie wählen (Anzeige „Startpunkt › Kategorie") und die
+   CSV-Dateien hochladen.
+3. Anschließend **auswählen, welche Foren** übernommen werden sollen, und den Import starten.
 
 **Dateien** (die Spalten entsprechen dem phpBB-Schema):
 

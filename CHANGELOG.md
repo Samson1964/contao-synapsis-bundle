@@ -1,5 +1,20 @@
 # Synapsis Changelog
 
+## Version 1.7.0 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (CSS).
+
+### Hinzugefügt / Geändert – Import
+
+* **Foren-Auswahl beim Import**: Der Import ist jetzt zweistufig – erst die CSV-Dateien hochladen, dann **auswählen, welche Foren** in die Kategorie übernommen werden.
+* **Ziel-Kategorie mit Startpunkt**: Die Auswahlliste zeigt „**Startpunkt › Kategorie**", damit bei gleichnamigen Kategorien nicht versehentlich in den falschen Startpunkt importiert wird.
+* **Modul heißt jetzt „Import"** (statt „phpBB Import") mit einer **Formatauswahl** – so lassen sich später weitere Importquellen ergänzen, ohne einen zusätzlichen Menüpunkt. Der phpBB-Import bleibt unverändert.
+* **Umfragen sauberer**: Bei importierten Umfragen wird das benutzerdefinierte phpBB-`<t>`-Tag um Frage und Antworten jetzt entfernt.
+
+### Behoben
+
+* **Button-Angleichung**: „Zitieren", „Melden", „Löschen" und **„Gefällt mir"** sind jetzt einheitliche Pill-Buttons (das Herz-Icon bleibt). Die Regeln sind so abgesichert (Vorfahr + Element + Reset-Eigenschaften), dass sie das CSS der umgebenden Website sicher überschreiben – „Gefällt mir" fällt nicht mehr aus dem Rahmen.
+
 ## Version 1.6.0 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update genügt `composer update` (kein `contao:migrate` nötig).
