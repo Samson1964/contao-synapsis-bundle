@@ -92,6 +92,10 @@ $GLOBALS['TL_LANG']['MSC']['synapsisPermalinkCopy']   = 'Link zu diesem Beitrag 
 $GLOBALS['TL_LANG']['MSC']['synapsisPermalinkCopied'] = 'Kopiert!';
 $GLOBALS['TL_LANG']['MSC']['synapsisMarkForumRead']   = 'Forum als gelesen markieren';
 $GLOBALS['TL_LANG']['MSC']['synapsisMarkAllRead']     = 'Alles als gelesen markieren';
+$GLOBALS['TL_LANG']['MSC']['synapsisFeed']            = 'RSS-Feed';
+$GLOBALS['TL_LANG']['MSC']['synapsisDraftFound']      = 'Gespeicherter Entwurf gefunden.';
+$GLOBALS['TL_LANG']['MSC']['synapsisDraftRestore']    = 'Wiederherstellen';
+$GLOBALS['TL_LANG']['MSC']['synapsisDraftDiscard']    = 'Verwerfen';
 
 // Beiträge: bearbeiten, löschen, zitieren
 $GLOBALS['TL_LANG']['MSC']['synapsisEdit']          = 'Bearbeiten';

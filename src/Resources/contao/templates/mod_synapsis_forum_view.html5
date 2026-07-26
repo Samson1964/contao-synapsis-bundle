@@ -54,6 +54,9 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                     </button>
                 </form>
             <?php endif; ?>
+            <?php if (!empty($this->feedUrl)): ?>
+                <a class="synapsis-button synapsis-feedlink" href="<?= $this->feedUrl ?>" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisFeed'] ?? 'RSS-Feed' ?>">RSS</a>
+            <?php endif; ?>
             <?php if ('' !== $this->newTopicUrl): ?>
                 <a class="synapsis-button synapsis-button--primary" href="<?= $this->newTopicUrl ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNewTopic'] ?? 'Neues Thema' ?></a>
             <?php elseif ($this->closed): ?>

@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Schachbulle\ContaoSynapsisBundle\Modules;
 
 use Contao\BackendTemplate;
+use Contao\CoreBundle\Exception\ResponseException;
 use Contao\Database;
 use Contao\Date;
 use Contao\Dbafs;
@@ -25,6 +26,7 @@ use Contao\Pagination;
 use Contao\StringUtil;
 use Contao\System;
 use Composer\InstalledVersions;
+use Symfony\Component\HttpFoundation\Response;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AuthorLabel;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AvatarResolver;
 use Schachbulle\ContaoSynapsisBundle\Frontend\BBCode;
@@ -215,6 +217,11 @@ class SynapsisForum extends Module
 
         if (0 === $this->rootId) {
             return '';
+        }
+
+        // RSS-Feed: XML ausgeben und die Seitenausgabe kurzschliessen.
+        if (null !== Input::get('feed')) {
+            $this->emitFeed();
         }
 
         $this->resolveView();
@@ -460,6 +467,10 @@ class SynapsisForum extends Module
         $this->Template->markReadFormId = 'synapsis_readall_'.$this->id;
         $this->Template->markReadForum = 0;
         $this->Template->markReadAction = $this->pageUrl([]);
+
+        // RSS-Feed des Startpunkts (Link + Auto-Discovery im Seitenkopf).
+        $this->Template->feedUrl = $this->pageUrl(['feed' => 1]);
+        $GLOBALS['TL_HEAD']['synapsis_feed'] = '<link rel="alternate" type="application/rss+xml" href="'.$this->absoluteUrl(['feed' => 1]).'">';
     }
 
     /**
@@ -750,6 +761,89 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Gibt den RSS-Feed (neueste Themen) aus und schliesst die weitere
+     * Seitenausgabe ueber eine ResponseException kurz. Mit ?forum=<id> der Feed
+     * dieses Forums, sonst der des ganzen Startpunkts.
+     *
+     * @throws ResponseException immer
+     */
+    private function emitFeed(): void
+    {
+        $forumId = (int) Input::get('forum');
+
+        if ($forumId > 0 && null !== $this->findForum($forumId)) {
+            $forumIds = array_values(array_intersect($this->collectForumIds($forumId), $this->readableForumIds()));
+            $title = $this->forumTitle($forumId);
+            $channelLink = $this->absoluteUrl(['forum' => $forumId]);
+        } else {
+            $forumIds = $this->readableForumIds();
+            $title = (string) ($this->forumTitle($this->rootId) ?: ($GLOBALS['TL_LANG']['MSC']['synapsisForum'] ?? 'Forum'));
+            $channelLink = $this->absoluteUrl([]);
+        }
+
+        $xml = $this->buildFeedXml($forumIds, $title, $channelLink);
+
+        throw new ResponseException(new Response($xml, 200, ['Content-Type' => 'application/rss+xml; charset=UTF-8']));
+    }
+
+    /**
+     * Baut das RSS-2.0-Dokument aus den neuesten Themen der Foren.
+     *
+     * @param array<int> $forumIds
+     */
+    private function buildFeedXml(array $forumIds, string $title, string $channelLink): string
+    {
+        $placeholders = implode(',', array_fill(0, \count($forumIds), '?'));
+
+        $topics = Database::getInstance()
+            ->prepare('SELECT id, title, date, author, authorName FROM tl_synapsis_topic WHERE pid IN ('.$placeholders.') AND published = ? ORDER BY date DESC')
+            ->limit(25)
+            ->execute(...array_merge($forumIds, ['1']))
+            ->fetchAllAssoc()
+        ;
+
+        $esc = static fn (string $s): string => htmlspecialchars($s, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+
+        $items = '';
+
+        foreach ($topics as $topic) {
+            $topicId = (int) $topic['id'];
+            $link = $this->absoluteUrl(['topic' => $topicId]);
+            $author = $this->authorLabel((int) $topic['author'], (string) ($topic['authorName'] ?? ''));
+
+            // Kurzbeschreibung aus dem ersten Beitrag des Themas.
+            $firstText = (string) Database::getInstance()
+                ->prepare('SELECT text FROM tl_synapsis_post WHERE pid = ? AND published = ? ORDER BY date ASC')
+                ->limit(1)
+                ->execute($topicId, '1')
+                ->row(true)[0] ?? '';
+            $excerpt = trim(preg_replace('/\s+/', ' ', strip_tags($firstText)) ?? '');
+
+            if (mb_strlen($excerpt) > 300) {
+                $excerpt = mb_substr($excerpt, 0, 300).'…';
+            }
+
+            $items .= '<item>'
+                .'<title>'.$esc((string) $topic['title']).'</title>'
+                .'<link>'.$esc($link).'</link>'
+                .'<guid isPermaLink="true">'.$esc($link).'</guid>'
+                .'<dc:creator>'.$esc($author).'</dc:creator>'
+                .'<pubDate>'.date('r', (int) $topic['date']).'</pubDate>'
+                .'<description><![CDATA['.str_replace(']]>', ']]&gt;', $excerpt).']]></description>'
+                .'</item>';
+        }
+
+        return '<?xml version="1.0" encoding="UTF-8"?>'."\n"
+            .'<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            .'<channel>'
+            .'<title>'.$esc($title).'</title>'
+            .'<link>'.$esc($channelLink).'</link>'
+            .'<description>'.$esc($title).'</description>'
+            .$items
+            .'</channel></rss>';
+    }
+
+    /**
      * Themenliste eines Forums (seitenweise, angeheftete zuerst).
      */
     private function compileForum(): void
@@ -766,6 +860,10 @@ class SynapsisForum extends Module
         $this->Template->markReadFormId = 'synapsis_readall_'.$this->id;
         $this->Template->markReadForum = $forumId;
         $this->Template->markReadAction = $this->pageUrl(['forum' => $forumId]);
+
+        // RSS-Feed dieses Forums (Link + Auto-Discovery im Seitenkopf).
+        $this->Template->feedUrl = $this->pageUrl(['forum' => $forumId, 'feed' => 1]);
+        $GLOBALS['TL_HEAD']['synapsis_feed'] = '<link rel="alternate" type="application/rss+xml" title="'.StringUtil::specialchars((string) $this->activeForum['title']).'" href="'.$this->absoluteUrl(['forum' => $forumId, 'feed' => 1]).'">';
 
         $this->Template->forum = $this->activeForum;
         $this->Template->breadcrumb = $this->buildBreadcrumb($forumId);
@@ -958,6 +1056,7 @@ class SynapsisForum extends Module
 
         $this->Template->replyPrefill = '';
         $this->Template->quotePost = 0;
+        $this->Template->draftKey = '';
 
         if ($canReply) {
             $this->enableEditor();
@@ -969,6 +1068,10 @@ class SynapsisForum extends Module
             // Beim Zitieren die Beitrags-ID mitfuehren, damit der Autor benachrichtigt wird.
             $quoteId = (int) Input::get('quote');
             $this->Template->quotePost = ($quoteId > 0 && null !== $this->findPostInTopic($quoteId)) ? $quoteId : 0;
+
+            // Entwurf-Zwischenspeicherung fuer das Antwortfeld.
+            $this->Template->draftKey = 'syn_draft_'.$this->id.'_topic_'.$topicId;
+            $this->addDraftScript();
         }
     }
 
@@ -1015,6 +1118,9 @@ class SynapsisForum extends Module
         $this->Template->formAction = $this->pageUrl(['forum' => $forumId, 'new' => 1]);
         $this->Template->formId = 'synapsis_topic_'.$this->id;
         $this->Template->cancelUrl = $this->pageUrl(['forum' => $forumId]);
+        // Entwurf-Zwischenspeicherung fuer das Textfeld des neuen Themas.
+        $this->Template->draftKey = 'syn_draft_'.$this->id.'_forum_'.$forumId;
+        $this->addDraftScript();
         // Optionale Umfrage nur anbieten, wenn das Mitglied dazu berechtigt ist.
         $this->Template->canCreatePoll = $this->canCreatePoll($forumId);
 
@@ -3805,6 +3911,42 @@ class SynapsisForum extends Module
             .'toolbar:"bold italic | bullist numlist | link image emoticons",'
             .'branding:false'
             .'});});</script>'
+        ;
+    }
+
+    /**
+     * Bindet das Entwurf-Skript ein: der Text des Antwort-/Neues-Thema-Feldes
+     * wird lokal im Browser (localStorage) zwischengespeichert und kann nach
+     * einem Verlassen der Seite wiederhergestellt werden. Beim Absenden wird der
+     * Entwurf verworfen. Funktioniert mit dem TinyMCE-Editor und einer einfachen
+     * Textarea (kein Server, keine Tabelle).
+     */
+    private function addDraftScript(): void
+    {
+        $found = $GLOBALS['TL_LANG']['MSC']['synapsisDraftFound'] ?? 'Gespeicherter Entwurf gefunden.';
+        $restore = $GLOBALS['TL_LANG']['MSC']['synapsisDraftRestore'] ?? 'Wiederherstellen';
+        $discard = $GLOBALS['TL_LANG']['MSC']['synapsisDraftDiscard'] ?? 'Verwerfen';
+
+        $GLOBALS['TL_BODY']['synapsis_draft'] = '<script>document.addEventListener("DOMContentLoaded",function(){'
+            .'var ta=document.querySelector("textarea[data-draft]");if(!ta||!window.localStorage)return;'
+            .'var key=ta.getAttribute("data-draft-key"),form=ta.closest("form");'
+            .'function plain(v){return (v||"").replace(/<[^>]*>/g," ").replace(/&[a-z#0-9]+;/gi," ").trim();}'
+            .'function read(){if(window.tinymce){try{tinymce.triggerSave();}catch(e){}}return ta.value;}'
+            .'function write(v){if(window.tinymce&&tinymce.editors){for(var i=0;i<tinymce.editors.length;i++){if(tinymce.editors[i].targetElm===ta){tinymce.editors[i].setContent(v);return;}}}ta.value=v;}'
+            .'try{var raw=localStorage.getItem(key);if(raw){var d=JSON.parse(raw);if(d&&plain(d.v)){'
+            .'var bar=document.createElement("div");bar.className="synapsis-draftbar";'
+            .'var span=document.createElement("span");span.textContent='.json_encode($found).'+(d.t?" ("+new Date(d.t).toLocaleString()+")":"");bar.appendChild(span);bar.appendChild(document.createTextNode(" "));'
+            .'var b1=document.createElement("button");b1.type="button";b1.className="synapsis-button synapsis-button--secondary";b1.textContent='.json_encode($restore).';'
+            .'var b2=document.createElement("button");b2.type="button";b2.className="synapsis-button";b2.textContent='.json_encode($discard).';'
+            .'bar.appendChild(b1);bar.appendChild(document.createTextNode(" "));bar.appendChild(b2);'
+            .'ta.parentNode.insertBefore(bar,ta);'
+            .'b1.addEventListener("click",function(){write(d.v);bar.parentNode.removeChild(bar);});'
+            .'b2.addEventListener("click",function(){localStorage.removeItem(key);bar.parentNode.removeChild(bar);});'
+            .'}}}catch(e){}'
+            .'function save(){var v=read();if(plain(v)){localStorage.setItem(key,JSON.stringify({t:Date.now(),v:v}));}}'
+            .'ta.addEventListener("input",save);var iv=setInterval(save,5000);'
+            .'if(form)form.addEventListener("submit",function(){clearInterval(iv);localStorage.removeItem(key);});'
+            .'});</script>'
         ;
     }
 

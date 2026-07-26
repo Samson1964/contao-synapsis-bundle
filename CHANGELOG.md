@@ -1,5 +1,16 @@
 # Synapsis Changelog
 
+## Version 1.11.0 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (CSS/JS).
+
+### Hinzugefügt – Inhalt & Bedienung (Teil 2)
+
+* **RSS-Feed je Forum und Startpunkt**: Übersicht und Forenansicht bieten einen **RSS-2.0-Feed** der neuesten Themen (Schaltfläche „RSS" + automatische Feed-Erkennung im Seitenkopf). Aufruf über `?feed=1` bzw. `?forum=<id>&feed=1`; die Ausgabe wird sauber über eine `ResponseException` kurzgeschlossen (Themen-Links im richtigen Seitenkontext).
+* **Entwürfe speichern**: Der Text im Antwort- bzw. Neues-Thema-Feld wird **lokal im Browser** (localStorage) zwischengespeichert. Beim erneuten Aufruf erscheint eine Leiste zum **Wiederherstellen** oder **Verwerfen**; beim Absenden wird der Entwurf automatisch verworfen. Funktioniert mit dem TinyMCE-Editor und einer einfachen Textarea – ohne Server und ohne zusätzliche Tabelle.
+
+Damit ist der Bereich **„Inhalt & Bedienung"** vollständig.
+
 ## Version 1.10.0 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (CSS).

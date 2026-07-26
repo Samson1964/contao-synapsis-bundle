@@ -28,14 +28,19 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
 
     <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
 
-    <?php if (!empty($this->canMarkRead)): ?>
-        <form action="<?= $this->markReadAction ?>" method="post" class="synapsis-markread synapsis-markread--all">
-            <input type="hidden" name="FORM_SUBMIT" value="<?= $this->markReadFormId ?>">
-            <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
-            <input type="hidden" name="read_forum" value="0">
-            <button type="submit" class="synapsis-button synapsis-button--secondary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisMarkAllRead'] ?? 'Alles als gelesen markieren' ?></button>
-        </form>
-    <?php endif; ?>
+    <div class="synapsis-index__tools">
+        <?php if (!empty($this->feedUrl)): ?>
+            <a class="synapsis-button synapsis-feedlink" href="<?= $this->feedUrl ?>" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisFeed'] ?? 'RSS-Feed' ?>">RSS</a>
+        <?php endif; ?>
+        <?php if (!empty($this->canMarkRead)): ?>
+            <form action="<?= $this->markReadAction ?>" method="post" class="synapsis-markread">
+                <input type="hidden" name="FORM_SUBMIT" value="<?= $this->markReadFormId ?>">
+                <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                <input type="hidden" name="read_forum" value="0">
+                <button type="submit" class="synapsis-button synapsis-button--secondary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisMarkAllRead'] ?? 'Alles als gelesen markieren' ?></button>
+            </form>
+        <?php endif; ?>
+    </div>
 
     <?php if (!empty($this->newestTopics)): ?>
         <section class="synapsis-latest">

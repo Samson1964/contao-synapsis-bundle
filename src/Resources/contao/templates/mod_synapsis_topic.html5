@@ -261,7 +261,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                 <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
                 <?php if (!empty($this->quotePost)): ?><input type="hidden" name="quote_post" value="<?= (int) $this->quotePost ?>"><?php endif; ?>
 
-                <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8"><?= StringUtil::specialchars($this->replyPrefill) ?></textarea>
+                <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="8"<?php if (!empty($this->draftKey)): ?> data-draft data-draft-key="<?= $this->draftKey ?>"<?php endif; ?>><?= StringUtil::specialchars($this->replyPrefill) ?></textarea>
 
                 <?php if (!empty($this->emoticons)): ?>
                     <div class="synapsis-smileys">

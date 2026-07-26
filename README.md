@@ -263,6 +263,11 @@ sich so auch einzeln aufrufen (zeigt dann nur ihre Foren).
   Übersicht **„Alles als gelesen markieren"** (jeweils für angemeldete Mitglieder).
 * **Bild-Lightbox** – Bild-Anhänge öffnen sich per Klick als **Vollbild-Overlay** (Schließen per
   Klick oder Esc).
+* **RSS-Feed** – Übersicht und Forenansicht bieten einen **RSS-Feed** der neuesten Themen
+  (Schaltfläche „RSS", zusätzlich zur automatischen Feed-Erkennung im Browser).
+* **Entwürfe** – Der Text im Antwort- bzw. Neues-Thema-Feld wird **lokal im Browser**
+  zwischengespeichert; verlässt man die Seite, lässt sich der Entwurf beim nächsten Aufruf
+  **wiederherstellen** (oder verwerfen). Beim Absenden wird er automatisch verworfen.
 
 ### Avatare
 

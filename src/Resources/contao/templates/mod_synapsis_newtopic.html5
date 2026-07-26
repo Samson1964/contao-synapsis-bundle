@@ -44,7 +44,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
 
         <label class="synapsis-form__field">
             <span class="synapsis-form__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisText'] ?? 'Text' ?></span>
-            <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="10"></textarea>
+            <textarea name="text" class="<?= $this->editor ? 'synapsis-editor' : '' ?>" rows="10"<?php if (!empty($this->draftKey)): ?> data-draft data-draft-key="<?= $this->draftKey ?>"<?php endif; ?>></textarea>
         </label>
 
         <?php if (!empty($this->emoticons)): ?>
