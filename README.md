@@ -18,7 +18,7 @@ die im Backend ein Forum einrichten, sowie für die Mitglieder, die es im Fronte
 7. [Das Frontend-Modul einrichten](#das-frontend-modul-einrichten)
 8. [Ansichten und Bedienung im Frontend](#ansichten-und-bedienung-im-frontend)
 9. [Mein Bereich (persönliche Ansichten)](#mein-bereich)
-10. [Moderation: Rollen, Anpinnen, Schließen, Verschieben, Melden](#moderation)
+10. [Moderation: Rollen, Anpinnen, Schließen, Verschieben, Melden, Massen-Moderation, Sperren](#moderation)
 11. [Benachrichtigungen](#benachrichtigungen)
 12. [Umfragen](#umfragen)
 13. [Globale Einstellungen](#globale-einstellungen)
@@ -295,6 +295,8 @@ persönlichen Ansichten:
   erscheint unter den eigenen Beiträgen.
 * **Meldungen** – Nur für **Moderatoren/Administratoren** sichtbar: offene Beitragsmeldungen mit
   Begründung; jede lässt sich mit „Erledigt" abschließen.
+* **Sperren** – Nur für Berechtigte sichtbar: die gesperrten Mitglieder verwalten (freigeben oder
+  gezielt über den Benutzernamen sperren). Siehe [Mitglieder sperren](#mitglieder-sperren-bann).
 
 ---
 
@@ -317,9 +319,31 @@ Themenansicht stehen Berechtigten oben die Moderationsschaltflächen zur Verfüg
   **„Mein Bereich → Meldungen"** (nur für das zuständige Team des jeweiligen Forums, inkl.
   Begründung und Verweis auf den Beitrag). Erledigte Meldungen werden per „Erledigt" geschlossen.
 
+**Massen-Moderation:** In der **Forenansicht** (Themenliste) sehen Berechtigte an jedem Thema
+ein **Auswahlkästchen** und darunter eine **Aktionsleiste**. Mehrere markierte Themen lassen sich
+so in einem Schritt **schließen, öffnen, verschieben** (in ein anderes Forum desselben Startpunkts)
+oder **löschen**. Das Löschen wird zur Sicherheit bestätigt. Welche Aktionen zur Auswahl stehen,
+richtet sich nach den Rechten (Schließen/Öffnen → „Themen schließen", Verschieben → „Themen
+verschieben", Löschen → „fremde Beiträge bearbeiten/löschen").
+
 **Regel:** **Administratoren** dürfen all das immer. **Moderatoren** dürfen die einzelnen
 Aktionen nur, wenn sie in den [globalen Einstellungen](#globale-einstellungen) freigeschaltet
 sind.
+
+### Mitglieder sperren (Bann)
+
+Wiederholte Störer lassen sich für das Forum **sperren**. Ein gesperrtes Mitglied kann weiterhin
+**lesen**, aber **keine Themen mehr erstellen und nicht mehr antworten**. Die Sperre gilt forumweit
+(für alle Startpunkte), da sie sich auf das Contao-Mitglied bezieht.
+
+* **Schnell sperren** – An jedem Beitrag steht Berechtigten die Schaltfläche **„Sperren"** zur
+  Verfügung (sperrt den Verfasser nach einer Sicherheitsabfrage).
+* **Verwalten** – Unter **„Mein Bereich → Sperren"** (nur für Berechtigte) erscheinen alle
+  gesperrten Mitglieder mit **„Freigeben"**. Dort lässt sich ein Mitglied auch gezielt über seinen
+  **Benutzernamen** sperren (mit optionaler Begründung).
+
+Das Sperren ist eine strenge Maßnahme: **Administratoren** dürfen es immer, **Moderatoren** nur,
+wenn die Einstellung **„Moderatoren dürfen Mitglieder sperren"** aktiv ist (Standard: aus).
 
 ---
 

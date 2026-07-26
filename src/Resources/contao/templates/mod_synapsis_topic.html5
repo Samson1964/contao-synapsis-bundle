@@ -217,6 +217,14 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                                 <button type="submit" class="synapsis-post__action synapsis-post__action--danger"><?= $GLOBALS['TL_LANG']['MSC']['synapsisDelete'] ?? 'Löschen' ?></button>
                             </form>
                         <?php endif; ?>
+                        <?php if (!empty($post['canBan'])): ?>
+                            <form action="<?= $this->moderateAction ?>" method="post" class="synapsis-post__ban" onsubmit="return confirm('<?= $GLOBALS['TL_LANG']['MSC']['synapsisBanConfirm'] ?? 'Dieses Mitglied wirklich für das Forum sperren?' ?>');">
+                                <input type="hidden" name="FORM_SUBMIT" value="<?= $this->banFormId ?>">
+                                <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                                <input type="hidden" name="ban_member" value="<?= (int) $post['author'] ?>">
+                                <button type="submit" class="synapsis-post__action synapsis-post__action--danger"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBan'] ?? 'Sperren' ?></button>
+                            </form>
+                        <?php endif; ?>
                         <?php if (!empty($post['canLike'])): ?>
                             <form action="<?= $this->likeAction ?>" method="post" class="synapsis-like__form">
                                 <input type="hidden" name="FORM_SUBMIT" value="<?= $this->likeFormId ?>">
@@ -281,6 +289,8 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         </section>
     <?php elseif ($this->locked): ?>
         <p class="synapsis-note"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLockedNote'] ?? 'Dieses Thema ist geschlossen. Es sind keine Antworten mehr möglich.' ?></p>
+    <?php elseif (!empty($this->isBanned)): ?>
+        <p class="synapsis-note synapsis-note--banned"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBannedNote'] ?? 'Du bist für das Forum gesperrt und kannst keine Beiträge verfassen.' ?></p>
     <?php elseif (!$this->loggedIn): ?>
         <p class="synapsis-note"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLoginNote'] ?? 'Bitte melden Sie sich an, um zu antworten.' ?></p>
     <?php endif; ?>

@@ -45,7 +45,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
 
     'palettes' => array
     (
-        'default' => '{design_legend},colorScheme;{community_legend},showOnline,showRanks,ranks;{admin_legend},wordFilter;{notify_legend},notifyEnabled,notifySubject,notifyBody;{team_legend},teamNotifyAdmins,teamNotifyMods,teamNotifyOn,teamSubject,teamBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin,modCanLock,modCanMove,modCanEditPosts',
+        'default' => '{design_legend},colorScheme;{community_legend},showOnline,showRanks,ranks;{admin_legend},wordFilter;{notify_legend},notifyEnabled,notifySubject,notifyBody;{team_legend},teamNotifyAdmins,teamNotifyMods,teamNotifyOn,teamSubject,teamBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin,modCanLock,modCanMove,modCanEditPosts,modCanBan',
     ),
 
     'fields' => array
@@ -163,6 +163,15 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
             'inputType' => 'checkbox',
             'eval'      => array('tl_class' => 'w50 m12'),
             'sql'       => "char(1) NOT NULL default '1'",
+        ),
+        // Sperren ist eine strenge Massnahme -> fuer Moderatoren standardmaessig
+        // AUS (Administratoren duerfen immer). Deshalb Default '' statt '1'.
+        'modCanBan' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default ''",
         ),
 
         // --- Benachrichtigung an das Team (Admins/Moderatoren) ---

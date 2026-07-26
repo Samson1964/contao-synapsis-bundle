@@ -116,6 +116,31 @@ $GLOBALS['TL_LANG']['MSC']['synapsisReportBy']      = 'gemeldet von';
 $GLOBALS['TL_LANG']['MSC']['synapsisResolve']       = 'Erledigt';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoReports']     = 'Es liegen keine offenen Meldungen vor.';
 
+// Massen-Moderation (mehrere Themen gleichzeitig bearbeiten)
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkSelect']         = 'Für Massen-Moderation auswählen';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkWithSelection']  = 'Mit Auswahl:';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkAction']         = 'Aktion wählen';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkLock']           = 'Schließen';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkUnlock']         = 'Öffnen';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkMove']           = 'Verschieben';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkDelete']         = 'Löschen';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkApply']          = 'Anwenden';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkNeedSelection']  = 'Bitte mindestens ein Thema auswählen.';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkApplyConfirm']   = 'Aktion auf die ausgewählten Themen anwenden?';
+$GLOBALS['TL_LANG']['MSC']['synapsisBulkDeleteConfirm']  = 'Die ausgewählten Themen wirklich unwiderruflich löschen?';
+
+// Sperr-/Bann-Verwaltung
+$GLOBALS['TL_LANG']['MSC']['synapsisBans']              = 'Sperren';
+$GLOBALS['TL_LANG']['MSC']['synapsisBan']              = 'Sperren';
+$GLOBALS['TL_LANG']['MSC']['synapsisUnban']            = 'Freigeben';
+$GLOBALS['TL_LANG']['MSC']['synapsisBanConfirm']       = 'Dieses Mitglied wirklich für das Forum sperren?';
+$GLOBALS['TL_LANG']['MSC']['synapsisBanUsername']      = 'Mitglied sperren (Benutzername)';
+$GLOBALS['TL_LANG']['MSC']['synapsisBanReason']        = 'Begründung (optional)';
+$GLOBALS['TL_LANG']['MSC']['synapsisBannedBy']         = 'gesperrt von';
+$GLOBALS['TL_LANG']['MSC']['synapsisNoBans']           = 'Es sind keine Mitglieder gesperrt.';
+$GLOBALS['TL_LANG']['MSC']['synapsisBanUnknownMember'] = 'Es wurde kein Mitglied mit diesem Benutzernamen gefunden.';
+$GLOBALS['TL_LANG']['MSC']['synapsisBannedNote']       = 'Du bist für das Forum gesperrt und kannst keine Beiträge verfassen.';
+
 // Benachrichtigungscenter ("Mein Bereich")
 $GLOBALS['TL_LANG']['MSC']['synapsisNotifications']   = 'Benachrichtigungen';
 $GLOBALS['TL_LANG']['MSC']['synapsisNoNotifications'] = 'Du hast keine Benachrichtigungen.';

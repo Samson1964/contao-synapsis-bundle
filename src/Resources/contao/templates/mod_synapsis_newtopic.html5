@@ -33,6 +33,11 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         <p class="synapsis-formerror"><?= $this->formError ?></p>
     <?php endif; ?>
 
+    <?php if (!empty($this->isBanned)): ?>
+        <p class="synapsis-note synapsis-note--banned"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBannedNote'] ?? 'Du bist für das Forum gesperrt und kannst keine Beiträge verfassen.' ?></p>
+        <p class="synapsis-back"><a href="<?= $this->cancelUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToTopics'] ?? 'Zurück zum Forum' ?></a></p>
+    <?php else: ?>
+
     <form action="<?= $this->formAction ?>" method="post" enctype="multipart/form-data" class="synapsis-form">
         <input type="hidden" name="FORM_SUBMIT" value="<?= $this->formId ?>">
         <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
@@ -96,6 +101,8 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
             <a class="synapsis-button" href="<?= $this->cancelUrl ?>"><?= $GLOBALS['TL_LANG']['MSC']['synapsisCancel'] ?? 'Abbrechen' ?></a>
         </div>
     </form>
+
+    <?php endif; ?>
 
     <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
 

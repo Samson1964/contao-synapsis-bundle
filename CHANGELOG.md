@@ -1,5 +1,16 @@
 # Synapsis Changelog
 
+## Version 1.14.0 (2026-07-26)
+
+> **Schema-Änderung**: nach dem Update den **Anwendungscache neu bauen** und `contao:migrate` ausführen (neue Tabelle `tl_synapsis_ban`, neues Einstellungsfeld `modCanBan`). Anschließend die Assets neu veröffentlichen (CSS).
+
+### Hinzugefügt – Admin (Teil 2, Abschluss)
+
+* **Massen-Moderation**: In der Forenansicht können berechtigte Moderatoren/Administratoren jetzt **mehrere Themen auf einmal** bearbeiten. Über Auswahlkästchen an den Themen und eine Aktionsleiste lassen sich die markierten Themen gemeinsam **schließen/öffnen, verschieben oder löschen**. Jede Aktion wird gegen die passende Berechtigung geprüft (Schließen → „Themen schließen", Verschieben → „Themen verschieben", Löschen → „fremde Beiträge bearbeiten/löschen"); Löschen wird zusätzlich per Sicherheitsabfrage bestätigt. Es werden nur Themen des jeweiligen Forums berücksichtigt.
+* **Sperr-/Bann-Verwaltung**: Mitglieder können für das Forum **gesperrt** werden – ein gesperrtes Mitglied kann keine Themen mehr erstellen und nicht mehr antworten (Lesen bleibt möglich). Neuer Bereich **„Sperren"** unter „Mein Bereich" (nur für Berechtigte): Liste der gesperrten Mitglieder mit **Freigeben**, dazu ein Feld zum Sperren über den **Benutzernamen** (mit optionaler Begründung). Zusätzlich eine **„Sperren"-Schaltfläche** direkt an Beiträgen. Neue Einstellung **„Moderatoren dürfen Mitglieder sperren"** (Standard: aus – Administratoren dürfen es immer). Logik in der testbaren Klasse `Frontend\BanManager` (Tabelle `tl_synapsis_ban`).
+
+Damit ist der Bereich **Administration** vollständig.
+
 ## Version 1.13.0 (2026-07-26)
 
 > Keine Schema-Änderung und keine `config.php`/`services.yaml`-Änderung – nach dem Update genügt ein **Leeren des Contao-Caches** (bzw. ein OPcache-Reset), kein Neubau des Anwendungscontainers nötig.

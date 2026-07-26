@@ -92,6 +92,11 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
     <?php if ($this->empty): ?>
         <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNoTopics'] ?? 'In diesem Forum gibt es noch keine Themen.' ?></p>
     <?php else: ?>
+        <?php if (!empty($this->canBulk)): ?>
+        <form action="<?= $this->bulkAction ?>" method="post" class="synapsis-bulkform">
+            <input type="hidden" name="FORM_SUBMIT" value="<?= $this->bulkFormId ?>">
+            <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+        <?php endif; ?>
         <ul class="synapsis-topiclist">
             <li class="synapsis-topiclist__head">
                 <span class="synapsis-col-topic"><?= $GLOBALS['TL_LANG']['MSC']['synapsisTopic'] ?? 'Thema' ?></span>
@@ -102,6 +107,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
             <?php foreach ($this->topics as $topic): ?>
                 <li class="synapsis-topiclist__row<?= $topic['sticky'] ? ' is-sticky' : '' ?><?= !empty($topic['unread']) ? ' is-unread' : '' ?>">
                     <span class="synapsis-col-topic">
+                        <?php if (!empty($this->canBulk)): ?><input type="checkbox" class="synapsis-bulk-check" name="bulk_topics[]" value="<?= (int) $topic['id'] ?>" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkSelect'] ?? 'Für Massen-Moderation auswählen' ?>"><?php endif; ?>
                         <?php if (!empty($topic['unread'])): ?><span class="synapsis-unread-dot" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesen' ?>"></span><?php endif; ?>
                         <?php if ($topic['sticky']): ?><span class="synapsis-badge synapsis-badge--sticky"><?= $GLOBALS['TL_LANG']['MSC']['synapsisSticky'] ?? 'Angeheftet' ?></span><?php endif; ?>
                         <?php if ($topic['locked']): ?><span class="synapsis-badge synapsis-badge--locked"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLocked'] ?? 'Geschlossen' ?></span><?php endif; ?>
@@ -120,6 +126,35 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                 </li>
             <?php endforeach; ?>
         </ul>
+
+        <?php if (!empty($this->canBulk)): ?>
+            <div class="synapsis-bulkbar">
+                <span class="synapsis-bulkbar__label"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkWithSelection'] ?? 'Mit Auswahl:' ?></span>
+                <select name="bulk_action" class="synapsis-bulkbar__action">
+                    <option value="">&ndash; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkAction'] ?? 'Aktion wählen' ?> &ndash;</option>
+                    <?php if (!empty($this->canBulkLock)): ?>
+                        <option value="lock"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkLock'] ?? 'Schließen' ?></option>
+                        <option value="unlock"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkUnlock'] ?? 'Öffnen' ?></option>
+                    <?php endif; ?>
+                    <?php if (!empty($this->canBulkMove) && !empty($this->bulkTargets)): ?>
+                        <option value="move"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkMove'] ?? 'Verschieben' ?></option>
+                    <?php endif; ?>
+                    <?php if (!empty($this->canBulkDelete)): ?>
+                        <option value="delete"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkDelete'] ?? 'Löschen' ?></option>
+                    <?php endif; ?>
+                </select>
+                <?php if (!empty($this->canBulkMove) && !empty($this->bulkTargets)): ?>
+                    <select name="bulk_target" class="synapsis-bulkbar__target">
+                        <option value=""><?= $GLOBALS['TL_LANG']['MSC']['synapsisMoveTo'] ?? 'Verschieben nach …' ?></option>
+                        <?php foreach ($this->bulkTargets as $target): ?>
+                            <option value="<?= $target['id'] ?>"><?= StringUtil::specialchars($target['title']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
+                <button type="submit" class="synapsis-button synapsis-button--secondary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisBulkApply'] ?? 'Anwenden' ?></button>
+            </div>
+        </form>
+        <?php endif; ?>
 
         <?= $this->pagination ?>
     <?php endif; ?>

@@ -1231,3 +1231,51 @@
 .synapsis-smiley:hover {
     background: var(--syn-panel, #f3f4f6);
 }
+
+/* Massen-Moderation: Auswahlkaestchen + Aktionsleiste */
+.synapsis-bulk-check {
+    margin-right: 0.4em;
+    vertical-align: middle;
+}
+
+.synapsis-bulkbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em;
+    margin: 0.75em 0;
+    padding: 0.6em 0.8em;
+    background: var(--syn-bg-alt, #f4f6f8);
+    border: 1px solid var(--syn-border, #dde3e8);
+    border-radius: var(--syn-radius, 6px);
+}
+
+.synapsis-bulkbar__label {
+    font-weight: 600;
+    color: var(--syn-muted, #6b7a86);
+}
+
+.synapsis-bulkbar__action,
+.synapsis-bulkbar__target {
+    padding: 0.3em 0.5em;
+    border: 1px solid var(--syn-border, #dde3e8);
+    border-radius: var(--syn-radius, 6px);
+    background: var(--syn-bg, #fff);
+    color: var(--syn-text, #23303a);
+}
+
+/* Hinweis fuer gesperrte Mitglieder + Sperren-Verwaltung */
+.synapsis-note--banned {
+    color: #b23a2e;
+    font-weight: 600;
+}
+
+.synapsis-banform {
+    margin-bottom: 1.25em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid var(--syn-border, #dde3e8);
+}
+
+.synapsis-ban .synapsis-report__reason {
+    color: var(--syn-text, #23303a);
+}

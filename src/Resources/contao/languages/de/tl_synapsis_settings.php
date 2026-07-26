@@ -71,6 +71,10 @@ $GLOBALS['TL_LANG']['tl_synapsis_settings']['modCanEditPosts'] = array(
     'Moderatoren dürfen fremde Beiträge bearbeiten/löschen',
     'Ist dies aktiv, dürfen Moderatoren auch Beiträge anderer bearbeiten oder löschen.',
 );
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['modCanBan'] = array(
+    'Moderatoren dürfen Mitglieder sperren',
+    'Ist dies aktiv, dürfen Moderatoren Mitglieder für das Forum sperren und wieder freigeben. Administratoren dürfen das immer.',
+);
 
 // Felder (Team-Benachrichtigung)
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['teamNotifyAdmins'] = array(

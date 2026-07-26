@@ -29,6 +29,7 @@ use Composer\InstalledVersions;
 use Symfony\Component\HttpFoundation\Response;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AuthorLabel;
 use Schachbulle\ContaoSynapsisBundle\Frontend\AvatarResolver;
+use Schachbulle\ContaoSynapsisBundle\Frontend\BanManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\BBCode;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ForumAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LikeManager;
@@ -123,6 +124,13 @@ class SynapsisForum extends Module
     private $likeManager;
 
     /**
+     * Sperren-Verwaltung (Tabelle tl_synapsis_ban), lazy erzeugt.
+     *
+     * @var BanManager|null
+     */
+    private $banManager;
+
+    /**
      * Zugriffshelfer fuer das Umfragen-Erstellrecht.
      *
      * @var PollAccess
@@ -163,6 +171,13 @@ class SynapsisForum extends Module
      * @var bool|null
      */
     private $canSeeReportsCache;
+
+    /**
+     * Zwischenspeicher: darf der Besucher irgendwo im Startpunkt sperren?
+     *
+     * @var bool|null
+     */
+    private $canManageBansCache;
 
     /**
      * Zwischenspeicher: sollen Moderatoren-Namen im Frontend angezeigt werden?
@@ -317,6 +332,11 @@ class SynapsisForum extends Module
             $items['reports'] = $GLOBALS['TL_LANG']['MSC']['synapsisReports'] ?? 'Meldungen';
         }
 
+        // "Sperren" nur fuer Mitglieder mit Sperr-Recht.
+        if ($this->canManageBans()) {
+            $items['bans'] = $GLOBALS['TL_LANG']['MSC']['synapsisBans'] ?? 'Sperren';
+        }
+
         // Ungelesene Benachrichtigungen als Zahl-Badge am Punkt "Benachrichtigungen".
         $unread = $this->unreadNotificationCount();
 
@@ -344,7 +364,7 @@ class SynapsisForum extends Module
         // Mitglieder-Unteransichten (Abos, Signatur, Meine/Ungelesene Beitraege)
         $panel = (string) Input::get('panel');
 
-        if ('' !== $panel && $this->isMemberLoggedIn() && \in_array($panel, ['subs', 'sig', 'me', 'unread', 'liked', 'reports', 'notify'], true)) {
+        if ('' !== $panel && $this->isMemberLoggedIn() && \in_array($panel, ['subs', 'sig', 'me', 'unread', 'liked', 'reports', 'notify', 'bans'], true)) {
             $this->panel = $panel;
             $this->view = 'panel';
             $this->strTemplate = 'mod_synapsis_panel';
@@ -874,6 +894,8 @@ class SynapsisForum extends Module
         $this->handleForumSubscription();
         // "Forum als gelesen markieren" verarbeiten.
         $this->handleMarkRead();
+        // Massen-Moderation (mehrere Themen loeschen/schliessen/verschieben).
+        $this->handleBulkModeration();
 
         // Forum als gelesen markieren: nur fuer angemeldete Mitglieder anbieten.
         $this->Template->canMarkRead = $this->isMemberLoggedIn();
@@ -938,6 +960,25 @@ class SynapsisForum extends Module
         $this->Template->topics = $rows;
         $this->Template->pagination = $pagination->generate("\n");
         $this->Template->empty = [] === $rows;
+
+        // Massen-Moderation: Auswahlkaestchen + Aktionsleiste nur fuer
+        // berechtigte Moderatoren/Administratoren einblenden.
+        $canBulkLock = $this->canModerate($forumId, 'lock');
+        $canBulkMove = $this->canModerate($forumId, 'move');
+        $canBulkDelete = $this->canModerate($forumId, 'edit');
+        $canBulk = $canBulkLock || $canBulkMove || $canBulkDelete;
+
+        $this->Template->canBulk = $canBulk;
+        $this->Template->canBulkLock = $canBulkLock;
+        $this->Template->canBulkMove = $canBulkMove;
+        $this->Template->canBulkDelete = $canBulkDelete;
+        $this->Template->bulkFormId = 'synapsis_bulk_'.$this->id;
+        $this->Template->bulkAction = $this->pageUrl(['forum' => $forumId]);
+        $this->Template->bulkTargets = $canBulkMove ? $this->moveTargets($forumId) : [];
+
+        if ($canBulk) {
+            $this->addBulkScript();
+        }
     }
 
     /**
@@ -957,6 +998,7 @@ class SynapsisForum extends Module
         $this->handleEdit();
         $this->handleDelete();
         $this->handleReport();
+        $this->handleBan();
         $this->handlePostSubmission();
 
         // Ansichtszaehler erhoehen - aber pro Sitzung nur einmal, damit ein
@@ -1032,6 +1074,7 @@ class SynapsisForum extends Module
         $this->Template->moveTargets = $canMove ? $this->moveTargets($moderatedForum) : [];
         $this->Template->moderateAction = $this->pageUrl(['topic' => $topicId]);
         $this->Template->deleteFormId = 'synapsis_delete_'.$this->id;
+        $this->Template->banFormId = 'synapsis_ban_'.$this->id;
 
         // Melde-Formular, wenn ein Beitrag gemeldet werden soll
         $this->Template->reportPost = null;
@@ -1076,6 +1119,8 @@ class SynapsisForum extends Module
             && $this->canWrite((int) $this->activeForum['id']);
         $this->Template->canReply = $canReply;
         $this->Template->locked = (bool) $this->activeTopic['locked'];
+        // Hinweis anzeigen, wenn das Mitglied fuer das Forum gesperrt ist.
+        $this->Template->isBanned = $this->isCurrentMemberBanned();
 
         $this->Template->replyPrefill = '';
         $this->Template->quotePost = 0;
@@ -1137,6 +1182,7 @@ class SynapsisForum extends Module
 
         $this->Template->forum = $this->activeForum;
         $this->Template->breadcrumb = $this->buildBreadcrumb($forumId);
+        $this->Template->isBanned = $this->isCurrentMemberBanned();
         $this->Template->allowUploads = (bool) $this->synapsis_allowUploads;
         $this->Template->formAction = $this->pageUrl(['forum' => $forumId, 'new' => 1]);
         $this->Template->formId = 'synapsis_topic_'.$this->id;
@@ -1260,6 +1306,7 @@ class SynapsisForum extends Module
             'subs' => $GLOBALS['TL_LANG']['MSC']['synapsisSubscriptions'] ?? 'Abonnements',
             'sig' => $GLOBALS['TL_LANG']['MSC']['synapsisSignature'] ?? 'Signatur',
             'reports' => $GLOBALS['TL_LANG']['MSC']['synapsisReports'] ?? 'Meldungen',
+            'bans' => $GLOBALS['TL_LANG']['MSC']['synapsisBans'] ?? 'Sperren',
         ];
 
         $breadcrumb = $this->buildBreadcrumb(0);
@@ -1293,6 +1340,10 @@ class SynapsisForum extends Module
 
             case 'reports':
                 $this->compilePanelReports();
+                break;
+
+            case 'bans':
+                $this->compilePanelBans();
                 break;
 
             case 'notify':
@@ -1536,6 +1587,79 @@ class SynapsisForum extends Module
         $this->Template->items = $items;
         $this->Template->resolveFormId = 'synapsis_resolve_'.$this->id;
         $this->Template->formAction = $this->pageUrl(['panel' => 'reports']);
+    }
+
+    /**
+     * Sperren-Verwaltung: listet die gesperrten Mitglieder, ermoeglicht das
+     * Freigeben (Aufheben) und das Sperren eines Mitglieds ueber seinen
+     * Benutzernamen. Nur fuer Team-Mitglieder mit Sperr-Recht.
+     */
+    private function compilePanelBans(): void
+    {
+        $this->Template->items = [];
+        $this->Template->canManageBans = false;
+        $this->Template->banError = '';
+
+        if (!$this->canManageBans()) {
+            return;
+        }
+
+        $this->Template->canManageBans = true;
+
+        $submit = Input::post('FORM_SUBMIT');
+        $db = Database::getInstance();
+
+        // Freigeben (Sperre aufheben).
+        if ('synapsis_unban_'.$this->id === $submit) {
+            $memberId = (int) Input::post('ban_member');
+
+            if ($memberId > 0) {
+                $this->banManager()->unban($memberId);
+            }
+
+            $this->redirect($this->pageUrl(['panel' => 'bans']));
+        }
+
+        // Mitglied ueber Benutzernamen sperren.
+        if ('synapsis_banadd_'.$this->id === $submit) {
+            $username = trim((string) Input::post('ban_username'));
+
+            if ('' !== $username) {
+                $row = $db->prepare('SELECT id FROM tl_member WHERE username = ?')->execute($username)->row();
+                $memberId = empty($row) ? 0 : (int) $row['id'];
+
+                if ($memberId > 0 && $memberId !== $this->currentAuthorId()) {
+                    $reason = trim(strip_tags((string) Input::post('ban_reason', true)));
+                    $this->banManager()->ban($memberId, $this->currentAuthorId(), $reason);
+                    $this->Template->banError = '';
+                } else {
+                    // Fehlermeldung ueber den Redirect hinweg im Flash-Bereich merken.
+                    $this->Template->banError = $GLOBALS['TL_LANG']['MSC']['synapsisBanUnknownMember'] ?? 'Es wurde kein Mitglied mit diesem Benutzernamen gefunden.';
+                }
+            }
+
+            // Bei Erfolg neu laden; bei unbekanntem Namen die Meldung stehen lassen.
+            if (empty($this->Template->banError)) {
+                $this->redirect($this->pageUrl(['panel' => 'bans']));
+            }
+        }
+
+        $items = [];
+
+        foreach ($this->banManager()->all() as $ban) {
+            $items[] = [
+                'memberId' => $ban['member'],
+                'member' => $this->authorLabel($ban['member'], ''),
+                'reason' => $ban['reason'],
+                'bannedBy' => $this->authorLabel($ban['bannedBy'], ''),
+                'dateFormatted' => $this->formatDate($ban['tstamp']),
+            ];
+        }
+
+        $this->Template->items = $items;
+        $this->Template->unbanFormId = 'synapsis_unban_'.$this->id;
+        $this->Template->banAddFormId = 'synapsis_banadd_'.$this->id;
+        $this->Template->formAction = $this->pageUrl(['panel' => 'bans']);
     }
 
     /**
@@ -1975,6 +2099,100 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Massen-Moderation: wendet eine Aktion (Loeschen, Schliessen/Oeffnen,
+     * Verschieben) auf mehrere ausgewaehlte Themen des aktuellen Forums an.
+     * Jede Aktion wird gegen die passende Berechtigung geprueft; es werden nur
+     * Themen dieses Forums beruecksichtigt.
+     */
+    private function handleBulkModeration(): void
+    {
+        if ('synapsis_bulk_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        $forumId = (int) $this->activeForum['id'];
+        $action = (string) Input::post('bulk_action');
+        $topicIds = array_values(array_filter(array_map('intval', (array) Input::post('bulk_topics'))));
+
+        // Aktion -> benoetigte Berechtigung (Loeschen wie das Bearbeiten fremder
+        // Beitraege, das bereits das Loeschen ganzer Themen erlaubt).
+        $capabilityMap = [
+            'delete' => 'edit',
+            'lock' => 'lock',
+            'unlock' => 'lock',
+            'move' => 'move',
+        ];
+
+        if (!isset($capabilityMap[$action]) || [] === $topicIds || !$this->canModerate($forumId, $capabilityMap[$action])) {
+            $this->redirect($this->pageUrl(['forum' => $forumId]));
+        }
+
+        $db = Database::getInstance();
+
+        // Nur Themen beruecksichtigen, die wirklich in diesem Forum liegen.
+        $valid = [];
+
+        foreach ($topicIds as $topicId) {
+            $row = $db->prepare('SELECT id FROM tl_synapsis_topic WHERE id = ? AND pid = ?')->execute($topicId, $forumId)->row();
+
+            if (!empty($row)) {
+                $valid[] = $topicId;
+            }
+        }
+
+        if ([] === $valid) {
+            $this->redirect($this->pageUrl(['forum' => $forumId]));
+        }
+
+        $placeholders = implode(',', array_fill(0, \count($valid), '?'));
+
+        if ('delete' === $action) {
+            foreach ($valid as $topicId) {
+                $this->deleteTopicCompletely($topicId);
+            }
+        } elseif ('lock' === $action || 'unlock' === $action) {
+            $db->prepare('UPDATE tl_synapsis_topic SET locked = ? WHERE id IN ('.$placeholders.')')
+                ->execute('lock' === $action ? '1' : '', ...$valid)
+            ;
+        } elseif ('move' === $action) {
+            $target = (int) Input::post('bulk_target');
+
+            // Ziel muss ein anderes lesbares Forum desselben Startpunkts sein.
+            if ($target > 0 && $target !== $forumId && \in_array($target, $this->readableForumIds(), true)) {
+                $db->prepare('UPDATE tl_synapsis_topic SET pid = ? WHERE id IN ('.$placeholders.')')
+                    ->execute($target, ...$valid)
+                ;
+            }
+        }
+
+        $this->redirect($this->pageUrl(['forum' => $forumId]));
+    }
+
+    /**
+     * Kleiner Sicherheits-Dialog fuer die Massen-Moderation: verlangt eine
+     * Auswahl und laesst das Loeschen ausdruecklich bestaetigen (ohne
+     * JavaScript bleibt die Aktion normal absendbar).
+     */
+    private function addBulkScript(): void
+    {
+        $confirmDelete = $GLOBALS['TL_LANG']['MSC']['synapsisBulkDeleteConfirm'] ?? 'Die ausgewählten Themen wirklich unwiderruflich löschen?';
+        $confirmApply = $GLOBALS['TL_LANG']['MSC']['synapsisBulkApplyConfirm'] ?? 'Aktion auf die ausgewählten Themen anwenden?';
+        $needSelection = $GLOBALS['TL_LANG']['MSC']['synapsisBulkNeedSelection'] ?? 'Bitte mindestens ein Thema auswählen.';
+
+        $GLOBALS['TL_BODY']['synapsis_bulk'] = '<script>document.addEventListener("DOMContentLoaded",function(){'
+            .'document.querySelectorAll(".synapsis-bulkform").forEach(function(f){'
+            .'f.addEventListener("submit",function(e){'
+            .'var a=f.querySelector("[name=bulk_action]").value;'
+            .'var n=f.querySelectorAll("input[name=\'bulk_topics[]\']:checked").length;'
+            .'if(!a){e.preventDefault();return;}'
+            .'if(n===0){e.preventDefault();alert('.json_encode($needSelection).');return;}'
+            .'var m=("delete"===a)?'.json_encode($confirmDelete).':'.json_encode($confirmApply).';'
+            .'if(!confirm(m)){e.preventDefault();}'
+            .'});});});</script>'
+        ;
+    }
+
+    /**
      * Liste der moeglichen Verschiebe-Ziele (lesbare Foren des Startpunkts ohne
      * das aktuelle).
      *
@@ -2186,6 +2404,31 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Sperrt ein Mitglied aus der Themenansicht heraus (Schaltflaeche in der
+     * Beitrags-Fusszeile). Nur fuer Team-Mitglieder mit Sperr-Recht; das eigene
+     * Konto kann nicht gesperrt werden.
+     */
+    private function handleBan(): void
+    {
+        if ('synapsis_ban_'.$this->id !== Input::post('FORM_SUBMIT')) {
+            return;
+        }
+
+        $topicId = (int) $this->activeTopic['id'];
+
+        if ($this->canManageBans()) {
+            $memberId = (int) Input::post('ban_member');
+
+            if ($memberId > 0 && $memberId !== $this->currentAuthorId()) {
+                $reason = trim(strip_tags((string) Input::post('ban_reason', true)));
+                $this->banManager()->ban($memberId, $this->currentAuthorId(), $reason);
+            }
+        }
+
+        $this->redirect($this->pageUrl(['topic' => $topicId]));
+    }
+
+    /**
      * Darf der Besucher irgendwo in diesem Startpunkt moderieren (und damit
      * Meldungen sehen)? Ergebnis wird zwischengespeichert.
      */
@@ -2207,6 +2450,30 @@ class SynapsisForum extends Module
         }
 
         return $this->canSeeReportsCache = $result;
+    }
+
+    /**
+     * Darf der Besucher irgendwo in diesem Startpunkt Mitglieder sperren (und
+     * damit die Sperren-Verwaltung sehen)? Ergebnis wird zwischengespeichert.
+     */
+    private function canManageBans(): bool
+    {
+        if (null !== $this->canManageBansCache) {
+            return $this->canManageBansCache;
+        }
+
+        $result = false;
+
+        if ($this->isMemberLoggedIn()) {
+            foreach ($this->readableForumIds() as $forumId) {
+                if ($this->canModerate($forumId, 'ban')) {
+                    $result = true;
+                    break;
+                }
+            }
+        }
+
+        return $this->canManageBansCache = $result;
     }
 
     /**
@@ -2524,6 +2791,12 @@ class SynapsisForum extends Module
         // Melden: angemeldete Mitglieder, aber nicht den eigenen Beitrag
         $post['canReport'] = $this->currentAuthorId() > 0 && $authorId !== $this->currentAuthorId();
         $post['reportUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'report' => (int) $post['id']]);
+        // Sperren: nur fuer Team-Mitglieder mit Sperr-Recht, echtes Mitglied als
+        // Verfasser, nicht das eigene Konto und noch nicht gesperrt.
+        $post['canBan'] = $authorId > 0
+            && $authorId !== $this->currentAuthorId()
+            && $this->canManageBans()
+            && !$this->banManager()->isBanned($authorId);
         $post['attachmentList'] = $this->renderAttachments($post['attachments'] ?? null);
 
         // Wortfilter auf den (HTML-)Beitragstext anwenden (nur Textteile).
@@ -2930,6 +3203,11 @@ class SynapsisForum extends Module
      */
     private function canWrite(int $forumId): bool
     {
+        // Fuer das Forum gesperrte Mitglieder duerfen nirgends schreiben.
+        if ($this->isCurrentMemberBanned()) {
+            return false;
+        }
+
         return $this->access->canWrite(
             $this->buildChain($forumId),
             !$this->isMemberLoggedIn(),
@@ -3002,6 +3280,7 @@ class SynapsisForum extends Module
             'lock' => 'modCanLock',
             'move' => 'modCanMove',
             'edit' => 'modCanEditPosts',
+            'ban' => 'modCanBan',
         ];
 
         if (!isset($map[$capability])) {
@@ -3010,7 +3289,11 @@ class SynapsisForum extends Module
 
         $settings = $this->forumSettings();
 
-        return '1' === (string) ($settings[$map[$capability]] ?? '1');
+        // Sperren ist fuer Moderatoren standardmaessig AUS (Default ''), die
+        // uebrigen Rechte standardmaessig AN (Default '1').
+        $default = 'ban' === $capability ? '' : '1';
+
+        return '1' === (string) ($settings[$map[$capability]] ?? $default);
     }
 
     /**
@@ -3182,6 +3465,27 @@ class SynapsisForum extends Module
         }
 
         return $this->likeManager;
+    }
+
+    /**
+     * Sperren-Verwaltung (Tabelle tl_synapsis_ban), lazy erzeugt.
+     */
+    private function banManager(): BanManager
+    {
+        if (null === $this->banManager) {
+            $this->banManager = new BanManager(System::getContainer()->get('database_connection'));
+        }
+
+        return $this->banManager;
+    }
+
+    /**
+     * Ist das aktuell angemeldete Mitglied fuer das Forum gesperrt? (Gaeste nie.)
+     */
+    private function isCurrentMemberBanned(): bool
+    {
+        return $this->isMemberLoggedIn()
+            && $this->banManager()->isBanned((int) FrontendUser::getInstance()->id);
     }
 
     /**
