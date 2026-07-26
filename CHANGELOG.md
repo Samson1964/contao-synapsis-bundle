@@ -1,5 +1,13 @@
 # Synapsis Changelog
 
+## Version 1.14.1 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets.
+
+### Behoben
+
+* **Editor**: Die TinyMCE-Konfiguration lud die Plugins `emoticons` und `autolink`, die im mitgelieferten TinyMCE-Build nicht enthalten sind – das erzeugte im Browser zwei Konsolen-Fehler („Failed to load plugin"). Beide wurden aus der Konfiguration entfernt; für Emojis dient weiterhin die eigene Smiley-Leiste unter dem Editor. Der Editor selbst (Fett/Kursiv, Listen, Link, Bild) ist unverändert.
+
 ## Version 1.14.0 (2026-07-26)
 
 > **Schema-Änderung**: nach dem Update den **Anwendungscache neu bauen** und `contao:migrate` ausführen (neue Tabelle `tl_synapsis_ban`, neues Einstellungsfeld `modCanBan`). Anschließend die Assets neu veröffentlichen (CSS).

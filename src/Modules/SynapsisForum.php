@@ -4240,8 +4240,8 @@ class SynapsisForum extends Module
             .'suffix:".min",'
             .'menubar:false,'
             .'height:260,'
-            .'plugins:"lists link image emoticons autolink",'
-            .'toolbar:"bold italic | bullist numlist | link image emoticons",'
+            .'plugins:"lists link image",'
+            .'toolbar:"bold italic | bullist numlist | link image",'
             .'branding:false'
             .'});});</script>'
         ;
