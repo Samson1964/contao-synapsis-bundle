@@ -118,6 +118,21 @@ use Contao\StringUtil;
                 <?php endforeach; ?>
             </ul>
         <?php endif; ?>
+
+        <?php if (!empty($this->online) && (!empty($this->online['members']) || $this->online['guests'] > 0)): ?>
+            <h4 class="synapsis-stats__subtitle"><?= $GLOBALS['TL_LANG']['MSC']['synapsisOnline'] ?? 'Wer ist online' ?></h4>
+            <p class="synapsis-online">
+                <?php if (!empty($this->online['members'])): ?>
+                    <?php $names = array(); foreach ($this->online['members'] as $m) { $names[] = '' !== $m['url'] ? '<a href="'.$m['url'].'">'.StringUtil::specialchars($m['name']).'</a>' : StringUtil::specialchars($m['name']); } ?>
+                    <span class="synapsis-online__members"><?= implode(', ', $names) ?></span>
+                <?php else: ?>
+                    <span class="synapsis-online__members"><?= $GLOBALS['TL_LANG']['MSC']['synapsisOnlineNoMembers'] ?? 'Keine angemeldeten Mitglieder online.' ?></span>
+                <?php endif; ?>
+                <?php if ($this->online['guests'] > 0): ?>
+                    <span class="synapsis-online__guests">&middot; <?= sprintf($GLOBALS['TL_LANG']['MSC']['synapsisOnlineGuests'] ?? '%d Gäste', (int) $this->online['guests']) ?></span>
+                <?php endif; ?>
+            </p>
+        <?php endif; ?>
     </section>
 
     <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>

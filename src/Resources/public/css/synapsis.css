@@ -358,6 +358,77 @@
     color: var(--syn-accent);
 }
 
+/* --- Wer ist online ----------------------------------------------------- */
+.synapsis-online {
+    margin: 0.25rem 1rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.synapsis-online__guests {
+    color: var(--syn-muted);
+}
+
+/* --- Mitgliederprofil --------------------------------------------------- */
+.synapsis-profile__card {
+    border: 1px solid var(--syn-border);
+    border-radius: var(--syn-radius);
+    background: var(--syn-bg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.synapsis-profile__head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.synapsis-profile__head .synapsis-avatar {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+}
+
+.synapsis-profile__head .synapsis-avatar svg { width: 34px; height: 34px; }
+
+.synapsis-profile__name { margin: 0; font-size: 1.25rem; }
+
+.synapsis-profile__rank {
+    display: inline-block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--syn-muted);
+    background: var(--syn-panel, #f3f4f6);
+    border: 1px solid var(--syn-border);
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+}
+
+.synapsis-profile__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1rem 0 0;
+}
+
+.synapsis-profile__meta dt {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--syn-muted);
+}
+
+.synapsis-profile__meta dd { margin: 0.1rem 0 0; font-weight: 600; }
+
+.synapsis-profile__signature {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--syn-border);
+    font-size: 0.9rem;
+    color: var(--syn-muted);
+}
+
 /* --- Avatare ------------------------------------------------------------ */
 .synapsis-avatar {
     display: inline-flex;
@@ -407,6 +478,26 @@
 
 .synapsis-post__authorname { font-weight: 600; }
 .synapsis-post__authormeta { font-size: 0.78rem; color: var(--syn-muted); }
+
+/* Autorname als Profil-Link (Avatar + Name), ohne Unterstreichung */
+.synapsis .synapsis-post__authorlink {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    color: inherit;
+    text-decoration: none;
+}
+.synapsis .synapsis-post__authorlink:hover .synapsis-post__authorname { color: var(--syn-accent); }
+
+.synapsis-post__authorrank {
+    font-size: 0.72rem;
+    color: var(--syn-muted);
+    background: var(--syn-panel, #f3f4f6);
+    border: 1px solid var(--syn-border);
+    border-radius: 999px;
+    padding: 0.05rem 0.5rem;
+}
 
 .synapsis-post__body { flex: 1 1 auto; padding: 1rem; min-width: 0; }
 .synapsis-post__date { font-size: 0.8rem; color: var(--syn-muted); margin-bottom: 0.5rem; }

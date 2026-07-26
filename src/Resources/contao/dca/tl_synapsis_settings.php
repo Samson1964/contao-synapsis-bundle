@@ -45,7 +45,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
 
     'palettes' => array
     (
-        'default' => '{design_legend},colorScheme;{notify_legend},notifyEnabled,notifySubject,notifyBody;{team_legend},teamNotifyAdmins,teamNotifyMods,teamNotifyOn,teamSubject,teamBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin,modCanLock,modCanMove,modCanEditPosts',
+        'default' => '{design_legend},colorScheme;{community_legend},showOnline,showRanks,ranks;{notify_legend},notifyEnabled,notifySubject,notifyBody;{team_legend},teamNotifyAdmins,teamNotifyMods,teamNotifyOn,teamSubject,teamBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin,modCanLock,modCanMove,modCanEditPosts',
     ),
 
     'fields' => array
@@ -69,6 +69,28 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
             // wizard-Callback: SettingsListener::colorSchemeWizard (Farbvorschau-Raster)
             'eval'      => array('tl_class' => 'clr'),
             'sql'       => "varchar(32) NOT NULL default ''",
+        ),
+        // --- Community & Mitglieder ---
+        'showOnline' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default '1'",
+        ),
+        'showRanks' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'w50 m12'),
+            'sql'       => "char(1) NOT NULL default '1'",
+        ),
+        'ranks' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'textarea',
+            'eval'      => array('rows' => 5, 'tl_class' => 'clr', 'decodeEntities' => true),
+            'sql'       => "text NULL",
         ),
         'notifyEnabled' => array
         (

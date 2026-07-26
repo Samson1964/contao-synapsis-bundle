@@ -163,8 +163,15 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
         <?php foreach ($this->posts as $post): ?>
             <article class="synapsis-post" id="post-<?= $post['id'] ?>">
                 <aside class="synapsis-post__author">
-                    <?= $post['authorAvatar'] ?>
-                    <span class="synapsis-post__authorname"><?= $post['authorName'] ?></span>
+                    <?php if (!empty($post['authorUrl'])): ?>
+                        <a class="synapsis-post__authorlink" href="<?= $post['authorUrl'] ?>"><?= $post['authorAvatar'] ?><span class="synapsis-post__authorname"><?= $post['authorName'] ?></span></a>
+                    <?php else: ?>
+                        <?= $post['authorAvatar'] ?>
+                        <span class="synapsis-post__authorname"><?= $post['authorName'] ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($post['authorRank'])): ?>
+                        <span class="synapsis-post__authorrank"><?= StringUtil::specialchars($post['authorRank']) ?></span>
+                    <?php endif; ?>
                     <span class="synapsis-post__authormeta"><?= $GLOBALS['TL_LANG']['MSC']['synapsisPosts'] ?? 'Beiträge' ?>: <?= $post['authorPostCount'] ?></span>
                 </aside>
                 <div class="synapsis-post__body">

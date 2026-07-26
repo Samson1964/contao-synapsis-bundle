@@ -26,6 +26,13 @@ $GLOBALS['TL_LANG']['MSC']['synapsisStats']      = 'Statistiken';
 $GLOBALS['TL_LANG']['MSC']['synapsisTopPosters'] = 'Aktivste Mitglieder';
 $GLOBALS['TL_LANG']['MSC']['synapsisModerators'] = 'Moderatoren';
 
+// Community & Mitglieder (Wer ist online, Profil, Rangstufen)
+$GLOBALS['TL_LANG']['MSC']['synapsisOnline']          = 'Wer ist online';
+$GLOBALS['TL_LANG']['MSC']['synapsisOnlineNoMembers'] = 'Keine angemeldeten Mitglieder online.';
+$GLOBALS['TL_LANG']['MSC']['synapsisOnlineGuests']    = '%d Gäste';
+$GLOBALS['TL_LANG']['MSC']['synapsisJoined']          = 'Mitglied seit';
+$GLOBALS['TL_LANG']['MSC']['synapsisRecentPosts']     = 'Letzte Beiträge';
+
 // Zustaende und Hinweise
 $GLOBALS['TL_LANG']['MSC']['synapsisSticky']     = 'Angeheftet';
 $GLOBALS['TL_LANG']['MSC']['synapsisLocked']     = 'Geschlossen';

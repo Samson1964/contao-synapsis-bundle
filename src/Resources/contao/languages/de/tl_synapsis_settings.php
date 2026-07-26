@@ -14,6 +14,21 @@ declare(strict_types=1);
 
 // Legenden
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['design_legend']     = 'Darstellung';
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['community_legend']  = 'Community & Mitglieder';
+
+// Felder (Community)
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['showOnline'] = array(
+    '„Wer ist online" anzeigen',
+    'Zeigt auf der Übersicht die aktuell online befindlichen Mitglieder und die Zahl der Gäste (aktiv in den letzten 5 Minuten).',
+);
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['showRanks'] = array(
+    'Rangstufen anzeigen',
+    'Zeigt bei Beiträgen und im Profil eine Rangstufe anhand der Beitragszahl.',
+);
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['ranks'] = array(
+    'Rangstufen',
+    'Je Zeile „Mindestbeiträge|Titel", z. B. „50|Stammgast". Leer lassen für die Standardstufen (Neuling, Mitglied, Stammgast, Erfahren, Veteran).',
+);
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['notify_legend']     = 'E-Mail bei neuer Antwort';
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['team_legend']       = 'Benachrichtigung an das Team';
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['sender_legend']     = 'Absender (optional)';

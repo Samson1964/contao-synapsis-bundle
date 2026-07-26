@@ -255,6 +255,8 @@ sich so auch einzeln aufrufen (zeigt dann nur ihre Foren).
   markiert; die ungelesenen Beiträge sind über „Mein Bereich" abrufbar.
 * **Suche** – Die Suchbox durchsucht Themen-Titel, Beitragstexte und Umfragen **innerhalb des
   Startpunkts**.
+* **Mitgliederprofil** – Ein Klick auf einen Autornamen öffnet dessen Profil (Avatar, Rangstufe,
+  Mitglied-seit-Datum, Beitragszahl im Startpunkt, Signatur und die letzten Beiträge).
 
 ### Avatare
 
@@ -365,6 +367,12 @@ Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunk
   Farbvorschau** (wie beim Icon-Wizard): **Standard** (Blau), **Petrol**, **Gold**, **Rot** oder
   **Orange**. Die Schemata ändern nur die Farben; ein eigenes Schema lässt sich als CSS-Klasse
   `synapsis-scheme--<name>` in einer Custom-CSS ergänzen.
+* **Community & Mitglieder**:
+  * **„Wer ist online" anzeigen** – Auf der Übersicht erscheinen die aktuell aktiven Mitglieder
+    (der letzten 5 Minuten) samt Gästezahl.
+  * **Rangstufen anzeigen** – Bei Beiträgen und im Profil erscheint eine Rangstufe nach
+    Beitragszahl. Die Stufen sind frei konfigurierbar (je Zeile „Mindestbeiträge|Titel"); leer =
+    Standardstufen (Neuling, Mitglied, Stammgast, Erfahren, Veteran).
 * **E-Mail-Benachrichtigungen** – Zentraler An/aus-Schalter für **alle** E-Mails, sowie
   **Betreff- und Text-Vorlage** für die Antwort-Benachrichtigung an Themen-Abonnenten.
   Platzhalter: `##topic##` (Thementitel), `##name##` (Empfänger), `##url##` (Adresse des Themas).

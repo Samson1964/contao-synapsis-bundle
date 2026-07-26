@@ -1,5 +1,15 @@
 # Synapsis Changelog
 
+## Version 1.9.0 (2026-07-26)
+
+> Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabelle `tl_synapsis_online`, neue Felder `showOnline`/`showRanks`/`ranks` in den Einstellungen). Da eine `services.yaml`/DCA betroffen ist, den **Anwendungscache neu bauen**; Assets neu veröffentlichen (CSS).
+
+### Hinzugefügt – Community & Mitglieder
+
+* **Mitgliederprofil**: Ein Klick auf einen Autornamen (in Beiträgen) öffnet dessen Profil – **Avatar, Rangstufe, „Mitglied seit", Beitragszahl** (im Startpunkt), **Signatur** und die **letzten Beiträge**. Aufruf über `?member=<id>`.
+* **„Wer ist online"**: Auf der Übersicht werden die aktuell aktiven Mitglieder (letzte 5 Minuten) samt **Gästezahl** angezeigt (Präsenz je Sitzung in `tl_synapsis_online`). Global in den Einstellungen abschaltbar.
+* **Rangstufen nach Beitragszahl**: Bei Beiträgen und im Profil erscheint eine Rangstufe. Die Stufen sind konfigurierbar (je Zeile „Mindestbeiträge|Titel"); ohne Konfiguration gelten Standardstufen (Neuling, Mitglied, Stammgast, Erfahren, Veteran). Logik in der testbaren Klasse `Frontend\RankResolver`. In den Einstellungen abschaltbar.
+
 ## Version 1.8.0 (2026-07-26)
 
 > Keine Schema-Änderung. Da eine `services.yaml` betroffen ist, nach dem Update den **Anwendungscache neu bauen** (`cache:clear` bzw. Contao Manager; bei OPcache PHP neu starten). Assets neu veröffentlichen (CSS).

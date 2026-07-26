@@ -60,6 +60,8 @@ class SettingsListener
                     'modCanLock' => '1',
                     'modCanMove' => '1',
                     'modCanEditPosts' => '1',
+                    'showOnline' => '1',
+                    'showRanks' => '1',
                     'teamNotifyOn' => 'both',
                     'teamSubject' => 'Forum: neuer Beitrag im Thema "##topic##"',
                     'teamBody' => "Im Forum \"##forum##\" hat ##author## im Thema \"##topic##\" geschrieben.\n\n##url##\n",

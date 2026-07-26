@@ -34,6 +34,7 @@ use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 use Schachbulle\ContaoSynapsisBundle\Frontend\NotificationTemplate;
 use Schachbulle\ContaoSynapsisBundle\Frontend\PollAccess;
 use Schachbulle\ContaoSynapsisBundle\Frontend\PollManager;
+use Schachbulle\ContaoSynapsisBundle\Frontend\RankResolver;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ReadTracker;
 use Schachbulle\ContaoSynapsisBundle\Frontend\RoleAccess;
 use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
@@ -169,6 +170,27 @@ class SynapsisForum extends Module
     private $showModeratorsCache;
 
     /**
+     * Zwischenspeicher fuer die Rangstufen-Logik.
+     *
+     * @var RankResolver|null
+     */
+    private $rankResolver;
+
+    /**
+     * Zwischenspeicher: Mitglieds-ID => Rangtitel.
+     *
+     * @var array<int, string>
+     */
+    private $rankCache = [];
+
+    /**
+     * Datensatz des aktiven Profil-Mitglieds (Ansicht profile).
+     *
+     * @var array<string, mixed>|null
+     */
+    private $activeMember;
+
+    /**
      * Erzeugt das Modul bzw. im Backend eine Platzhalterdarstellung.
      */
     public function generate(): string
@@ -216,6 +238,9 @@ class SynapsisForum extends Module
         $scheme = (string) ($this->forumSettings()['colorScheme'] ?? '');
         $this->Template->schemeClass = \in_array($scheme, ['petrol', 'gold', 'rot', 'orange'], true) ? ' synapsis-scheme--'.$scheme : '';
 
+        // Praesenz des aktuellen Besuchers festhalten ("Wer ist online").
+        $this->trackOnline();
+
         // Mitglieder-Navigation (untere Box): nur fuer angemeldete Mitglieder,
         // auf jeder Seite. Der aktive Menuepunkt wird nicht verlinkt.
         $this->Template->memberNav = $this->isMemberLoggedIn() ? $this->buildMemberNav() : [];
@@ -224,6 +249,10 @@ class SynapsisForum extends Module
         switch ($this->view) {
             case 'category':
                 $this->compileCategory();
+                break;
+
+            case 'profile':
+                $this->compileProfile();
                 break;
 
             case 'forum':
@@ -312,6 +341,17 @@ class SynapsisForum extends Module
         if (null !== Input::get('q')) {
             $this->view = 'search';
             $this->strTemplate = 'mod_synapsis_search';
+
+            return;
+        }
+
+        // Mitgliederprofil (ueber Klick auf einen Autornamen)
+        $memberId = (int) Input::get('member');
+
+        if ($memberId > 0 && null !== ($member = $this->findProfileMember($memberId))) {
+            $this->activeMember = $member;
+            $this->view = 'profile';
+            $this->strTemplate = 'mod_synapsis_profile';
 
             return;
         }
@@ -410,6 +450,7 @@ class SynapsisForum extends Module
         $this->Template->categories = $categories;
         $this->Template->newestTopics = $this->findNewestTopics(10);
         $this->Template->statistics = $this->buildStatistics();
+        $this->Template->online = $this->onlineUsers();
     }
 
     /**
@@ -480,6 +521,200 @@ class SynapsisForum extends Module
         }
 
         return false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Community & Mitglieder (Profil, "Wer ist online", Rangstufen)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Laedt ein Mitglied fuer die Profilansicht (oder null).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function findProfileMember(int $id): ?array
+    {
+        $row = Database::getInstance()
+            ->prepare('SELECT id, username, firstname, lastname, dateAdded FROM tl_member WHERE id = ?')
+            ->execute($id)
+            ->row()
+        ;
+
+        return empty($row) ? null : $row;
+    }
+
+    /**
+     * Baut die Profilansicht eines Mitglieds: Avatar, Rang, Beitrittsdatum,
+     * Beitragszahl (im Startpunkt), Signatur und die letzten Beitraege.
+     */
+    private function compileProfile(): void
+    {
+        $memberId = (int) $this->activeMember['id'];
+        $name = $this->authorLabel($memberId, '');
+
+        $breadcrumb = $this->buildBreadcrumb(0);
+        $breadcrumb[] = ['title' => $name, 'url' => ''];
+        $this->Template->breadcrumb = $breadcrumb;
+
+        $signature = $this->memberSignature($memberId);
+        $joined = (int) ($this->activeMember['dateAdded'] ?? 0);
+
+        $this->Template->profile = [
+            'name' => $name,
+            'avatar' => $this->avatar($memberId),
+            'rank' => $this->memberRank($memberId),
+            'postCount' => $this->authorPostCountInRoot($memberId),
+            'joined' => $joined > 0 ? $this->formatDate($joined) : '',
+            'signature' => '' !== $signature ? BBCode::toHtml($signature) : '',
+        ];
+
+        $this->Template->recentPosts = $this->memberRecentPosts($memberId, 10);
+    }
+
+    /**
+     * Die letzten Beitraege eines Mitglieds innerhalb dieses Startpunkts.
+     *
+     * @return array<array<string, mixed>>
+     */
+    private function memberRecentPosts(int $memberId, int $limit): array
+    {
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, \count($forumIds), '?'));
+
+        $rows = Database::getInstance()
+            ->prepare(
+                'SELECT p.pid AS topicId, p.date, t.title FROM tl_synapsis_post p'
+                .' INNER JOIN tl_synapsis_topic t ON t.id = p.pid'
+                .' WHERE p.author = ? AND p.published = ? AND t.published = ? AND t.pid IN ('.$placeholders.')'
+                .' ORDER BY p.date DESC'
+            )
+            ->limit($limit)
+            ->execute(...array_merge([$memberId, '1', '1'], $forumIds))
+            ->fetchAllAssoc()
+        ;
+
+        $items = [];
+
+        foreach ($rows as $row) {
+            $items[] = [
+                'title' => (string) $row['title'],
+                'url' => $this->pageUrl(['topic' => (int) $row['topicId']]),
+                'dateFormatted' => $this->formatDate((int) $row['date']),
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Haelt die Praesenz des aktuellen Besuchers fest ("Wer ist online").
+     * Eine Zeile je Sitzung; member = 0 fuer Gaeste. Gelegentlich werden alte
+     * Zeilen entfernt.
+     */
+    private function trackOnline(): void
+    {
+        if ('1' !== (string) ($this->forumSettings()['showOnline'] ?? '1')) {
+            return;
+        }
+
+        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+
+        if (null === $request || !$request->hasSession()) {
+            return;
+        }
+
+        $session = $request->getSession();
+
+        if (!$session->isStarted()) {
+            return;
+        }
+
+        $sessionId = substr(hash('sha256', (string) $session->getId()), 0, 64);
+        $memberId = $this->isMemberLoggedIn() ? (int) FrontendUser::getInstance()->id : 0;
+        $now = time();
+        $db = Database::getInstance();
+
+        $db->prepare('INSERT INTO tl_synapsis_online (sessionId, member, tstamp) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE member = ?, tstamp = ?')
+            ->execute($sessionId, $memberId, $now, $memberId, $now)
+        ;
+
+        // Aufraeumen (nur gelegentlich, um Schreiblast gering zu halten).
+        if (1 === random_int(1, 20)) {
+            $db->prepare('DELETE FROM tl_synapsis_online WHERE tstamp < ?')->execute($now - 900);
+        }
+    }
+
+    /**
+     * Ermittelt die aktuell online-Mitglieder (Namen + Profil-Link) und die Zahl
+     * der Gaeste (aktiv in den letzten 5 Minuten).
+     *
+     * @return array{members: array<array<string, string>>, guests: int}
+     */
+    private function onlineUsers(): array
+    {
+        if ('1' !== (string) ($this->forumSettings()['showOnline'] ?? '1')) {
+            return ['members' => [], 'guests' => 0];
+        }
+
+        $threshold = time() - 300;
+        $db = Database::getInstance();
+
+        $rows = $db
+            ->prepare('SELECT DISTINCT member FROM tl_synapsis_online WHERE tstamp >= ? AND member > 0')
+            ->execute($threshold)
+            ->fetchAllAssoc()
+        ;
+
+        $members = [];
+
+        foreach (array_map('intval', array_column($rows, 'member')) as $mid) {
+            $members[] = ['name' => $this->authorLabel($mid, ''), 'url' => $this->profileUrl($mid)];
+        }
+
+        $guests = (int) $db
+            ->prepare('SELECT COUNT(*) FROM tl_synapsis_online WHERE tstamp >= ? AND member = 0')
+            ->execute($threshold)
+            ->row(true)[0]
+        ;
+
+        return ['members' => $members, 'guests' => $guests];
+    }
+
+    /**
+     * Rangtitel eines Mitglieds anhand seiner Beitragszahl im Startpunkt
+     * (leer, wenn Raenge abgeschaltet sind oder keine Stufe greift). Gecacht.
+     */
+    private function memberRank(int $memberId): string
+    {
+        if ($memberId <= 0 || '1' !== (string) ($this->forumSettings()['showRanks'] ?? '1')) {
+            return '';
+        }
+
+        if (isset($this->rankCache[$memberId])) {
+            return $this->rankCache[$memberId];
+        }
+
+        return $this->rankCache[$memberId] = $this->rankResolver()->titleFor($this->authorPostCountInRoot($memberId));
+    }
+
+    /**
+     * Liefert die (gecachte) Rangstufen-Logik aus der Konfiguration.
+     */
+    private function rankResolver(): RankResolver
+    {
+        if (null === $this->rankResolver) {
+            $this->rankResolver = RankResolver::fromConfig((string) ($this->forumSettings()['ranks'] ?? ''));
+        }
+
+        return $this->rankResolver;
+    }
+
+    /**
+     * Profil-Link eines Mitglieds (leer fuer Gaeste, author = 0).
+     */
+    private function profileUrl(int $memberId): string
+    {
+        return $memberId > 0 ? $this->pageUrl(['member' => $memberId]) : '';
     }
 
     /**
@@ -2080,6 +2315,8 @@ class SynapsisForum extends Module
 
         $post['authorName'] = $this->authorLabel($authorId, (string) ($post['authorName'] ?? ''));
         $post['authorAvatar'] = $this->avatar($authorId);
+        $post['authorUrl'] = $this->profileUrl($authorId);
+        $post['authorRank'] = $this->memberRank($authorId);
         // Signatur mit sicherem BB-Code als HTML (leer bleibt leer).
         $signature = $this->memberSignature($authorId);
         $post['signature'] = '' !== $signature ? BBCode::toHtml($signature) : '';

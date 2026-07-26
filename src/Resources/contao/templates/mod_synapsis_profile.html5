@@ -1,0 +1,74 @@
+<?php
+/*
+ * Mitgliederprofil im Forum: Avatar, Rang, Beitrittsdatum, Beitragszahl,
+ * Signatur und die letzten Beiträge.
+ *
+ * @var array $this->profile
+ * @var array $this->recentPosts
+ * @var array $this->breadcrumb
+ */
+
+use Contao\StringUtil;
+?>
+<div class="synapsis<?= $this->schemeClass ?> synapsis-profile<?= $this->class ?>"<?= $this->cssID ?>>
+
+    <?php if (!empty($this->breadcrumb)): ?>
+        <nav class="synapsis-breadcrumb">
+            <?php foreach ($this->breadcrumb as $crumb): ?>
+                <?php if ('' !== $crumb['url']): ?><a href="<?= $crumb['url'] ?>"><?= StringUtil::specialchars($crumb['title']) ?></a><?php else: ?><span><?= StringUtil::specialchars($crumb['title']) ?></span><?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
+    <?php endif; ?>
+
+    <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
+
+    <section class="synapsis-profile__card">
+        <div class="synapsis-profile__head">
+            <?= $this->profile['avatar'] ?>
+            <div class="synapsis-profile__ident">
+                <h2 class="synapsis-profile__name"><?= $this->profile['name'] ?></h2>
+                <?php if ('' !== (string) $this->profile['rank']): ?>
+                    <span class="synapsis-profile__rank"><?= StringUtil::specialchars($this->profile['rank']) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <dl class="synapsis-profile__meta">
+            <div>
+                <dt><?= $GLOBALS['TL_LANG']['MSC']['synapsisPosts'] ?? 'Beiträge' ?></dt>
+                <dd><?= (int) $this->profile['postCount'] ?></dd>
+            </div>
+            <?php if ('' !== (string) $this->profile['joined']): ?>
+                <div>
+                    <dt><?= $GLOBALS['TL_LANG']['MSC']['synapsisJoined'] ?? 'Mitglied seit' ?></dt>
+                    <dd><?= $this->profile['joined'] ?></dd>
+                </div>
+            <?php endif; ?>
+        </dl>
+
+        <?php if ('' !== (string) $this->profile['signature']): ?>
+            <div class="synapsis-profile__signature"><?= $this->profile['signature'] ?></div>
+        <?php endif; ?>
+    </section>
+
+    <section class="synapsis-profile__recent">
+        <h3 class="synapsis-stats__subtitle"><?= $GLOBALS['TL_LANG']['MSC']['synapsisRecentPosts'] ?? 'Letzte Beiträge' ?></h3>
+        <?php if (empty($this->recentPosts)): ?>
+            <p class="synapsis-empty"><?= $GLOBALS['TL_LANG']['MSC']['synapsisNoOwnPosts'] ?? 'Noch keine Beiträge.' ?></p>
+        <?php else: ?>
+            <ul class="synapsis-latest__list">
+                <?php foreach ($this->recentPosts as $item): ?>
+                    <li class="synapsis-latest__item">
+                        <a href="<?= $item['url'] ?>"><?= StringUtil::specialchars($item['title']) ?></a>
+                        <span class="synapsis-latest__meta"><?= $item['dateFormatted'] ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </section>
+
+    <p class="synapsis-back"><a href="<?= $this->baseUrl ?>">&laquo; <?= $GLOBALS['TL_LANG']['MSC']['synapsisBackToForum'] ?? 'Zur Übersicht' ?></a></p>
+
+    <?php $this->insert('mod_synapsis_membernav', $this->getData()); ?>
+
+</div>
