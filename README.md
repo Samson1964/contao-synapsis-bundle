@@ -102,7 +102,8 @@ Modulen:
 |-------------------|------------------------------------------------------------------------------|
 | **Forum**         | Die Forenstruktur (Startpunkte, Kategorien, Foren) und ihre Themen/Beiträge  |
 | **Import**        | Ein Fremdsystem-Forum übernehmen (derzeit phpBB-CSV-Export): Foren, Themen, Beiträge, Umfragen |
-| **Einstellungen** | Globale Einstellungen (E-Mail-Vorlagen, Rechte der Moderatoren)              |
+| **Statistik**     | Lese-Übersicht: Gesamtzahlen, Aufstellung je Startpunkt, aktivste Mitglieder, letzte Beiträge |
+| **Einstellungen** | Globale Einstellungen (Darstellung, Community, Wortfilter, E-Mail-Vorlagen, Rechte der Moderatoren) |
 
 ---
 
@@ -384,6 +385,9 @@ Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunk
   * **Rangstufen anzeigen** – Bei Beiträgen und im Profil erscheint eine Rangstufe nach
     Beitragszahl. Die Stufen sind frei konfigurierbar (je Zeile „Mindestbeiträge|Titel"); leer =
     Standardstufen (Neuling, Mitglied, Stammgast, Erfahren, Veteran).
+* **Wortfilter** (Administration) – Ersetzt konfigurierte Wörter in Beitragstexten und Titeln
+  (je Zeile „Wort" → Sternchen oder „Wort=Ersatz"). Verglichen wird als ganzes Wort, ohne
+  Beachtung der Groß-/Kleinschreibung; HTML/Links bleiben unangetastet. Leer = aus.
 * **E-Mail-Benachrichtigungen** – Zentraler An/aus-Schalter für **alle** E-Mails, sowie
   **Betreff- und Text-Vorlage** für die Antwort-Benachrichtigung an Themen-Abonnenten.
   Platzhalter: `##topic##` (Thementitel), `##name##` (Empfänger), `##url##` (Adresse des Themas).

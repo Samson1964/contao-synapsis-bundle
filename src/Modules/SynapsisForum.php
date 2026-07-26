@@ -39,6 +39,7 @@ use Schachbulle\ContaoSynapsisBundle\Frontend\PollManager;
 use Schachbulle\ContaoSynapsisBundle\Frontend\RankResolver;
 use Schachbulle\ContaoSynapsisBundle\Frontend\ReadTracker;
 use Schachbulle\ContaoSynapsisBundle\Frontend\RoleAccess;
+use Schachbulle\ContaoSynapsisBundle\Frontend\WordFilter;
 use Schachbulle\ContaoSynapsisBundle\SchachbulleContaoSynapsisBundle;
 
 /**
@@ -191,6 +192,13 @@ class SynapsisForum extends Module
      * @var array<string, mixed>|null
      */
     private $activeMember;
+
+    /**
+     * Zwischenspeicher fuer den Wortfilter.
+     *
+     * @var WordFilter|null
+     */
+    private $wordFilter;
 
     /**
      * Erzeugt das Modul bzw. im Backend eine Platzhalterdarstellung.
@@ -730,6 +738,18 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Liefert den (gecachten) Wortfilter aus der globalen Konfiguration.
+     */
+    private function wordFilter(): WordFilter
+    {
+        if (null === $this->wordFilter) {
+            $this->wordFilter = WordFilter::fromConfig((string) ($this->forumSettings()['wordFilter'] ?? ''));
+        }
+
+        return $this->wordFilter;
+    }
+
+    /**
      * Profil-Link eines Mitglieds (leer fuer Gaeste, author = 0).
      */
     private function profileUrl(int $memberId): string
@@ -947,6 +967,9 @@ class SynapsisForum extends Module
                 ->execute($topicId)
             ;
         }
+
+        // Wortfilter auf den Titel der Themenansicht + Brotkrumen anwenden.
+        $this->activeTopic['title'] = $this->wordFilter()->filterText((string) $this->activeTopic['title']);
 
         $this->Template->topic = $this->activeTopic;
         $this->Template->forum = $this->activeForum;
@@ -1201,7 +1224,7 @@ class SynapsisForum extends Module
 
         while ($rows->next()) {
             $items[] = [
-                'title' => (string) $rows->title,
+                'title' => $this->wordFilter()->filterText((string) $rows->title),
                 'url' => $this->pageUrl(['topic' => (int) $rows->id]),
                 'forumTitle' => $this->forumTitle((int) $rows->pid),
                 'dateFormatted' => $this->formatDate((int) $rows->date),
@@ -2432,6 +2455,7 @@ class SynapsisForum extends Module
         $topicId = (int) $topic['id'];
 
         $topic['url'] = $this->pageUrl(['topic' => $topicId]);
+        $topic['title'] = $this->wordFilter()->filterText((string) ($topic['title'] ?? ''));
         $topic['authorName'] = $this->authorLabel((int) $topic['author'], (string) ($topic['authorName'] ?? ''));
         $topic['authorAvatar'] = $this->avatar((int) $topic['author']);
         $topic['dateFormatted'] = $this->formatDate((int) $topic['date']);
@@ -2501,6 +2525,11 @@ class SynapsisForum extends Module
         $post['canReport'] = $this->currentAuthorId() > 0 && $authorId !== $this->currentAuthorId();
         $post['reportUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'report' => (int) $post['id']]);
         $post['attachmentList'] = $this->renderAttachments($post['attachments'] ?? null);
+
+        // Wortfilter auf den (HTML-)Beitragstext anwenden (nur Textteile).
+        if ($this->wordFilter()->isActive()) {
+            $post['text'] = $this->wordFilter()->filterHtml((string) ($post['text'] ?? ''));
+        }
 
         return $post;
     }

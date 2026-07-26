@@ -1,5 +1,14 @@
 # Synapsis Changelog
 
+## Version 1.12.0 (2026-07-26)
+
+> Enthält eine Schema-Änderung: nach dem Update `contao:migrate` ausführen (neues Feld `wordFilter` in den Einstellungen). Da eine `config.php` (neues Backend-Modul) betroffen ist, den **Anwendungscache neu bauen**; Assets neu veröffentlichen.
+
+### Hinzugefügt – Admin (Teil 1)
+
+* **Wortfilter**: Neue Einstellung „Wortfilter" (Bereich Administration). Konfigurierte Wörter werden in **Beitragstexten und Titeln** ersetzt – je Zeile „Wort" (→ Sternchen) oder „Wort=Ersatz". Verglichen wird als ganzes Wort und ohne Beachtung der Groß-/Kleinschreibung; **HTML/Links bleiben unangetastet** (nur Textteile werden gefiltert). Logik in der testbaren Klasse `Frontend\WordFilter`.
+* **Backend-Statistik**: Neues Backend-Modul **„Statistik"** (Gruppe Synapsis) mit einer Lese-Übersicht: Gesamtzahlen (Startpunkte, Kategorien, Foren, Themen, Beiträge, aktive Mitglieder, offene Meldungen), Aufstellung je Startpunkt, aktivste Mitglieder und die letzten Beiträge.
+
 ## Version 1.11.0 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (CSS/JS).

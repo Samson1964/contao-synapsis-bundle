@@ -15,6 +15,13 @@ declare(strict_types=1);
 // Legenden
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['design_legend']     = 'Darstellung';
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['community_legend']  = 'Community & Mitglieder';
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['admin_legend']      = 'Administration';
+
+// Felder (Administration)
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['wordFilter'] = array(
+    'Wortfilter',
+    'Je Zeile „Wort" (wird durch Sternchen ersetzt) oder „Wort=Ersatz". Betrifft Beitragstexte und Titel; verglichen wird als ganzes Wort ohne Beachtung der Groß-/Kleinschreibung. Leer = aus.',
+);
 
 // Felder (Community)
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['showOnline'] = array(

@@ -39,6 +39,12 @@ $GLOBALS['BE_MOD']['synapsis']['synapsis_csv'] = array
     'icon'     => 'bundles/schachbullecontaosynapsis/icons/forum.svg',
 );
 
+$GLOBALS['BE_MOD']['synapsis']['synapsis_stats'] = array
+(
+    'callback' => \Schachbulle\ContaoSynapsisBundle\Backend\StatsModule::class,
+    'icon'     => 'bundles/schachbullecontaosynapsis/icons/forum.svg',
+);
+
 $GLOBALS['BE_MOD']['synapsis']['synapsis_settings'] = array
 (
     'tables' => array('tl_synapsis_settings'),
