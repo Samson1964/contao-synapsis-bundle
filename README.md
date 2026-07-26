@@ -257,6 +257,12 @@ sich so auch einzeln aufrufen (zeigt dann nur ihre Foren).
   Startpunkts**.
 * **Mitgliederprofil** – Ein Klick auf einen Autornamen öffnet dessen Profil (Avatar, Rangstufe,
   Mitglied-seit-Datum, Beitragszahl im Startpunkt, Signatur und die letzten Beiträge).
+* **Permalink** – Jeder Beitrag hat einen **„Link"** (Direktlink samt Sprungmarke); ein Klick
+  kopiert die Adresse in die Zwischenablage.
+* **Als gelesen markieren** – In einem Forum lässt sich **„Forum als gelesen markieren"**, auf der
+  Übersicht **„Alles als gelesen markieren"** (jeweils für angemeldete Mitglieder).
+* **Bild-Lightbox** – Bild-Anhänge öffnen sich per Klick als **Vollbild-Overlay** (Schließen per
+  Klick oder Esc).
 
 ### Avatare
 

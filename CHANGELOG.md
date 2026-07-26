@@ -1,5 +1,15 @@
 # Synapsis Changelog
 
+## Version 1.10.0 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (CSS).
+
+### Hinzugefügt – Inhalt & Bedienung
+
+* **Permalink je Beitrag**: Jeder Beitrag hat einen **„Link"** (Direktlink samt Sprungmarke `#post-<id>`); ein Klick kopiert die Adresse in die Zwischenablage (mit Fallback).
+* **„Als gelesen markieren"**: In der Forenansicht **„Forum als gelesen markieren"** (Forum samt Unterforen), auf der Übersicht **„Alles als gelesen markieren"** (ganzer Startpunkt) – jeweils für angemeldete Mitglieder (`ReadTracker::markAllRead`).
+* **Bild-Lightbox**: Bild-Anhänge öffnen sich per Klick als Vollbild-Overlay (Schließen per Klick oder Esc) – ohne zusätzliche Bibliothek.
+
 ## Version 1.9.1 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update genügt `composer update`.

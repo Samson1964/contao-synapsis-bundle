@@ -86,6 +86,13 @@ $GLOBALS['TL_LANG']['MSC']['synapsisReopen'] = 'Wieder öffnen';
 $GLOBALS['TL_LANG']['MSC']['synapsisMove']   = 'Verschieben';
 $GLOBALS['TL_LANG']['MSC']['synapsisMoveTo'] = 'Verschieben nach …';
 
+// Inhalt & Bedienung (Permalink, als gelesen markieren)
+$GLOBALS['TL_LANG']['MSC']['synapsisPermalink']       = 'Link';
+$GLOBALS['TL_LANG']['MSC']['synapsisPermalinkCopy']   = 'Link zu diesem Beitrag kopieren';
+$GLOBALS['TL_LANG']['MSC']['synapsisPermalinkCopied'] = 'Kopiert!';
+$GLOBALS['TL_LANG']['MSC']['synapsisMarkForumRead']   = 'Forum als gelesen markieren';
+$GLOBALS['TL_LANG']['MSC']['synapsisMarkAllRead']     = 'Alles als gelesen markieren';
+
 // Beiträge: bearbeiten, löschen, zitieren
 $GLOBALS['TL_LANG']['MSC']['synapsisEdit']          = 'Bearbeiten';
 $GLOBALS['TL_LANG']['MSC']['synapsisEditPost']      = 'Beitrag bearbeiten';

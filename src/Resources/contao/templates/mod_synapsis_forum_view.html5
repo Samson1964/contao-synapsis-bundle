@@ -35,6 +35,14 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
             <?php endif; ?>
         </div>
         <div class="synapsis-forumview__actions">
+            <?php if ($this->canMarkRead): ?>
+                <form action="<?= $this->markReadAction ?>" method="post" class="synapsis-markread">
+                    <input type="hidden" name="FORM_SUBMIT" value="<?= $this->markReadFormId ?>">
+                    <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+                    <input type="hidden" name="read_forum" value="<?= (int) $this->markReadForum ?>">
+                    <button type="submit" class="synapsis-button"><?= $GLOBALS['TL_LANG']['MSC']['synapsisMarkForumRead'] ?? 'Forum als gelesen markieren' ?></button>
+                </form>
+            <?php endif; ?>
             <?php if ($this->canSubscribeForum): ?>
                 <form action="<?= $this->forumSubscribeAction ?>" method="post" class="synapsis-subscribe">
                     <input type="hidden" name="FORM_SUBMIT" value="<?= $this->forumSubscribeFormId ?>">

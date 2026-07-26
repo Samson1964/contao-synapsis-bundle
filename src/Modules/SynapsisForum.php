@@ -408,6 +408,9 @@ class SynapsisForum extends Module
      */
     private function compileIndex(): void
     {
+        // "Alles als gelesen markieren" verarbeiten, bevor gerendert wird.
+        $this->handleMarkRead();
+
         $categories = [];
 
         // Direkte Kinder des Startpunkts (Kategorien und Foren)
@@ -451,6 +454,12 @@ class SynapsisForum extends Module
         $this->Template->newestTopics = $this->findNewestTopics(10);
         $this->Template->statistics = $this->buildStatistics();
         $this->Template->online = $this->onlineUsers();
+
+        // "Alles als gelesen markieren" (ganzer Startpunkt), nur fuer Mitglieder.
+        $this->Template->canMarkRead = $this->isMemberLoggedIn();
+        $this->Template->markReadFormId = 'synapsis_readall_'.$this->id;
+        $this->Template->markReadForum = 0;
+        $this->Template->markReadAction = $this->pageUrl([]);
     }
 
     /**
@@ -718,6 +727,29 @@ class SynapsisForum extends Module
     }
 
     /**
+     * Verarbeitet "als gelesen markieren": read_forum = 0 markiert den ganzen
+     * Startpunkt, sonst nur das angegebene Forum (samt Unterforen). Nur fuer
+     * angemeldete Mitglieder.
+     */
+    private function handleMarkRead(): void
+    {
+        if ('synapsis_readall_'.$this->id !== Input::post('FORM_SUBMIT') || !$this->isMemberLoggedIn()) {
+            return;
+        }
+
+        $forumId = (int) Input::post('read_forum');
+        $readable = $this->readableForumIds();
+
+        $scope = $forumId > 0
+            ? array_values(array_intersect($this->collectForumIds($forumId), $readable))
+            : $readable;
+
+        $this->readTracker()->markAllRead((int) FrontendUser::getInstance()->id, $scope);
+
+        $this->redirect($forumId > 0 ? $this->pageUrl(['forum' => $forumId]) : $this->pageUrl([]));
+    }
+
+    /**
      * Themenliste eines Forums (seitenweise, angeheftete zuerst).
      */
     private function compileForum(): void
@@ -726,6 +758,14 @@ class SynapsisForum extends Module
 
         // Forum-Abonnement (E-Mail bei neuem Thema) umschalten, bevor gerendert wird.
         $this->handleForumSubscription();
+        // "Forum als gelesen markieren" verarbeiten.
+        $this->handleMarkRead();
+
+        // Forum als gelesen markieren: nur fuer angemeldete Mitglieder anbieten.
+        $this->Template->canMarkRead = $this->isMemberLoggedIn();
+        $this->Template->markReadFormId = 'synapsis_readall_'.$this->id;
+        $this->Template->markReadForum = $forumId;
+        $this->Template->markReadAction = $this->pageUrl(['forum' => $forumId]);
 
         $this->Template->forum = $this->activeForum;
         $this->Template->breadcrumb = $this->buildBreadcrumb($forumId);
@@ -2349,6 +2389,8 @@ class SynapsisForum extends Module
         $post['canModify'] = $this->canModifyPost($post);
         $post['editUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'edit' => (int) $post['id']]);
         $post['quoteUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'quote' => (int) $post['id']]);
+        // Permalink (Direktlink zum Beitrag samt Anker)
+        $post['permalinkUrl'] = $this->pageUrl(['topic' => (int) $post['pid']]).'#post-'.(int) $post['id'];
         // Melden: angemeldete Mitglieder, aber nicht den eigenen Beitrag
         $post['canReport'] = $this->currentAuthorId() > 0 && $authorId !== $this->currentAuthorId();
         $post['reportUrl'] = $this->pageUrl(['topic' => (int) $post['pid'], 'report' => (int) $post['id']]);

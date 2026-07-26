@@ -583,6 +583,42 @@
     gap: 0.5rem;
 }
 
+/* --- Als gelesen markieren --------------------------------------------- */
+.synapsis-markread { margin: 0; }
+.synapsis-markread--all { margin: 0 0 1rem; text-align: right; }
+
+/* --- Bild-Lightbox (Anhaenge) ----------------------------------------- */
+.synapsis-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.82);
+    cursor: zoom-out;
+}
+
+.synapsis-lightbox[hidden] { display: none; }
+
+.synapsis-lightbox img {
+    max-width: 96vw;
+    max-height: 92vh;
+    border-radius: var(--syn-radius);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.5);
+}
+
+.synapsis-lightbox__close {
+    position: absolute;
+    top: 0.6rem;
+    right: 1rem;
+    font-size: 2.4rem;
+    line-height: 1;
+    color: #fff;
+    opacity: 0.85;
+}
+
 /* Buttons koennen <a> oder <button> sein. Die Selektoren sind bewusst mit
    Element + Klasse qualifiziert, damit sie die allgemeine Link-Formatierung der
    umgebenden Website (Farbe/Unterstreichung) sicher uebertreffen. */

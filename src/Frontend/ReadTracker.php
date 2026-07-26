@@ -74,6 +74,23 @@ final class ReadTracker
     }
 
     /**
+     * Markiert alle (derzeit ungelesenen) Themen der angegebenen Foren fuer das
+     * Mitglied als gelesen ("Forum als gelesen markieren").
+     *
+     * @param array<int> $forumIds
+     */
+    public function markAllRead(int $memberId, array $forumIds): void
+    {
+        if ($memberId <= 0 || [] === $forumIds) {
+            return;
+        }
+
+        foreach ($this->unreadTopicIds($memberId, $forumIds) as $topicId) {
+            $this->markRead($memberId, $topicId);
+        }
+    }
+
+    /**
      * Ist das Thema fuer das Mitglied ungelesen? $latestTs ist der Zeitpunkt
      * des neuesten Beitrags im Thema.
      */

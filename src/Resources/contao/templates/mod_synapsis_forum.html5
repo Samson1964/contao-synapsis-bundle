@@ -8,6 +8,9 @@
  */
 
 use Contao\StringUtil;
+use Contao\System;
+
+$requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
 ?>
 <div class="synapsis<?= $this->schemeClass ?> synapsis-index<?= $this->class ?>"<?= $this->cssID ?>>
 
@@ -24,6 +27,15 @@ use Contao\StringUtil;
     <?php endif; ?>
 
     <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
+
+    <?php if (!empty($this->canMarkRead)): ?>
+        <form action="<?= $this->markReadAction ?>" method="post" class="synapsis-markread synapsis-markread--all">
+            <input type="hidden" name="FORM_SUBMIT" value="<?= $this->markReadFormId ?>">
+            <input type="hidden" name="REQUEST_TOKEN" value="<?= $requestToken ?>">
+            <input type="hidden" name="read_forum" value="0">
+            <button type="submit" class="synapsis-button synapsis-button--secondary"><?= $GLOBALS['TL_LANG']['MSC']['synapsisMarkAllRead'] ?? 'Alles als gelesen markieren' ?></button>
+        </form>
+    <?php endif; ?>
 
     <?php if (!empty($this->newestTopics)): ?>
         <section class="synapsis-latest">
