@@ -15,7 +15,7 @@ use Contao\System;
 
 $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
 ?>
-<div class="synapsis synapsis-forumview<?= $this->class ?>"<?= $this->cssID ?>>
+<div class="synapsis<?= $this->schemeClass ?> synapsis-forumview<?= $this->class ?>"<?= $this->cssID ?>>
 
     <?php if (!empty($this->breadcrumb)): ?>
         <nav class="synapsis-breadcrumb">
@@ -28,7 +28,12 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
     <?php $this->insert('mod_synapsis_searchbox', $this->getData()); ?>
 
     <header class="synapsis-forumview__header">
-        <h2 class="synapsis-forumview__title"><?= StringUtil::specialchars($this->forum['title']) ?></h2>
+        <div class="synapsis-forumview__heading">
+            <h2 class="synapsis-forumview__title"><?= StringUtil::specialchars($this->forum['title']) ?></h2>
+            <?php if (!empty($this->moderators)): ?>
+                <p class="synapsis-forum-mods"><?= $GLOBALS['TL_LANG']['MSC']['synapsisModerators'] ?? 'Moderatoren' ?>: <?= StringUtil::specialchars(implode(', ', $this->moderators)) ?></p>
+            <?php endif; ?>
+        </div>
         <div class="synapsis-forumview__actions">
             <?php if ($this->canSubscribeForum): ?>
                 <form action="<?= $this->forumSubscribeAction ?>" method="post" class="synapsis-subscribe">
@@ -59,6 +64,9 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
                             <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?= StringUtil::specialchars($forum['title']) ?></a>
                             <?php if ('' !== (string) $forum['description']): ?>
                                 <span class="synapsis-forum-desc"><?= StringUtil::specialchars($forum['description']) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($forum['moderators'])): ?>
+                                <span class="synapsis-forum-mods"><?= $GLOBALS['TL_LANG']['MSC']['synapsisModerators'] ?? 'Moderatoren' ?>: <?= StringUtil::specialchars(implode(', ', $forum['moderators'])) ?></span>
                             <?php endif; ?>
                         </span>
                     </span>

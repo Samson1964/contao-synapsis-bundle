@@ -13,10 +13,22 @@ declare(strict_types=1);
  */
 
 // Legenden
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['design_legend']     = 'Darstellung';
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['notify_legend']     = 'E-Mail bei neuer Antwort';
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['team_legend']       = 'Benachrichtigung an das Team';
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['sender_legend']     = 'Absender (optional)';
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['moderators_legend'] = 'Rechte der Moderatoren';
+
+// Farbschema
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['colorScheme'] = array(
+    'Farbschema',
+    'Wählt das Farbschema für die Frontend-Darstellung des Forums.',
+);
+$GLOBALS['TL_LANG']['tl_synapsis_settings']['colorSchemeRef'] = array(
+    ''            => 'Standard (Blau)',
+    'schachbund'  => 'Schachbund (Petrol)',
+    'bdf'         => 'BdF (Gold)',
+);
 
 // Felder (Moderatoren)
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['modCanPin'] = array(

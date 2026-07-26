@@ -24,6 +24,7 @@ $GLOBALS['TL_LANG']['MSC']['synapsisLastPost']   = 'Letzter Beitrag';
 $GLOBALS['TL_LANG']['MSC']['synapsisLatest']     = 'Neueste Themen';
 $GLOBALS['TL_LANG']['MSC']['synapsisStats']      = 'Statistiken';
 $GLOBALS['TL_LANG']['MSC']['synapsisTopPosters'] = 'Aktivste Mitglieder';
+$GLOBALS['TL_LANG']['MSC']['synapsisModerators'] = 'Moderatoren';
 
 // Zustaende und Hinweise
 $GLOBALS['TL_LANG']['MSC']['synapsisSticky']     = 'Angeheftet';

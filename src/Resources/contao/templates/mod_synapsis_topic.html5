@@ -16,7 +16,7 @@ use Contao\System;
 
 $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
 ?>
-<div class="synapsis synapsis-topic<?= $this->class ?>"<?= $this->cssID ?>>
+<div class="synapsis<?= $this->schemeClass ?> synapsis-topic<?= $this->class ?>"<?= $this->cssID ?>>
 
     <?php if (!empty($this->breadcrumb)): ?>
         <nav class="synapsis-breadcrumb">

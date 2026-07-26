@@ -10,7 +10,7 @@
 
 use Contao\StringUtil;
 ?>
-<div class="synapsis synapsis-search-results<?= $this->class ?>"<?= $this->cssID ?>>
+<div class="synapsis<?= $this->schemeClass ?> synapsis-search-results<?= $this->class ?>"<?= $this->cssID ?>>
 
     <?php if (!empty($this->breadcrumb)): ?>
         <nav class="synapsis-breadcrumb">

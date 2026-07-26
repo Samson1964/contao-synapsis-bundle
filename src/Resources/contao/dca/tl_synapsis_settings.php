@@ -45,7 +45,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
 
     'palettes' => array
     (
-        'default' => '{notify_legend},notifyEnabled,notifySubject,notifyBody;{team_legend},teamNotifyAdmins,teamNotifyMods,teamNotifyOn,teamSubject,teamBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin,modCanLock,modCanMove,modCanEditPosts',
+        'default' => '{design_legend},colorScheme;{notify_legend},notifyEnabled,notifySubject,notifyBody;{team_legend},teamNotifyAdmins,teamNotifyMods,teamNotifyOn,teamSubject,teamBody;{sender_legend},senderName,senderEmail;{moderators_legend},modCanPin,modCanLock,modCanMove,modCanEditPosts',
     ),
 
     'fields' => array
@@ -57,6 +57,17 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
         'tstamp' => array
         (
             'sql' => "int(10) unsigned NOT NULL default 0",
+        ),
+        // Farbschema des Frontends (leer = Standard). Weitere Schemata sind als
+        // CSS-Klassen in synapsis.css hinterlegt (synapsis-scheme--<wert>).
+        'colorScheme' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'select',
+            'options'   => array('', 'schachbund', 'bdf'),
+            'reference' => &$GLOBALS['TL_LANG']['tl_synapsis_settings']['colorSchemeRef'],
+            'eval'      => array('tl_class' => 'w50'),
+            'sql'       => "varchar(32) NOT NULL default ''",
         ),
         'notifyEnabled' => array
         (

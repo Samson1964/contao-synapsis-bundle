@@ -1,5 +1,19 @@
 # Synapsis Changelog
 
+## Version 1.5.0 (2026-07-26)
+
+> Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Felder `showModerators` in `tl_synapsis_forum` und `colorScheme` in den Einstellungen). Zusätzlich Assets neu veröffentlichen (CSS).
+
+### Hinzugefügt
+
+* **Moderatoren im Frontend anzeigen**: Neue Startpunkt-Einstellung „Moderatoren im Frontend anzeigen". Ist sie aktiv, erscheinen bei jedem Forum die Namen seiner Moderatoren (auch als Mitgliedergruppe gewählte Moderatoren werden zu Einzelnamen aufgelöst) – in der Übersicht, der Kategorie-Ansicht und im Forum-Kopf.
+* **Farbschemata**: In den globalen Einstellungen lässt sich ein Farbschema wählen. Neben dem Standard (Blau) gibt es „Schachbund" (Petrol, orientiert an schachbund.de) und „BdF" (Gold, orientiert an bdf-fernschachbund.de). Die Schemata überschreiben nur die Farb-Variablen; eigene weitere Schemata lassen sich als CSS-Klasse `synapsis-scheme--<name>` ergänzen.
+
+### Behoben / Geändert
+
+* **Kategorie-Einzelansicht**: Die Überschrift (h2) wird jetzt korrekt formatiert (das CSS galt bisher nur für die h3 der Übersicht).
+* **Spaltenausrichtung** in den Listen: `synapsis-col-last` ist nun in Ausrichtung und Farbe an `synapsis-col-count` angeglichen (Breite bleibt funktional unterschiedlich).
+
 ## Version 1.4.1 (2026-07-25)
 
 > Keine Schema-Änderung gegenüber 1.4.0 – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (kein `contao:migrate` nötig).

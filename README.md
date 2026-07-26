@@ -170,6 +170,10 @@ Moderatoren dürfen, wird global in den [Einstellungen](#globale-einstellungen) 
 (Themen anpinnen, schließen, verschieben, Beiträge bearbeiten/löschen); **Administratoren**
 dürfen dies immer. Details siehe [Moderation](#moderation).
 
+Am **Startpunkt** gibt es zusätzlich die Option **„Moderatoren im Frontend anzeigen"**: Ist sie
+aktiv, erscheinen bei jedem Forum die Namen seiner Moderatoren (als Gruppe gewählte Moderatoren
+werden dabei zu Einzelnamen aufgelöst).
+
 ### Umfragen erstellen
 
 Je Knoten lässt sich – über **Gruppen** und/oder **einzelne Mitglieder** – festlegen, wer
@@ -357,6 +361,9 @@ mit Prozent und Teilnehmerzahl angezeigt. Doppelt abstimmen ist ausgeschlossen.
 
 Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunkte hinweg):
 
+* **Farbschema** – Wählt das Farbschema für die Frontend-Darstellung: **Standard** (Blau),
+  **Schachbund** (Petrol) oder **BdF** (Gold). Die Schemata ändern nur die Farben; ein eigenes
+  Schema lässt sich als CSS-Klasse `synapsis-scheme--<name>` in einer Custom-CSS ergänzen.
 * **E-Mail-Benachrichtigungen** – Zentraler An/aus-Schalter für **alle** E-Mails, sowie
   **Betreff- und Text-Vorlage** für die Antwort-Benachrichtigung an Themen-Abonnenten.
   Platzhalter: `##topic##` (Thementitel), `##name##` (Empfänger), `##url##` (Adresse des Themas).

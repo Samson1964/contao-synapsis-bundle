@@ -15,11 +15,40 @@
     --syn-border: #dde3e8;
     --syn-text: #23303a;
     --syn-muted: #6b7a86;
+    --syn-panel: #f3f4f6;
     --syn-radius: 6px;
 
     color: var(--syn-text);
     font-size: 15px;
     line-height: 1.5;
+}
+
+/* --- Farbschemata (im Backend unter Einstellungen waehlbar) --------------
+   Ueberschreiben nur die Farbvariablen; die Klasse liegt am selben Element wie
+   ".synapsis" (hoehere Spezifitaet -> gewinnt). Standard = keine Zusatzklasse. */
+
+/* Schachbund: kuehles Dunkel-Petrol auf Weiss (orientiert an schachbund.de) */
+.synapsis.synapsis-scheme--schachbund {
+    --syn-accent: #0d4a63;
+    --syn-accent-dark: #062f40;
+    --syn-bg: #ffffff;
+    --syn-bg-alt: #eef2f4;
+    --syn-border: #d3dde2;
+    --syn-text: #001821;
+    --syn-muted: #5b6a73;
+    --syn-panel: #eef2f4;
+}
+
+/* BdF: warmes Gold auf Creme (orientiert an bdf-fernschachbund.de) */
+.synapsis.synapsis-scheme--bdf {
+    --syn-accent: #a67c00;
+    --syn-accent-dark: #6c5700;
+    --syn-bg: #fffdf5;
+    --syn-bg-alt: #faf3d9;
+    --syn-border: #e6d9a8;
+    --syn-text: #4a3d00;
+    --syn-muted: #8a7a3f;
+    --syn-panel: #faf3d9;
 }
 
 .synapsis * {
@@ -49,12 +78,14 @@
     padding: 0.65rem 1rem;
 }
 
+.synapsis-category__header h2,
 .synapsis-category__header h3 {
     margin: 0;
     font-size: 1.05rem;
     /* Farbe explizit setzen: das vererbte Weiss des Kopfes wird sonst von einer
-       direkten h3-Regel des Website-Themes ueberschrieben (Ueberschrift kaum
-       lesbar). !important erzwingt den Kontrast unabhaengig vom Theme. */
+       direkten Ueberschriften-Regel des Website-Themes ueberschrieben (kaum
+       lesbar). !important erzwingt den Kontrast unabhaengig vom Theme. Gilt fuer
+       h3 (Uebersicht) und h2 (Kategorie-Einzelansicht). */
     color: #fff !important;
 }
 
@@ -115,16 +146,22 @@
     min-width: 0;
 }
 
-.synapsis-col-count {
-    flex: 0 0 5rem;
+.synapsis-col-count,
+.synapsis-col-last {
     text-align: center;
     color: var(--syn-muted);
+}
+
+/* Breite unterscheidet sich funktional (Zaehlspalte schmal, Spalte "Letzter
+   Beitrag" breiter fuer Titel/Autor/Datum); Ausrichtung und Farbe sind nun
+   angeglichen. */
+.synapsis-col-count {
+    flex: 0 0 5rem;
 }
 
 .synapsis-col-last {
     flex: 0 0 12rem;
     font-size: 0.85rem;
-    color: var(--syn-muted);
 }
 
 .synapsis-forum-icon {
@@ -165,6 +202,17 @@
 .synapsis-topic-meta {
     font-size: 0.82rem;
     color: var(--syn-muted);
+}
+
+/* Moderatoren-Zeile (Forenliste + Forum-Kopf) */
+.synapsis-forum-mods {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--syn-muted);
+}
+
+.synapsis-forumview__heading .synapsis-forum-mods {
+    margin-top: 0.25rem;
 }
 
 /* --- Themenliste -------------------------------------------------------- */

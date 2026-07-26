@@ -161,6 +161,14 @@ class SynapsisForum extends Module
     private $canSeeReportsCache;
 
     /**
+     * Zwischenspeicher: sollen Moderatoren-Namen im Frontend angezeigt werden?
+     * (Einstellung am Startpunkt.)
+     *
+     * @var bool|null
+     */
+    private $showModeratorsCache;
+
+    /**
      * Erzeugt das Modul bzw. im Backend eine Platzhalterdarstellung.
      */
     public function generate(): string
@@ -203,6 +211,10 @@ class SynapsisForum extends Module
         $this->Template->view = $this->view;
         $this->Template->baseUrl = $this->pageUrl([]);
         $this->Template->loggedIn = $this->isMemberLoggedIn();
+
+        // Farbschema (global in den Einstellungen gewaehlt) als Wrapper-Klasse.
+        $scheme = (string) ($this->forumSettings()['colorScheme'] ?? '');
+        $this->Template->schemeClass = \in_array($scheme, ['schachbund', 'bdf'], true) ? ' synapsis-scheme--'.$scheme : '';
 
         // Mitglieder-Navigation (untere Box): nur fuer angemeldete Mitglieder,
         // auf jeder Seite. Der aktive Menuepunkt wird nicht verlinkt.
@@ -486,6 +498,9 @@ class SynapsisForum extends Module
             ? $this->pageUrl(['forum' => $forumId, 'new' => 1])
             : '';
         $this->Template->closed = (bool) $this->activeForum['closed'];
+
+        // Moderatoren-Namen (nur wenn am Startpunkt aktiviert).
+        $this->Template->moderators = $this->showModerators() ? $this->moderatorNames($forumId) : [];
 
         // Forum abonnieren: nur fuer angemeldete Mitglieder anbieten.
         $this->Template->canSubscribeForum = $this->isMemberLoggedIn();
@@ -1979,6 +1994,8 @@ class SynapsisForum extends Module
         // eingreift). Geschlossene Foren werden zusaetzlich per CSS-Klasse
         // "is-locked" gedaempft dargestellt.
         $forum['iconSvg'] = LucideIcons::svg($this->resolveForumIcon($forumId));
+        // Moderatoren-Namen nur ermitteln, wenn am Startpunkt aktiviert.
+        $forum['moderators'] = $this->showModerators() ? $this->moderatorNames($forumId) : [];
 
         return $forum;
     }
@@ -3107,6 +3124,56 @@ class SynapsisForum extends Module
         }
 
         return array_values(array_unique(array_filter(array_map('intval', $memberIds))));
+    }
+
+    /**
+     * Ist am Startpunkt eingestellt, dass die Moderatoren-Namen im Frontend
+     * angezeigt werden sollen? (Ergebnis wird zwischengespeichert.)
+     */
+    private function showModerators(): bool
+    {
+        if (null !== $this->showModeratorsCache) {
+            return $this->showModeratorsCache;
+        }
+
+        $value = (string) Database::getInstance()
+            ->prepare('SELECT showModerators FROM tl_synapsis_forum WHERE id = ?')
+            ->execute($this->rootId)
+            ->row(true)[0]
+        ;
+
+        return $this->showModeratorsCache = ('1' === $value);
+    }
+
+    /**
+     * Liefert die Anzeigenamen der Moderatoren eines Forums (vererbt aus der
+     * Kette; als Gruppe gewaehlte Moderatoren werden zu Einzelnamen aufgeloest).
+     *
+     * @return array<string>
+     */
+    private function moderatorNames(int $forumId): array
+    {
+        $ids = $this->teamMemberIds($forumId, false, true);
+
+        if ([] === $ids) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+        $rows = Database::getInstance()
+            ->prepare("SELECT firstname, lastname, username FROM tl_member WHERE id IN ($placeholders) ORDER BY lastname, firstname, username")
+            ->execute(...$ids)
+            ->fetchAllAssoc()
+        ;
+
+        $names = [];
+
+        foreach ($rows as $row) {
+            $name = trim(($row['firstname'] ?? '').' '.($row['lastname'] ?? ''));
+            $names[] = '' !== $name ? $name : (string) $row['username'];
+        }
+
+        return $names;
     }
 
     /**

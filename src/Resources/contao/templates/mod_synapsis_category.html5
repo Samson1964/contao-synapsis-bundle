@@ -10,7 +10,7 @@
 
 use Contao\StringUtil;
 ?>
-<div class="synapsis synapsis-categoryview<?= $this->class ?>"<?= $this->cssID ?>>
+<div class="synapsis<?= $this->schemeClass ?> synapsis-categoryview<?= $this->class ?>"<?= $this->cssID ?>>
 
     <?php if (!empty($this->breadcrumb)): ?>
         <nav class="synapsis-breadcrumb">
@@ -47,6 +47,9 @@ use Contao\StringUtil;
                             <a class="synapsis-forum-title" href="<?= $forum['url'] ?>"><?php if (!empty($forum['hasUnread'])): ?><span class="synapsis-unread-dot" title="<?= $GLOBALS['TL_LANG']['MSC']['synapsisUnread'] ?? 'Ungelesene Beiträge' ?>"></span><?php endif; ?><?= StringUtil::specialchars($forum['title']) ?></a>
                             <?php if ('' !== (string) $forum['description']): ?>
                                 <span class="synapsis-forum-desc"><?= StringUtil::specialchars($forum['description']) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($forum['moderators'])): ?>
+                                <span class="synapsis-forum-mods"><?= $GLOBALS['TL_LANG']['MSC']['synapsisModerators'] ?? 'Moderatoren' ?>: <?= StringUtil::specialchars(implode(', ', $forum['moderators'])) ?></span>
                             <?php endif; ?>
                         </span>
                     </span>

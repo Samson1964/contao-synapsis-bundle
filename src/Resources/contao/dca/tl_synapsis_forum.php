@@ -84,7 +84,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
     (
         '__selector__' => array('type', 'protected'),
         'default'      => '{type_legend},type',
-        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{roles_legend:hide},adminGroups,adminMembers,modGroups,modMembers;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
+        'root'         => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{roles_legend:hide},adminGroups,adminMembers,modGroups,modMembers,showModerators;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
         'category'     => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{roles_legend:hide},adminGroups,adminMembers,modGroups,modMembers;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
         'forum'        => '{type_legend},type;{title_legend},title,alias;{meta_legend},description;{icon_legend},forumIcon;{config_legend},closed;{protected_legend:hide},protected;{guest_legend:hide},guestRead,guestWrite;{roles_legend:hide},adminGroups,adminMembers,modGroups,modMembers;{poll_legend:hide},pollGroups,pollMembers;{publish_legend},published',
     ),
@@ -255,6 +255,15 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
             // options_callback: ForumListener::getMemberOptions
             'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
             'sql'       => "blob NULL",
+        ),
+        // Nur am Startpunkt: Moderatoren-Namen im Frontend bei jedem Forum
+        // anzeigen (Gruppen werden zu Einzelnamen aufgeloest).
+        'showModerators' => array
+        (
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array('tl_class' => 'clr'),
+            'sql'       => "char(1) NOT NULL default ''",
         ),
         'published' => array
         (
