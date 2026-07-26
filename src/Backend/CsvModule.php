@@ -18,14 +18,18 @@ use Contao\System;
 /**
  * Backend-Modul "Import" (Gruppe Synapsis, do=synapsis_csv).
  *
- * Importiert derzeit einen phpBB-CSV-Export in eine Synapsis-Kategorie. Der
- * Ablauf ist zweistufig: zuerst die CSV-Dateien hochladen, dann auswaehlen,
- * welche Foren uebernommen werden. Die Formatauswahl ist so angelegt, dass
- * spaeter weitere Importquellen ergaenzt werden koennen, ohne einen weiteren
- * Menuepunkt anzulegen.
+ * Unterstuetzt zwei Importquellen in eine Synapsis-Kategorie:
+ *   - phpBB (CSV-Export): Dateien hochladen, dann Foren auswaehlen.
+ *   - Support-Ticket-System (Fast-Media): liest die vorhandenen Tabellen
+ *     tl_support_* der aktuellen Datenbank; wird nur angeboten, wenn diese
+ *     Tabellen existieren. Kein Datei-Upload noetig.
+ *
+ * Der Ablauf ist in beiden Faellen zweistufig: Quelle/Ziel waehlen, dann
+ * auswaehlen, welche Foren uebernommen werden.
  *
  * phpBB-Benutzer sind im Zielsystem fremd und werden als Gast mit ihrem Namen
- * abgelegt. Private Nachrichten und Datei-Anhaenge werden nicht uebernommen.
+ * abgelegt. Support-Benutzer sind echte Contao-Mitglieder und werden 1:1
+ * uebernommen. Private Nachrichten und Datei-Anhaenge werden nicht uebernommen.
  */
 class CsvModule extends Backend
 {
@@ -78,10 +82,15 @@ class CsvModule extends Backend
      */
     private function handleUpload($connection): string
     {
+        $format = 'support' === Input::post('format') ? 'support' : 'phpbb';
         $target = (int) Input::post('target');
 
         if (!$this->isCategory($connection, $target)) {
             return $this->renderUploadForm($connection, $this->error('Bitte eine Ziel-Kategorie auswählen.'));
+        }
+
+        if ('support' === $format) {
+            return $this->handleSupportUpload($connection, $target);
         }
 
         // Eventuelle Reste einer frueheren Sitzung aufraeumen.
@@ -113,7 +122,34 @@ class CsvModule extends Backend
             return $this->renderUploadForm($connection, $this->error('In der Foren-Datei wurden keine importierbaren Foren gefunden.'));
         }
 
-        $this->session()->set('synapsis_import', ['dir' => $dir, 'target' => $target, 'time' => time()]);
+        $this->session()->set('synapsis_import', ['format' => 'phpbb', 'dir' => $dir, 'target' => $target, 'time' => time()]);
+
+        return $this->renderSelectForm($connection, $target, $forums);
+    }
+
+    /**
+     * Schritt 1 fuer den Support-Ticket-Import: ohne Datei-Upload direkt die
+     * Foren aus tl_support_archive zur Auswahl anzeigen.
+     *
+     * @param \Doctrine\DBAL\Connection $connection
+     */
+    private function handleSupportUpload($connection, int $target): string
+    {
+        $importer = new SupportImporter($connection);
+
+        if (!$importer->isAvailable()) {
+            return $this->renderUploadForm($connection, $this->error('Die Support-Ticket-Tabellen (tl_support_archive) sind in dieser Datenbank nicht vorhanden.'));
+        }
+
+        $forums = $importer->listForums();
+
+        if ([] === $forums) {
+            return $this->renderUploadForm($connection, $this->error('In tl_support_archive wurden keine importierbaren Foren gefunden.'));
+        }
+
+        // Eventuelle Reste einer frueheren Sitzung (phpBB-Uploads) aufraeumen.
+        $this->cleanupStored();
+        $this->session()->set('synapsis_import', ['format' => 'support', 'target' => $target, 'time' => time()]);
 
         return $this->renderSelectForm($connection, $target, $forums);
     }
@@ -127,7 +163,15 @@ class CsvModule extends Backend
     {
         $data = $this->session()->get('synapsis_import');
 
-        if (!\is_array($data) || empty($data['dir']) || !is_dir($data['dir'])) {
+        if (!\is_array($data)) {
+            return $this->renderUploadForm($connection, $this->error('Die Sitzung ist abgelaufen. Bitte den Import erneut beginnen.'));
+        }
+
+        if ('support' === ($data['format'] ?? 'phpbb')) {
+            return $this->handleSupportImport($connection, $data);
+        }
+
+        if (empty($data['dir']) || !is_dir($data['dir'])) {
             return $this->renderUploadForm($connection, $this->error('Die hochgeladenen Dateien sind nicht mehr verfügbar (Sitzung abgelaufen). Bitte erneut hochladen.'));
         }
 
@@ -169,6 +213,41 @@ class CsvModule extends Backend
     }
 
     /**
+     * Schritt 2 fuer den Support-Ticket-Import: ausgewaehlte Foren aus den
+     * tl_support_*-Tabellen importieren.
+     *
+     * @param \Doctrine\DBAL\Connection $connection
+     * @param array<string, mixed>      $data
+     */
+    private function handleSupportImport($connection, array $data): string
+    {
+        $target = (int) $data['target'];
+        $selected = array_values(array_filter(array_map('intval', (array) Input::post('forums'))));
+
+        if ([] === $selected) {
+            $forums = (new SupportImporter($connection))->listForums();
+
+            return $this->renderSelectForm($connection, $target, $forums, $this->error('Bitte mindestens ein Forum auswählen.'));
+        }
+
+        try {
+            $stats = (new SupportImporter($connection))->import($target, $selected);
+        } catch (\Throwable $e) {
+            return $this->renderUploadForm($connection, $this->error(StringUtil::specialchars($e->getMessage())));
+        } finally {
+            $this->session()->remove('synapsis_import');
+        }
+
+        $message = '<p class="tl_confirm">Support-Ticket-Import abgeschlossen: '
+            .$stats['forums'].' Foren, '
+            .$stats['topics'].' Themen, '
+            .$stats['posts'].' Beiträge übernommen. '
+            .$stats['skipped'].' Beiträge übersprungen (nicht freigegeben oder ohne Thema).</p>';
+
+        return $this->renderUploadForm($connection, $message);
+    }
+
+    /**
      * Rendert Schritt 1 (Format, Ziel-Kategorie, Datei-Uploads).
      *
      * @param \Doctrine\DBAL\Connection $connection
@@ -198,22 +277,36 @@ class CsvModule extends Backend
                 .'<p class="tl_help tl_tip">'.StringUtil::specialchars($desc).'</p></div>';
         }
 
+        $formatOptions = '<option value="phpbb">phpBB (CSV-Export)</option>';
+        $supportAvailable = (new SupportImporter($connection))->isAvailable();
+
+        if ($supportAvailable) {
+            $formatOptions .= '<option value="support">Support-Ticket-System (aktuelle Datenbank)</option>';
+        }
+
         $html .= '<form method="post" enctype="multipart/form-data" class="tl_form">'
             .'<div class="tl_formbody_edit">'
             .'<input type="hidden" name="FORM_SUBMIT" value="synapsis_phpbb_upload">'
             .'<input type="hidden" name="REQUEST_TOKEN" value="'.$token.'">'
-            .'<fieldset class="tl_tbox"><legend>Schritt 1: Dateien hochladen</legend>'
+            .'<fieldset class="tl_tbox"><legend>Schritt 1: Quelle und Ziel wählen</legend>'
             .'<div class="widget"><h3><label for="format">Format</label></h3>'
-            .'<select name="format" id="format" class="tl_select"><option value="phpbb">phpBB (CSV-Export)</option></select>'
-            .'<p class="tl_help tl_tip">Derzeit wird der CSV-Export von phpBB unterstützt.</p></div>'
+            .'<select name="format" id="format" class="tl_select">'.$formatOptions.'</select>'
+            .'<p class="tl_help tl_tip">phpBB: CSV-Export hochladen. Support-Ticket-System: liest die Tabellen tl_support_* der aktuellen Datenbank (kein Upload nötig).</p></div>'
             .'<div class="widget"><h3><label for="target">Ziel-Kategorie</label></h3>'
             .'<select name="target" id="target" class="tl_select">'.$targetOptions.'</select>'
-            .'<p class="tl_help tl_tip">Startpunkt › Kategorie. Die phpBB-Foren werden als Foren unter dieser Kategorie angelegt.</p></div>'
-            .$fileFields
+            .'<p class="tl_help tl_tip">Startpunkt › Kategorie. Die importierten Foren werden als Foren unter dieser Kategorie angelegt.</p></div>'
+            .'<div id="synapsis_phpbb_files">'.$fileFields.'</div>'
             .'</fieldset></div>'
             .'<div class="tl_formbody_submit"><div class="tl_submit_container">'
             .'<button type="submit" class="tl_submit">Weiter zur Forenauswahl</button>'
             .'</div></div></form>';
+
+        if ($supportAvailable) {
+            // Beim Support-Import werden keine Dateien benoetigt: Datei-Felder
+            // je nach Format ein-/ausblenden.
+            $html .= '<script>(function(){var f=document.getElementById("format"),b=document.getElementById("synapsis_phpbb_files");'
+                .'if(f&&b){var t=function(){b.style.display="support"===f.value?"none":"";};f.addEventListener("change",t);t();}})();</script>';
+        }
 
         return $html;
     }

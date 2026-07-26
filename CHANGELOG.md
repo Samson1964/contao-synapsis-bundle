@@ -1,5 +1,20 @@
 # Synapsis Changelog
 
+## Version 1.13.0 (2026-07-26)
+
+> Keine Schema-Änderung und keine `config.php`/`services.yaml`-Änderung – nach dem Update genügt ein **Leeren des Contao-Caches** (bzw. ein OPcache-Reset), kein Neubau des Anwendungscontainers nötig.
+
+### Hinzugefügt – Import aus dem Support-Ticket-System (Fast-Media)
+
+* **Neues Import-Format** im Backend-Modul **„Import"**: Neben dem phpBB-CSV-Import gibt es jetzt „Support-Ticket-System (aktuelle Datenbank)". Es wird **nur angeboten, wenn die Tabellen `tl_support_*` in der Datenbank vorhanden sind**. Kein Datei-Upload – die Daten werden direkt aus der laufenden Datenbank gelesen.
+* **Ablauf wie beim phpBB-Import**: Zielkategorie wählen, dann die zu übernehmenden Foren auswählen. Zuordnung:
+  * `tl_support_archive` (Typ `forum` **und** `support`) → **Foren** (Teaser wird zur Beschreibung).
+  * `tl_support_ticket` → **Themen** (Titel entschlüsselt, `hits` → Aufrufe, `closed` → gesperrt, Datum übernommen).
+  * `tl_support_comment` → **Beiträge** (Text ist bereits HTML und bleibt erhalten); der **Eröffnungsbeitrag** ist der älteste Kommentar des Tickets.
+* **Verfasser 1:1**: Die Support-Benutzer sind echte Contao-Mitglieder – `member_id` wird direkt als `author` übernommen (kein „Gast (Name)" wie bei phpBB). Der Anzeigename wird wie üblich live aus `tl_member` aufgelöst.
+* Leere Tickets (ohne veröffentlichten Kommentar) und unveröffentlichte Kommentare werden übersprungen. `tl_support_category` und `tl_support_notify` bleiben unberücksichtigt; Datei-Anhänge werden nicht übernommen.
+* Importierte Foren sind zunächst **öffentlich lesbar** (im Backend anpassbar). Logik in der Klasse `Backend\SupportImporter`; gegen die echten Daten (13 Foren, 139 Themen, 432 Beiträge) auf Contao 4.13 und 5 verifiziert.
+
 ## Version 1.12.0 (2026-07-26)
 
 > Enthält eine Schema-Änderung: nach dem Update `contao:migrate` ausführen (neues Feld `wordFilter` in den Einstellungen). Da eine `config.php` (neues Backend-Modul) betroffen ist, den **Anwendungscache neu bauen**; Assets neu veröffentlichen.

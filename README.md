@@ -22,7 +22,7 @@ die im Backend ein Forum einrichten, sowie für die Mitglieder, die es im Fronte
 11. [Benachrichtigungen](#benachrichtigungen)
 12. [Umfragen](#umfragen)
 13. [Globale Einstellungen](#globale-einstellungen)
-14. [Import aus phpBB](#import-aus-phpbb)
+14. [Import](#import)
 15. [Warum wird mein Forum nicht angezeigt? (Checkliste)](#warum-wird-mein-forum-nicht-angezeigt)
 16. [Für Entwickler](#für-entwickler)
 
@@ -101,7 +101,7 @@ Modulen:
 | Modul             | Zweck                                                                        |
 |-------------------|------------------------------------------------------------------------------|
 | **Forum**         | Die Forenstruktur (Startpunkte, Kategorien, Foren) und ihre Themen/Beiträge  |
-| **Import**        | Ein Fremdsystem-Forum übernehmen (derzeit phpBB-CSV-Export): Foren, Themen, Beiträge, Umfragen |
+| **Import**        | Ein Fremdsystem-Forum übernehmen: phpBB-CSV-Export oder Support-Ticket-System (Fast-Media): Foren, Themen, Beiträge, Umfragen |
 | **Statistik**     | Lese-Übersicht: Gesamtzahlen, Aufstellung je Startpunkt, aktivste Mitglieder, letzte Beiträge |
 | **Einstellungen** | Globale Einstellungen (Darstellung, Community, Wortfilter, E-Mail-Vorlagen, Rechte der Moderatoren) |
 
@@ -403,7 +403,12 @@ Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunk
 
 ---
 
-## Import aus phpBB
+## Import
+
+Über **Synapsis-Forum → Import** lassen sich Inhalte aus einem Fremdsystem übernehmen.
+Zur Auswahl stehen ein **phpBB-Forum** (CSV-Export) und – falls vorhanden – das **Support-Ticket-System** (Fast-Media) aus der aktuellen Datenbank. Beide Wege hängen den Import in eine **Kategorie** ein.
+
+### Import aus phpBB
 
 Über **Synapsis-Forum → Import** lässt sich ein bestehendes **phpBB-Forum** übernehmen.
 Grundlage ist ein **CSV-Export der phpBB-Tabellen** (in phpMyAdmin je Tabelle als CSV
@@ -434,6 +439,32 @@ phpBB-Namen abgelegt (Anzeige „Gast (Name)"), da die phpBB-Konten im Zielsyste
 
 > Hinweis: Importierte Foren werden zunächst **öffentlich lesbar** angelegt, damit die Inhalte
 > sichtbar sind – der Zugriffsschutz lässt sich anschließend je Forum anpassen.
+
+### Import aus dem Support-Ticket-System
+
+Ist das **Support-Ticket-System** (Fast-Media) in derselben Contao-Datenbank installiert (Tabellen
+`tl_support_*`), erscheint unter **Import** zusätzlich das Format **„Support-Ticket-System (aktuelle
+Datenbank)"**. Hier ist **kein Datei-Upload** nötig – die Daten werden direkt aus der laufenden
+Datenbank gelesen.
+
+**Ablauf:** Ziel-Kategorie wählen, Format „Support-Ticket-System" auswählen, dann die zu
+übernehmenden Foren markieren und den Import starten.
+
+**Was übernommen wird:**
+
+| Support-Tabelle | wird zu | Inhalt |
+|-----------------|---------|--------|
+| `tl_support_archive` (Typ `forum`/`support`) | Forum | Titel, Teaser → Beschreibung |
+| `tl_support_ticket` | Thema | Titel, Datum, Aufrufe (`hits`), gesperrt (`closed`) |
+| `tl_support_comment` | Beitrag | Der Kommentartext (bereits HTML) bleibt erhalten |
+
+Der **Eröffnungsbeitrag** eines Themas ist der **älteste Kommentar** des Tickets (das Ticket selbst
+hat keinen eigenen Text). **Verfasser** sind echte Contao-Mitglieder und werden **1:1** übernommen
+(die `member_id` wird direkt als Autor gesetzt, der Anzeigename kommt live aus `tl_member`) – anders
+als beim phpBB-Import, bei dem fremde Konten als Gast abgelegt werden. Leere Tickets und
+unveröffentlichte Kommentare werden übersprungen; `tl_support_category`, `tl_support_notify` und
+Datei-Anhänge bleiben unberücksichtigt. Auch hier gilt: importierte Foren sind zunächst öffentlich
+lesbar und lassen sich je Forum absichern.
 
 ---
 
