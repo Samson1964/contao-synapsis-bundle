@@ -1,5 +1,13 @@
 # Synapsis Changelog
 
+## Version 1.9.1 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update genügt `composer update`.
+
+### Behoben
+
+* **Abonnements bleiben im Startpunkt**: In „Mein Bereich → Abonnements" wurden auch abonnierte Themen aus **anderen Startpunkten** angezeigt, sofern sie öffentlich lesbar waren (die bisherige Sichtbarkeitsprüfung war nicht startpunkt-gebunden). Die Liste ist jetzt – wie „Meine Beiträge", „Ungelesene" und „Gefällt mir" – auf die Foren des angezeigten Startpunkts begrenzt. (Ein Test über zwei Startpunkte bestätigt alle vier Ansichten.)
+
 ## Version 1.9.0 (2026-07-26)
 
 > Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Tabelle `tl_synapsis_online`, neue Felder `showOnline`/`showRanks`/`ranks` in den Einstellungen). Da eine `services.yaml`/DCA betroffen ist, den **Anwendungscache neu bauen**; Assets neu veröffentlichen (CSS).

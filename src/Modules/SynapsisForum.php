@@ -1151,18 +1151,20 @@ class SynapsisForum extends Module
             }
         }
 
+        // Nur Abonnements von Themen DIESES Startpunkts anzeigen (lesbare Foren).
+        // readableForumIds() enthaelt ausschliesslich sichtbare Foren des
+        // Startpunkts - so bleiben fremde Startpunkte aussen vor.
+        $forumIds = $this->readableForumIds();
+        $placeholders = implode(',', array_fill(0, \count($forumIds), '?'));
+
         $rows = Database::getInstance()
-            ->prepare('SELECT t.id, t.title, t.pid FROM tl_synapsis_subscription s INNER JOIN tl_synapsis_topic t ON t.id = s.topic WHERE s.member = ? AND t.published = ? ORDER BY s.tstamp DESC')
-            ->execute($memberId, '1')
+            ->prepare('SELECT t.id, t.title, t.pid FROM tl_synapsis_subscription s INNER JOIN tl_synapsis_topic t ON t.id = s.topic WHERE s.member = ? AND t.published = ? AND t.pid IN ('.$placeholders.') ORDER BY s.tstamp DESC')
+            ->execute(...array_merge([$memberId, '1'], $forumIds))
         ;
 
         $items = [];
 
         while ($rows->next()) {
-            if (!$this->isVisible((int) $rows->pid)) {
-                continue;
-            }
-
             $items[] = [
                 'topicId' => (int) $rows->id,
                 'title' => (string) $rows->title,
