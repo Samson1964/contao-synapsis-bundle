@@ -16,5 +16,5 @@ declare(strict_types=1);
  */
 $GLOBALS['TL_LANG']['MOD']['synapsis'] = 'Synapsis-Forum';
 $GLOBALS['TL_LANG']['MOD']['synapsis_forum'] = array('Forum', 'Die Forenstruktur mit Kategorien, Foren, Themen und Beiträgen verwalten.');
-$GLOBALS['TL_LANG']['MOD']['synapsis_csv'] = array('CSV Import', 'Eine Forenstruktur aus zwei CSV-Dateien (Kategorien/Foren und Themen/Beiträge) importieren, z. B. aus phpBB.');
+$GLOBALS['TL_LANG']['MOD']['synapsis_csv'] = array('phpBB Import', 'Einen phpBB-CSV-Export (Foren, Themen, Beiträge, Umfragen) in eine Kategorie importieren. Verfasser werden als Gast übernommen.');
 $GLOBALS['TL_LANG']['MOD']['synapsis_settings'] = array('Einstellungen', 'Globale Foreneinstellungen wie die E-Mail-Vorlagen für neue Antworten.');

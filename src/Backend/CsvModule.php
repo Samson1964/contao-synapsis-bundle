@@ -16,15 +16,30 @@ use Contao\StringUtil;
 use Contao\System;
 
 /**
- * Backend-Modul "CSV Import" (Gruppe Synapsis, do=synapsis_csv).
+ * Backend-Modul "Import" (Gruppe Synapsis, do=synapsis_csv).
  *
- * Importiert eine Forenstruktur aus zwei CSV-Dateien - eine mit Kategorien und
- * Foren, eine mit Themen und Beitraegen (siehe CsvIo). Damit lassen sich Daten
- * aus Fremdsystemen (z. B. phpBB) uebernehmen oder eine geloeschte Struktur
- * wiederherstellen.
+ * Importiert einen phpBB-CSV-Export in eine Synapsis-Kategorie: Foren, Themen,
+ * Beitraege (Text nach HTML gewandelt) und Umfragen. phpBB-Benutzer sind fremd
+ * und werden als Gast mit ihrem Namen abgelegt. Private Nachrichten und
+ * Datei-Anhaenge werden nicht uebernommen.
+ *
+ * Weitere Importformate lassen sich spaeter ueber die Formatauswahl ergaenzen.
  */
 class CsvModule extends Backend
 {
+    /**
+     * Hochzuladende phpBB-Tabellen: Schluessel => [Pflicht?, Beschreibung].
+     *
+     * @var array<string, array{0: bool, 1: string}>
+     */
+    private const FILES = [
+        'forums' => [true, 'phpbb_forums – die Foren (nur echte Foren werden übernommen, keine phpBB-Kategorien).'],
+        'topics' => [true, 'phpbb_topics – die Themen.'],
+        'posts' => [true, 'phpbb_posts – die Beiträge.'],
+        'users' => [false, 'phpbb_users – optional, liefert die Anzeigenamen registrierter Verfasser.'],
+        'poll_options' => [false, 'phpbb_poll_options – optional, für die Übernahme von Umfragen.'],
+    ];
+
     /**
      * @param mixed $dc Data-Container (hier ungenutzt)
      */
@@ -39,52 +54,53 @@ class CsvModule extends Backend
     public function generate(): string
     {
         $connection = System::getContainer()->get('database_connection');
-        $io = new CsvIo($connection);
 
         $message = '';
 
-        if ('synapsis_csv_import' === Input::post('FORM_SUBMIT')) {
-            $message = $this->handleImport($io);
+        if ('synapsis_phpbb_import' === Input::post('FORM_SUBMIT')) {
+            $message = $this->handleImport($connection);
         }
 
         return $this->render($connection, $message);
     }
 
     /**
-     * Verarbeitet die hochgeladenen CSV-Dateien und liefert eine
-     * Ergebnismeldung (HTML).
+     * Verarbeitet die hochgeladenen phpBB-CSV-Dateien.
+     *
+     * @param \Doctrine\DBAL\Connection $connection
      */
-    private function handleImport(CsvIo $io): string
+    private function handleImport($connection): string
     {
         $target = (int) Input::post('target');
 
         if (0 === $target) {
-            return $this->error('Bitte ein Ziel auswählen.');
+            return $this->error('Bitte eine Ziel-Kategorie auswählen.');
         }
 
-        if (empty($_FILES['structurefile']['tmp_name']) || !is_uploaded_file($_FILES['structurefile']['tmp_name'])) {
-            return $this->error('Bitte die Struktur-Datei (Kategorien/Foren) auswählen.');
-        }
+        $csv = [];
 
-        $structureCsv = (string) file_get_contents($_FILES['structurefile']['tmp_name']);
+        foreach (self::FILES as $key => [$required, $desc]) {
+            $field = 'file_'.$key;
 
-        // Inhalt-Datei ist optional
-        $contentCsv = '';
-
-        if (!empty($_FILES['contentfile']['tmp_name']) && is_uploaded_file($_FILES['contentfile']['tmp_name'])) {
-            $contentCsv = (string) file_get_contents($_FILES['contentfile']['tmp_name']);
+            if (!empty($_FILES[$field]['tmp_name']) && is_uploaded_file($_FILES[$field]['tmp_name'])) {
+                $csv[$key] = (string) file_get_contents($_FILES[$field]['tmp_name']);
+            } elseif ($required) {
+                return $this->error('Bitte die Datei „'.$key.'" auswählen ('.$desc.').');
+            }
         }
 
         try {
-            $stats = $io->import($structureCsv, $contentCsv, $target);
+            $stats = (new PhpbbImporter($connection))->import($csv, $target);
         } catch (\Throwable $e) {
             return $this->error(StringUtil::specialchars($e->getMessage()));
         }
 
-        return '<p class="tl_confirm">Import abgeschlossen: '
-            .$stats['forums'].' Kategorien/Foren, '
+        return '<p class="tl_confirm">phpBB-Import abgeschlossen: '
+            .$stats['forums'].' Foren, '
             .$stats['topics'].' Themen, '
-            .$stats['posts'].' Beiträge importiert.</p>';
+            .$stats['posts'].' Beiträge, '
+            .$stats['polls'].' Umfragen ('.$stats['votes'].' Stimmen) übernommen. '
+            .$stats['skipped'].' Beiträge übersprungen (nicht freigegeben oder ohne Thema).</p>';
     }
 
     private function error(string $text): string
@@ -101,45 +117,48 @@ class CsvModule extends Backend
     {
         $token = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
 
-        $roots = $connection->fetchAllAssociative("SELECT id, title FROM tl_synapsis_forum WHERE type = 'root' ORDER BY sorting");
         $categories = $connection->fetchAllAssociative("SELECT id, title FROM tl_synapsis_forum WHERE type = 'category' ORDER BY sorting");
 
-        // Import-Ziele (Startpunkte und Kategorien)
-        $targetOptions = '';
-        foreach ($roots as $r) {
-            $targetOptions .= '<option value="'.$r['id'].'">Startpunkt: '.StringUtil::specialchars($r['title']).'</option>';
-        }
-        foreach ($categories as $c) {
-            $targetOptions .= '<option value="'.$c['id'].'">Kategorie: '.StringUtil::specialchars($c['title']).'</option>';
-        }
-
         $html = '<div id="tl_buttons"></div>';
-        $html .= '<h2 class="sub_headline">Synapsis: CSV Import</h2>';
+        $html .= '<h2 class="sub_headline">Synapsis: phpBB-Import</h2>';
         $html .= $message;
 
-        if ([] === $roots) {
-            $html .= '<p class="tl_info">Es ist noch kein Startpunkt vorhanden. Legen Sie zuerst im Forum-Modul einen Startpunkt an.</p>';
+        if ([] === $categories) {
+            $html .= '<p class="tl_info">Es ist noch keine Kategorie vorhanden. Legen Sie zuerst im Forum-Modul einen Startpunkt und darin eine Kategorie an – der Import erfolgt immer in eine Kategorie.</p>';
 
             return $html;
         }
 
+        $targetOptions = '';
+
+        foreach ($categories as $c) {
+            $targetOptions .= '<option value="'.$c['id'].'">'.StringUtil::specialchars($c['title']).'</option>';
+        }
+
+        $fileFields = '';
+
+        foreach (self::FILES as $key => [$required, $desc]) {
+            $label = 'phpbb_'.$key.'.csv'.($required ? ' *' : ' (optional)');
+            $fileFields .= '<div class="widget"><h3><label for="file_'.$key.'">'.$label.'</label></h3>'
+                .'<input type="file" name="file_'.$key.'" id="file_'.$key.'" class="tl_upload_field" accept=".csv">'
+                .'<p class="tl_help tl_tip">'.StringUtil::specialchars($desc).'</p></div>';
+        }
+
         $html .= '<form method="post" enctype="multipart/form-data" class="tl_form">'
             .'<div class="tl_formbody_edit">'
-            .'<input type="hidden" name="FORM_SUBMIT" value="synapsis_csv_import">'
+            .'<input type="hidden" name="FORM_SUBMIT" value="synapsis_phpbb_import">'
             .'<input type="hidden" name="REQUEST_TOKEN" value="'.$token.'">'
-            .'<fieldset class="tl_tbox"><legend>Import in einen Startpunkt oder eine Kategorie</legend>'
-            .'<div class="widget"><h3><label for="target">Ziel</label></h3>'
+            .'<fieldset class="tl_tbox"><legend>phpBB-Import in eine Kategorie</legend>'
+            .'<div class="widget"><h3><label for="format">Format</label></h3>'
+            .'<select name="format" id="format" class="tl_select"><option value="phpbb">phpBB (CSV-Export)</option></select>'
+            .'<p class="tl_help tl_tip">Derzeit wird der CSV-Export von phpBB unterstützt.</p></div>'
+            .'<div class="widget"><h3><label for="target">Ziel-Kategorie</label></h3>'
             .'<select name="target" id="target" class="tl_select">'.$targetOptions.'</select>'
-            .'<p class="tl_help tl_tip">Startpunkt als Ziel erwartet Kategorien auf oberster Ebene, eine Kategorie erwartet Foren.</p></div>'
-            .'<div class="widget"><h3><label for="structurefile">Struktur-Datei (Kategorien/Foren)</label></h3>'
-            .'<input type="file" name="structurefile" id="structurefile" class="tl_upload_field" accept=".csv">'
-            .'<p class="tl_help tl_tip">Pflicht. Spalten: ref, parent, type (category/forum), title, alias, description, forumIcon, closed, protected, groups, guestRead, guestWrite, published.</p></div>'
-            .'<div class="widget"><h3><label for="contentfile">Inhalt-Datei (Themen/Beiträge)</label></h3>'
-            .'<input type="file" name="contentfile" id="contentfile" class="tl_upload_field" accept=".csv">'
-            .'<p class="tl_help tl_tip">Optional. Spalten: forum, topic, type (topic/post), title, author, authorName, date, text, sticky, locked, published, views. „forum" verweist auf die ref eines Forums der Struktur-Datei, „topic" gruppiert Beiträge unter ihr Thema.</p></div>'
+            .'<p class="tl_help tl_tip">Die phpBB-Foren werden als Foren unter dieser Kategorie angelegt.</p></div>'
+            .$fileFields
             .'</fieldset></div>'
             .'<div class="tl_formbody_submit"><div class="tl_submit_container">'
-            .'<button type="submit" class="tl_submit">CSV importieren</button>'
+            .'<button type="submit" class="tl_submit">phpBB importieren</button>'
             .'</div></div></form>';
 
         return $html;

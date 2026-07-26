@@ -1,5 +1,18 @@
 # Synapsis Changelog
 
+## Version 1.6.0 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update genügt `composer update` (kein `contao:migrate` nötig).
+
+### Geändert
+
+* **Import auf phpBB umgestellt**: Das Backend-Modul heißt jetzt **„phpBB Import"** und übernimmt einen **phpBB-CSV-Export** direkt. Hochgeladen werden die phpBB-Tabellen `phpbb_forums`, `phpbb_topics`, `phpbb_posts` (Pflicht) sowie optional `phpbb_users` (Anzeigenamen) und `phpbb_poll_options` (Umfragen). Der Import erfolgt in eine **Kategorie**.
+  * Übernommen werden **Foren** (phpBB-Kategorien/Container werden übersprungen), **Themen** (inkl. Aufruf-Zähler, angeheftet/geschlossen), **Beiträge** und **Umfragen** (samt Ergebnis).
+  * Der phpBB-**Beitragstext** (Legacy-BBCode mit `bbcode_uid` **oder** phpBB-3.x-XML) wird nach sauberem, sicherem **HTML** gewandelt: Fett/Kursiv/Unterstrichen, Links, Bilder, Zitate (auch verschachtelt), Listen, Code, Farbe, Zeilenumbrüche; Smilies bleiben als Text erhalten.
+  * **Verfasser** werden als **Gast** mit ihrem phpBB-Namen abgelegt (Anzeige „Gast (Name)"); private Nachrichten und Datei-Anhänge werden nicht übernommen.
+  * Importierte Foren sind zunächst **öffentlich lesbar** (im Backend anpassbar).
+  * Neue Klassen `Backend\PhpbbImporter` und die testbare `Backend\PhpbbTextConverter` (16 Unit-Tests); die alte generische `CsvIo` entfällt. Weitere Importformate lassen sich über die Formatauswahl ergänzen.
+
 ## Version 1.5.0 (2026-07-26)
 
 > Enthält Schema-Änderungen: nach dem Update `contao:migrate` ausführen (neue Felder `showModerators` in `tl_synapsis_forum` und `colorScheme` in den Einstellungen). Zusätzlich Assets neu veröffentlichen (CSS).

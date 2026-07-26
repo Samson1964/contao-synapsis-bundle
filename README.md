@@ -22,7 +22,7 @@ die im Backend ein Forum einrichten, sowie für die Mitglieder, die es im Fronte
 11. [Benachrichtigungen](#benachrichtigungen)
 12. [Umfragen](#umfragen)
 13. [Globale Einstellungen](#globale-einstellungen)
-14. [Import aus anderen Foren (CSV)](#import-aus-anderen-foren-csv)
+14. [Import aus phpBB](#import-aus-phpbb)
 15. [Warum wird mein Forum nicht angezeigt? (Checkliste)](#warum-wird-mein-forum-nicht-angezeigt)
 16. [Für Entwickler](#für-entwickler)
 
@@ -101,7 +101,7 @@ Modulen:
 | Modul             | Zweck                                                                        |
 |-------------------|------------------------------------------------------------------------------|
 | **Forum**         | Die Forenstruktur (Startpunkte, Kategorien, Foren) und ihre Themen/Beiträge  |
-| **CSV Import**    | Foren, Themen und Beiträge aus einer anderen Software (z. B. phpBB) übernehmen |
+| **phpBB Import**  | Foren, Themen, Beiträge und Umfragen aus einem phpBB-CSV-Export übernehmen    |
 | **Einstellungen** | Globale Einstellungen (E-Mail-Vorlagen, Rechte der Moderatoren)              |
 
 ---
@@ -379,20 +379,35 @@ Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunk
 
 ---
 
-## Import aus anderen Foren (CSV)
+## Import aus phpBB
 
-Über **Synapsis-Forum → CSV Import** lässt sich eine bestehende Struktur (z. B. aus phpBB)
-übernehmen. Der Import erfolgt über **zwei CSV-Dateien** und wird unter einen Startpunkt oder
-eine Kategorie eingehängt:
+Über **Synapsis-Forum → phpBB Import** lässt sich ein bestehendes **phpBB-Forum** übernehmen.
+Grundlage ist ein **CSV-Export der phpBB-Tabellen** (in phpMyAdmin je Tabelle als CSV
+exportieren). Der Import wird immer in eine **Kategorie** eingehängt: die phpBB-Foren entstehen
+als Foren darunter.
 
-* **Struktur-Datei** – Kategorien und Foren. Spalten: `ref, parent, type, title, alias,
-  description, forumIcon, closed, protected, groups, guestRead, guestWrite, published`.
-* **Inhalt-Datei** (optional) – Themen und Beiträge. Spalten: `forum, topic, type, title,
-  author, authorName, date, text, sticky, locked, published, views`. Dabei verweist `forum` auf
-  die `ref` eines Forums der Struktur-Datei und `topic` gruppiert die Beiträge unter ihr Thema.
+**Ablauf:**
 
-So lassen sich Fremdsystem-IDs (etwa phpBB `forum_id`/`topic_id`) direkt abbilden; Beiträge
-ohne zuordenbares Konto werden als Gast mit dem ursprünglichen Namen übernommen.
+1. Im Backend unter **Forum** einen Startpunkt und darin die **Ziel-Kategorie** anlegen.
+2. Unter **phpBB Import** die Ziel-Kategorie wählen und die CSV-Dateien hochladen.
+
+**Dateien** (die Spalten entsprechen dem phpBB-Schema):
+
+| Datei | Pflicht | Inhalt |
+|-------|---------|--------|
+| `phpbb_forums.csv` | ja | Die Foren. Nur echte Foren werden übernommen – phpBB-**Kategorien** (Container) werden übersprungen. |
+| `phpbb_topics.csv` | ja | Die Themen (Titel, Datum, Aufrufe, angeheftet, geschlossen). |
+| `phpbb_posts.csv`  | ja | Die Beiträge. Der phpBB-Text (BBCode bzw. XML) wird nach HTML gewandelt. |
+| `phpbb_users.csv`  | optional | Liefert die Anzeigenamen registrierter Verfasser. |
+| `phpbb_poll_options.csv` | optional | Für die Übernahme von Umfragen (Frage, Antworten, Ergebnis). |
+
+**Was übernommen wird:** Foren, Themen, Beiträge (mit Formatierung, Links, Zitaten, Listen),
+Aufruf-Zähler und Umfragen (samt Ergebnis). **Verfasser** werden als **Gast** mit ihrem
+phpBB-Namen abgelegt (Anzeige „Gast (Name)"), da die phpBB-Konten im Zielsystem fremd sind.
+**Nicht übernommen** werden private Nachrichten und Datei-Anhänge.
+
+> Hinweis: Importierte Foren werden zunächst **öffentlich lesbar** angelegt, damit die Inhalte
+> sichtbar sind – der Zugriffsschutz lässt sich anschließend je Forum anpassen.
 
 ---
 
