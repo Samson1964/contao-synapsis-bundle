@@ -2324,8 +2324,9 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Entfernt ein Thema mit allen abhaengigen Daten (Umfrage samt Optionen und
-     * Stimmen, Abonnements, Lesestaende).
+     * Entfernt ein Thema mit allen abhaengigen Daten (Beitraege samt
+     * "Gefaellt mir"-Eintraegen, Umfrage samt Optionen und Stimmen,
+     * Abonnements, Lesestaende, Meldungen, Benachrichtigungen).
      */
     private function deleteTopicCompletely(int $topicId): void
     {
@@ -2339,6 +2340,12 @@ class SynapsisForum extends Module
             $db->prepare('DELETE FROM tl_synapsis_poll_vote WHERE poll = ?')->execute($pollId);
             $db->prepare('DELETE FROM tl_synapsis_poll WHERE id = ?')->execute($pollId);
         }
+
+        // Beitraege des Themas samt deren "Gefaellt mir"-Eintraegen entfernen.
+        // Wichtig fuer die Massen-Moderation, die ganze Themen direkt loescht
+        // (beim Einzel-Loeschen ist der letzte Beitrag bereits entfernt).
+        $db->prepare('DELETE FROM tl_synapsis_like WHERE post IN (SELECT id FROM tl_synapsis_post WHERE pid = ?)')->execute($topicId);
+        $db->prepare('DELETE FROM tl_synapsis_post WHERE pid = ?')->execute($topicId);
 
         $db->prepare('DELETE FROM tl_synapsis_subscription WHERE topic = ?')->execute($topicId);
         $db->prepare('DELETE FROM tl_synapsis_read WHERE topic = ?')->execute($topicId);

@@ -29,6 +29,14 @@ class BanManager
      */
     private $connection;
 
+    /**
+     * Zwischenspeicher member => gesperrt? Vermeidet wiederholte Abfragen
+     * innerhalb eines Requests (z. B. je Beitrag in der Themenansicht).
+     *
+     * @var array<int, bool>
+     */
+    private $cache = [];
+
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
@@ -43,10 +51,14 @@ class BanManager
             return false;
         }
 
-        return (bool) $this->connection->fetchOne(
-            'SELECT COUNT(*) FROM tl_synapsis_ban WHERE member = ?',
-            [$memberId]
-        );
+        if (!\array_key_exists($memberId, $this->cache)) {
+            $this->cache[$memberId] = (bool) $this->connection->fetchOne(
+                'SELECT COUNT(*) FROM tl_synapsis_ban WHERE member = ?',
+                [$memberId]
+            );
+        }
+
+        return $this->cache[$memberId];
     }
 
     /**
@@ -66,6 +78,8 @@ class BanManager
             'bannedBy' => $byMemberId,
         ]);
 
+        $this->cache[$memberId] = true;
+
         return true;
     }
 
@@ -79,6 +93,7 @@ class BanManager
         }
 
         $this->connection->executeStatement('DELETE FROM tl_synapsis_ban WHERE member = ?', [$memberId]);
+        $this->cache[$memberId] = false;
     }
 
     /**

@@ -1,5 +1,32 @@
 # Synapsis Changelog
 
+## Version 1.14.2 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Leeren des Caches.
+
+### Behoben
+
+* **Massen-Löschung hinterließ verwaiste Beiträge**: Beim Löschen ganzer Themen über die
+  Massen-Moderation blieben deren Beiträge (und die zugehörigen „Gefällt mir"-Einträge) in der
+  Datenbank zurück und verfälschten u. a. die Statistik. `deleteTopicCompletely` entfernt jetzt
+  auch die Beiträge samt Likes. (Die Einzel-Löschung war nicht betroffen.)
+
+### Verbessert
+
+* **Sperr-Abfragen zwischengespeichert**: Der Sperrstatus eines Mitglieds wird je Request nur
+  noch einmal aus der Datenbank gelesen (vorher eine Abfrage je Beitrag bzw. Schreibrecht-Prüfung).
+
+### Dokumentation
+
+* **Handbuch neu organisiert**: Die README ist jetzt ein kompakter Überblick (Funktionsumfang,
+  Installation, Schnellstart); das ausführliche Handbuch liegt in neun Themen-Dateien im neuen
+  Ordner **`doc/`** (Grundlagen, Knoten-Einstellungen, Frontend, Moderation, Benachrichtigungen,
+  globale Einstellungen, Import, FAQ, Entwickler).
+* **Lücken geschlossen**: Das **Statistik-Modul** ist jetzt dokumentiert, die Einstellung
+  „Moderatoren dürfen Mitglieder **sperren**" ergänzt (fehlte in der Rechte-Liste), die
+  Editor-Beschreibung an 1.14.1 angepasst (Emojis über die Smiley-Leiste) und eine
+  **Update-Anleitung** (Cache → Migration → Assets) samt erweiterter FAQ ergänzt.
+
 ## Version 1.14.1 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets.
