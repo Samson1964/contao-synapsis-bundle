@@ -57,3 +57,4 @@ services:
         class: Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer\SettingsListener
         tags:
             - { name: contao.callback, table: tl_synapsis_settings, target: config.onload, method: onLoad }
+            - { name: contao.callback, table: tl_synapsis_settings, target: fields.colorScheme.wizard, method: colorSchemeWizard }

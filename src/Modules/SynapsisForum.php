@@ -214,7 +214,7 @@ class SynapsisForum extends Module
 
         // Farbschema (global in den Einstellungen gewaehlt) als Wrapper-Klasse.
         $scheme = (string) ($this->forumSettings()['colorScheme'] ?? '');
-        $this->Template->schemeClass = \in_array($scheme, ['schachbund', 'bdf'], true) ? ' synapsis-scheme--'.$scheme : '';
+        $this->Template->schemeClass = \in_array($scheme, ['petrol', 'gold', 'rot', 'orange'], true) ? ' synapsis-scheme--'.$scheme : '';
 
         // Mitglieder-Navigation (untere Box): nur fuer angemeldete Mitglieder,
         // auf jeder Seite. Der aktive Menuepunkt wird nicht verlinkt.

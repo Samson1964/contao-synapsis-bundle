@@ -361,9 +361,10 @@ mit Prozent und Teilnehmerzahl angezeigt. Doppelt abstimmen ist ausgeschlossen.
 
 Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunkte hinweg):
 
-* **Farbschema** – Wählt das Farbschema für die Frontend-Darstellung: **Standard** (Blau),
-  **Schachbund** (Petrol) oder **BdF** (Gold). Die Schemata ändern nur die Farben; ein eigenes
-  Schema lässt sich als CSS-Klasse `synapsis-scheme--<name>` in einer Custom-CSS ergänzen.
+* **Farbschema** – Wählt das Farbschema für die Frontend-Darstellung über eine **anklickbare
+  Farbvorschau** (wie beim Icon-Wizard): **Standard** (Blau), **Petrol**, **Gold**, **Rot** oder
+  **Orange**. Die Schemata ändern nur die Farben; ein eigenes Schema lässt sich als CSS-Klasse
+  `synapsis-scheme--<name>` in einer Custom-CSS ergänzen.
 * **E-Mail-Benachrichtigungen** – Zentraler An/aus-Schalter für **alle** E-Mails, sowie
   **Betreff- und Text-Vorlage** für die Antwort-Benachrichtigung an Themen-Abonnenten.
   Platzhalter: `##topic##` (Thementitel), `##name##` (Empfänger), `##url##` (Adresse des Themas).

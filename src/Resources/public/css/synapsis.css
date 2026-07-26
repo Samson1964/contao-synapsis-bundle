@@ -27,8 +27,8 @@
    Ueberschreiben nur die Farbvariablen; die Klasse liegt am selben Element wie
    ".synapsis" (hoehere Spezifitaet -> gewinnt). Standard = keine Zusatzklasse. */
 
-/* Schachbund: kuehles Dunkel-Petrol auf Weiss (orientiert an schachbund.de) */
-.synapsis.synapsis-scheme--schachbund {
+/* Petrol: kuehles Dunkel-Petrol auf Weiss */
+.synapsis.synapsis-scheme--petrol {
     --syn-accent: #0d4a63;
     --syn-accent-dark: #062f40;
     --syn-bg: #ffffff;
@@ -39,8 +39,8 @@
     --syn-panel: #eef2f4;
 }
 
-/* BdF: warmes Gold auf Creme (orientiert an bdf-fernschachbund.de) */
-.synapsis.synapsis-scheme--bdf {
+/* Gold: warmes Gold auf Creme */
+.synapsis.synapsis-scheme--gold {
     --syn-accent: #a67c00;
     --syn-accent-dark: #6c5700;
     --syn-bg: #fffdf5;
@@ -49,6 +49,30 @@
     --syn-text: #4a3d00;
     --syn-muted: #8a7a3f;
     --syn-panel: #faf3d9;
+}
+
+/* Rot: warmes Rot auf Weiss */
+.synapsis.synapsis-scheme--rot {
+    --syn-accent: #b23a2e;
+    --syn-accent-dark: #7f2820;
+    --syn-bg: #ffffff;
+    --syn-bg-alt: #faf1ef;
+    --syn-border: #e8cfca;
+    --syn-text: #3a1815;
+    --syn-muted: #8a6a64;
+    --syn-panel: #faf1ef;
+}
+
+/* Orange: kraeftiges Orange (an contao.org angelehnt) */
+.synapsis.synapsis-scheme--orange {
+    --syn-accent: #f47c00;
+    --syn-accent-dark: #c96500;
+    --syn-bg: #ffffff;
+    --syn-bg-alt: #fef4e9;
+    --syn-border: #f3d9bc;
+    --syn-text: #2b2b2b;
+    --syn-muted: #7a6a5a;
+    --syn-panel: #fef4e9;
 }
 
 .synapsis * {

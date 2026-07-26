@@ -25,9 +25,11 @@ $GLOBALS['TL_LANG']['tl_synapsis_settings']['colorScheme'] = array(
     'Wählt das Farbschema für die Frontend-Darstellung des Forums.',
 );
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['colorSchemeRef'] = array(
-    ''            => 'Standard (Blau)',
-    'schachbund'  => 'Schachbund (Petrol)',
-    'bdf'         => 'BdF (Gold)',
+    ''       => 'Standard (Blau)',
+    'petrol' => 'Petrol',
+    'gold'   => 'Gold',
+    'rot'    => 'Rot',
+    'orange' => 'Orange',
 );
 
 // Felder (Moderatoren)

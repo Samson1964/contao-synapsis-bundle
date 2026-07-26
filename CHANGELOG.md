@@ -1,5 +1,17 @@
 # Synapsis Changelog
 
+## Version 1.8.0 (2026-07-26)
+
+> Keine Schema-Änderung. Da eine `services.yaml` betroffen ist, nach dem Update den **Anwendungscache neu bauen** (`cache:clear` bzw. Contao Manager; bei OPcache PHP neu starten). Assets neu veröffentlichen (CSS).
+
+### Geändert – Farbschemata
+
+* **Visuelle Auswahl**: Das Farbschema wird jetzt über eine **anklickbare Farbvorschau** gewählt (analog zum Lucide-Icon-Wizard) statt nur über eine Auswahlliste.
+* **Neue Schemata**: zusätzlich **Rot** und **Orange** (angelehnt an contao.org) – insgesamt fünf: Standard (Blau), Petrol, Gold, Rot, Orange.
+* **Markennamen entfernt**: aus „Schachbund (Petrol)" wird **Petrol**, aus „BdF (Gold)" wird **Gold**. Die CSS-Klassen heißen entsprechend `synapsis-scheme--petrol` bzw. `--gold`.
+
+> **Hinweis:** Wer bisher „Schachbund" oder „BdF" gewählt hatte, wählt bitte einmalig neu **Petrol** bzw. **Gold** – die alten Werte greifen nicht mehr (Anzeige fällt sonst auf Standard zurück).
+
 ## Version 1.7.1 (2026-07-26)
 
 > Keine Schema-Änderung. Da eine `services.yaml` betroffen ist, muss nach dem Update der **Anwendungscache neu gebaut** werden (`vendor/bin/contao-console cache:clear` bzw. Contao Manager → Systemwartung; bei aktivem OPcache PHP neu starten).
