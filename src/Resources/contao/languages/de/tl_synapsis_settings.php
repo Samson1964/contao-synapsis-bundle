@@ -52,6 +52,7 @@ $GLOBALS['TL_LANG']['tl_synapsis_settings']['colorSchemeRef'] = array(
     'gold'   => 'Gold',
     'rot'    => 'Rot',
     'orange' => 'Orange',
+    'gruen'  => 'Grün',
 );
 
 // Felder (Moderatoren)

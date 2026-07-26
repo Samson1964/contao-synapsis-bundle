@@ -7,9 +7,9 @@ Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunk
 ## Darstellung
 
 * **Farbschema** – Wählt das Farbschema für die Frontend-Darstellung über eine **anklickbare
-  Farbvorschau** (wie beim Icon-Wizard): **Standard** (Blau), **Petrol**, **Gold**, **Rot** oder
-  **Orange**. Die Schemata ändern nur die Farben; ein eigenes Schema lässt sich als CSS-Klasse
-  `synapsis-scheme--<name>` in einer Custom-CSS ergänzen.
+  Farbvorschau** (wie beim Icon-Wizard): **Standard** (Blau), **Petrol**, **Gold**, **Rot**,
+  **Orange** oder **Grün**. Die Schemata ändern nur die Farben; ein eigenes Schema lässt sich
+  als CSS-Klasse `synapsis-scheme--<name>` in einer Custom-CSS ergänzen.
 
 ## Community & Mitglieder
 

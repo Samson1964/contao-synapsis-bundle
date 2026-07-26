@@ -266,7 +266,7 @@ class SynapsisForum extends Module
 
         // Farbschema (global in den Einstellungen gewaehlt) als Wrapper-Klasse.
         $scheme = (string) ($this->forumSettings()['colorScheme'] ?? '');
-        $this->Template->schemeClass = \in_array($scheme, ['petrol', 'gold', 'rot', 'orange'], true) ? ' synapsis-scheme--'.$scheme : '';
+        $this->Template->schemeClass = \in_array($scheme, ['petrol', 'gold', 'rot', 'orange', 'gruen'], true) ? ' synapsis-scheme--'.$scheme : '';
 
         // Praesenz des aktuellen Besuchers festhalten ("Wer ist online").
         $this->trackOnline();

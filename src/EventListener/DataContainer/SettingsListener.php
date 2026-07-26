@@ -37,6 +37,7 @@ class SettingsListener
         'gold' => ['Gold', '#a67c00', '#6c5700'],
         'rot' => ['Rot', '#b23a2e', '#7f2820'],
         'orange' => ['Orange', '#f47c00', '#c96500'],
+        'gruen' => ['Grün', '#77ab40', '#567d2e'],
     ];
 
     /**

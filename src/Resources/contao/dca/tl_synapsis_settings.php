@@ -64,7 +64,7 @@ $GLOBALS['TL_DCA']['tl_synapsis_settings'] = array
         (
             'exclude'   => true,
             'inputType' => 'select',
-            'options'   => array('', 'petrol', 'gold', 'rot', 'orange'),
+            'options'   => array('', 'petrol', 'gold', 'rot', 'orange', 'gruen'),
             'reference' => &$GLOBALS['TL_LANG']['tl_synapsis_settings']['colorSchemeRef'],
             // wizard-Callback: SettingsListener::colorSchemeWizard (Farbvorschau-Raster)
             'eval'      => array('tl_class' => 'clr'),

@@ -1,5 +1,37 @@
 # Synapsis Changelog
 
+## Version 1.15.0 (2026-07-26)
+
+> Keine Schema-Änderung – nach dem Update `composer update`, Cache leeren und die **Assets neu
+> veröffentlichen** (CSS geändert).
+
+### Hinzugefügt
+
+* **Farbschema „Grün"**: Sechstes Schema (`synapsis-scheme--gruen`), farblich an das
+  MERCONIS-Forum von leadingsystems.de angelehnt (Akzent `#77ab40`). Wählbar über die
+  Farbvorschau in den Einstellungen.
+
+### Behoben
+
+* **Listen in Beiträgen**: Nummerierte und Aufzählungslisten (`ol`/`ul`) aus dem Editor wurden
+  vom CSS mancher Websites „geschluckt" (keine Punkte/Zahlen, keine Einrückung). Das Bundle
+  erzwingt jetzt in Beitragstexten die üblichen Aufzählungszeichen samt Einrückung und
+  neutralisiert Theme-eigene `li::before`-Symbole.
+* **Themenansicht-Kopf**: Der Thementitel (h2) steht jetzt **über** der Moderations-/
+  Aktionsleiste statt daneben; die Leiste bricht bei vielen Schaltflächen sauber um.
+* **Auswahlfelder lesbar**: „Verschieben nach …" (Themenansicht) und die Auswahlfelder der
+  Massen-Moderation werden jetzt defensiv gegen das Website-CSS gestylt (Rahmen, Hintergrund,
+  Schriftgröße) und sind überall gut erkennbar.
+
+### Geprüft (Sicherheit)
+
+* **Rechte der Beitrags-Aktionen** auditiert: Serverseitig dürfen **Gäste nie** bearbeiten,
+  löschen oder sperren (auch keine Gastbeiträge), **Mitglieder nur eigene Beiträge** (solange
+  das Thema offen ist) und **fremde Beiträge nur Moderatoren** (per Einstellung abschaltbar)
+  **und Administratoren** – alle Formular-Handler prüfen das unabhängig von der Anzeige. Neue
+  automatisierte Gast-Prüfungen sichern das dauerhaft ab. Sieht ein Konto die Schaltflächen an
+  fremden Beiträgen, besitzt es eine Admin-/Moderatorenrolle im betreffenden Baum.
+
 ## Version 1.14.2 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Leeren des Caches.
