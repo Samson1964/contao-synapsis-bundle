@@ -1,5 +1,13 @@
 # Synapsis Changelog
 
+## Version 1.7.1 (2026-07-26)
+
+> Keine Schema-Änderung. Da eine `services.yaml` betroffen ist, muss nach dem Update der **Anwendungscache neu gebaut** werden (`vendor/bin/contao-console cache:clear` bzw. Contao Manager → Systemwartung; bei aktivem OPcache PHP neu starten).
+
+### Behoben
+
+* **Baumstruktur: keine Einträge unterhalb eines Forums**: Im Backend-Baum ist „Hineinfügen" unter einem **Forum** jetzt **deaktiviert** (ein Forum enthält nur Themen) – „Danach einfügen" (Geschwister) bleibt möglich. Umgesetzt über einen `paste_button_callback`; zusätzlich verhindert ein `oncreate`-Sicherheitsnetz das Anlegen unter einem Forum (mit Hinweismeldung). Im echten Contao-4.13-Backend verifiziert.
+
 ## Version 1.7.0 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update genügt `composer update` und ein Neuveröffentlichen der Assets (CSS).

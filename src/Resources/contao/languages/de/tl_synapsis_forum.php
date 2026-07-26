@@ -63,3 +63,4 @@ $GLOBALS['TL_LANG']['tl_synapsis_forum']['show']   = array('Details anzeigen', '
 
 // Sonstiges
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['closedLabel'] = 'geschlossen';
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['noChildUnderForum'] = 'Unterhalb eines Forums können keine weiteren Einträge angelegt werden. Ein Forum enthält nur Themen.';

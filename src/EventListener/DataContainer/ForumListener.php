@@ -11,9 +11,11 @@ declare(strict_types=1);
 namespace Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer;
 
 use Contao\Backend;
+use Contao\Controller;
 use Contao\DataContainer;
 use Contao\Image;
 use Contao\Input;
+use Contao\Message;
 use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
@@ -170,11 +172,74 @@ class ForumListener
         } else {
             $parentType = (string) $this->connection->fetchOne('SELECT type FROM tl_synapsis_forum WHERE id = ?', [$pid]);
             $allowed = self::ALLOWED_CHILDREN[$parentType] ?? [];
+
+            // Sicherheitsnetz: Unterhalb eines Forums darf kein Knoten liegen
+            // (Foren enthalten nur Themen). Der eben angelegte Datensatz wird
+            // wieder entfernt und mit Hinweis zurueckgeleitet - unabhaengig vom
+            // paste_button_callback, der den Button dort bereits ausblendet.
+            if ('forum' === $parentType) {
+                $this->connection->delete('tl_synapsis_forum', ['id' => $insertId]);
+                Message::addError($GLOBALS['TL_LANG']['tl_synapsis_forum']['noChildUnderForum'] ?? 'Unterhalb eines Forums können keine weiteren Einträge angelegt werden. Ein Forum enthält nur Themen.');
+                Controller::redirect(Controller::getReferer());
+            }
         }
 
         if ([] !== $allowed) {
             $this->connection->update('tl_synapsis_forum', ['type' => $allowed[0]], ['id' => $insertId]);
         }
+    }
+
+    /**
+     * Rendert die Einfuegen-Schaltflaechen im Baummodus (paste_button_callback).
+     *
+     * Ziel: Unter einem Forum darf nichts eingefuegt werden, deshalb wird dort
+     * die Schaltflaeche „Hineinfuegen" deaktiviert dargestellt (graues Icon ohne
+     * Verweis). „Danach einfuegen" (Geschwister) bleibt erlaubt. Bei einem
+     * Zirkularbezug ($cr, z. B. ein Knoten in seinen eigenen Teilbaum) werden -
+     * wie im Contao-Standard - beide Schaltflaechen gesperrt.
+     *
+     * Funktioniert unter Contao 4.13 und 5, da der Rueckgabewert in beiden Faellen
+     * als fertiges HTML uebernommen wird.
+     *
+     * @param array<string, mixed>     $row
+     * @param array<string, mixed>|null $arrClipboard
+     */
+    public function pasteButton(?DataContainer $dc, array $row, string $table, bool $cr, ?array $arrClipboard = null): string
+    {
+        $id = (int) ($row['id'] ?? 0);
+        $mode = (string) ($arrClipboard['mode'] ?? '');
+        $clipboardId = $arrClipboard['id'] ?? 0;
+        $idParam = !\is_array($clipboardId) ? '&amp;id='.$clipboardId : '';
+
+        $pasteInto = $GLOBALS['TL_LANG'][$table]['pasteinto'][0] ?? 'Hineinfügen';
+        $pasteAfter = $GLOBALS['TL_LANG'][$table]['pasteafter'][0] ?? 'Danach einfügen';
+
+        // Wurzelebene (id = 0): nur „an den Anfang einfuegen" (erzeugt einen
+        // Startpunkt) - dort ist „Hineinfuegen" korrekt.
+        if (0 === $id) {
+            $url = Backend::addToUrl('act='.$mode.'&amp;mode=2&amp;pid=0'.$idParam);
+
+            return '<a href="'.$url.'" title="'.StringUtil::specialchars($pasteInto).'" onclick="Backend.getScrollOffset()">'.Image::getHtml('pasteinto.svg', $pasteInto).'</a> ';
+        }
+
+        // Zirkularbezug: beide Schaltflaechen sperren (wie im Standard).
+        if ($cr) {
+            return Image::getHtml('pasteafter_.svg').' '.Image::getHtml('pasteinto_.svg').' ';
+        }
+
+        // „Danach einfuegen" (Geschwister) - immer erlaubt.
+        $afterUrl = Backend::addToUrl('act='.$mode.'&amp;mode=1&amp;pid='.$id.$idParam);
+        $html = '<a href="'.$afterUrl.'" title="'.StringUtil::specialchars($pasteAfter).'" onclick="Backend.getScrollOffset()">'.Image::getHtml('pasteafter.svg', $pasteAfter).'</a> ';
+
+        // „Hineinfuegen" (Kind) - unter einem Forum verboten.
+        if ('forum' === (string) ($row['type'] ?? '')) {
+            $html .= Image::getHtml('pasteinto_.svg').' ';
+        } else {
+            $intoUrl = Backend::addToUrl('act='.$mode.'&amp;mode=2&amp;pid='.$id.$idParam);
+            $html .= '<a href="'.$intoUrl.'" title="'.StringUtil::specialchars($pasteInto).'" onclick="Backend.getScrollOffset()">'.Image::getHtml('pasteinto.svg', $pasteInto).'</a> ';
+        }
+
+        return $html;
     }
 
     /**

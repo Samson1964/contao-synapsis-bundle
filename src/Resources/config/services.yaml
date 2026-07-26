@@ -31,6 +31,7 @@ services:
             - { name: contao.callback, table: tl_synapsis_forum, target: fields.alias.save, method: generateAlias }
             - { name: contao.callback, table: tl_synapsis_forum, target: list.label.label, method: renderLabel }
             - { name: contao.callback, table: tl_synapsis_forum, target: list.operations.topics.button, method: topicsButton }
+            - { name: contao.callback, table: tl_synapsis_forum, target: list.sorting.paste_button, method: pasteButton }
 
     # --- Themen (tl_synapsis_topic) ------------------------------------------
     schachbulle_contao_synapsis.listener.data_container.topic:
