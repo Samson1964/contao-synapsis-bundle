@@ -217,9 +217,12 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
         'pollMembers' => array
         (
             'exclude'   => true,
-            'inputType' => 'select',
-            // options_callback: ForumListener::getMemberOptions (services.yaml)
-            'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
+            // Picker statt Auswahlliste: skaliert auch bei zehntausenden
+            // Mitgliedern (Modal mit Suche und Blaettern statt 40.000 Optionen).
+            'inputType' => 'picker',
+            'foreignKey' => 'tl_member.username',
+            'eval'      => array('multiple' => true, 'fieldType' => 'checkbox', 'tl_class' => 'clr'),
+            'relation'  => array('type' => 'hasMany', 'load' => 'lazy', 'table' => 'tl_member'),
             'sql'       => "blob NULL",
         ),
         // Rollen (vererbt): Administratoren ...
@@ -234,9 +237,11 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
         'adminMembers' => array
         (
             'exclude'   => true,
-            'inputType' => 'select',
-            // options_callback: ForumListener::getMemberOptions
-            'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
+            // Picker statt Auswahlliste (siehe pollMembers).
+            'inputType' => 'picker',
+            'foreignKey' => 'tl_member.username',
+            'eval'      => array('multiple' => true, 'fieldType' => 'checkbox', 'tl_class' => 'clr'),
+            'relation'  => array('type' => 'hasMany', 'load' => 'lazy', 'table' => 'tl_member'),
             'sql'       => "blob NULL",
         ),
         // ... und Moderatoren.
@@ -251,9 +256,11 @@ $GLOBALS['TL_DCA']['tl_synapsis_forum'] = array
         'modMembers' => array
         (
             'exclude'   => true,
-            'inputType' => 'select',
-            // options_callback: ForumListener::getMemberOptions
-            'eval'      => array('multiple' => true, 'chosen' => true, 'tl_class' => 'clr'),
+            // Picker statt Auswahlliste (siehe pollMembers).
+            'inputType' => 'picker',
+            'foreignKey' => 'tl_member.username',
+            'eval'      => array('multiple' => true, 'fieldType' => 'checkbox', 'tl_class' => 'clr'),
+            'relation'  => array('type' => 'hasMany', 'load' => 'lazy', 'table' => 'tl_member'),
             'sql'       => "blob NULL",
         ),
         // Nur am Startpunkt: Moderatoren-Namen im Frontend bei jedem Forum

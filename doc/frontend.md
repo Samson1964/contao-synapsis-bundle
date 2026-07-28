@@ -82,8 +82,9 @@ der Pfadnavigation sind sowohl Foren als auch **Kategorien verlinkt**.
   kopiert die Adresse in die Zwischenablage.
 * **Als gelesen markieren** – In einem Forum lässt sich **„Forum als gelesen markieren"**, auf der
   Übersicht **„Alles als gelesen markieren"** (jeweils für angemeldete Mitglieder).
-* **Bild-Lightbox** – Bild-Anhänge öffnen sich per Klick als **Vollbild-Overlay** (Schließen per
-  Klick oder Esc).
+* **Bild-Lightbox** – Bild-Anhänge zeigen ihre Vorschau in **voller Beitragsbreite** und öffnen
+  sich per Klick als **Vollbild-Overlay** (Schließen per Klick oder Esc) – nicht in einem neuen
+  Fenster.
 * **RSS-Feed** – Übersicht und Forenansicht bieten einen **RSS-Feed** der neuesten Themen
   (Schaltfläche „RSS", zusätzlich zur automatischen Feed-Erkennung im Browser).
 * **Entwürfe** – Der Text im Antwort- bzw. Neues-Thema-Feld wird **lokal im Browser**

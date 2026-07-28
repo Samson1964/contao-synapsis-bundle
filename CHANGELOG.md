@@ -1,5 +1,33 @@
 # Synapsis Changelog
 
+## Version 1.16.0 (2026-07-28)
+
+> Keine Schema-Änderung. Da sich die Service-Registrierung geändert hat, nach dem Update den
+> **Anwendungscache neu bauen** (`cache:clear`, bei OPcache PHP neu starten) und die **Assets neu
+> veröffentlichen** (CSS geändert).
+
+### Verbessert
+
+* **Mitglieder-Auswahl skaliert jetzt**: Die Felder **„Administratoren: Mitglieder"**,
+  **„Moderatoren: Mitglieder"** und **„Umfragen: erlaubte Mitglieder"** luden bisher **alle**
+  Mitglieder in eine Auswahlliste – bei zehntausenden Mitgliedern fror das Backend ein. Die
+  Felder nutzen jetzt den **Contao-Auswahldialog** (Picker): Ein Klick öffnet die
+  Mitgliederliste des Backends mit **Suche und Blättern**; gespeichert wird unverändert die
+  ID-Liste – **bestehende Zuordnungen bleiben erhalten**, keine Migration nötig.
+
+### Behoben
+
+* **Bild-Anhänge**: Die Vorschau passt sich jetzt der **Breite des Beitrags** an (vorher fest
+  160 px), und ein Klick öffnet zuverlässig die **Lightbox** statt eines neuen Fensters – das
+  `target="_blank"` am Bild-Link entfiel, und die Lightbox-/Permalink-Skripte binden sich
+  robust dokumentweit (unabhängig davon, ob das Website-Theme Skripte verschiebt oder bündelt).
+
+### Intern
+
+* Das lokale `vendor/`-Verzeichnis gehört nicht mehr zum Arbeitsordner des Repos; die
+  Unit-Tests laufen über eine zentrale PHPUnit-Installation (für Mitentwickler unverändert:
+  `composer install` → `vendor/bin/phpunit`).
+
 ## Version 1.15.0 (2026-07-26)
 
 > Keine Schema-Änderung – nach dem Update `composer update`, Cache leeren und die **Assets neu

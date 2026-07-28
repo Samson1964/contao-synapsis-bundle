@@ -133,27 +133,6 @@ class ForumListener
     }
 
     /**
-     * Alle Mitglieder als Auswahl "Name (Benutzername)" - fuer das einzeln
-     * vergebene Umfragen-Erstellrecht.
-     *
-     * @return array<int, string>
-     */
-    public function getMemberOptions(): array
-    {
-        $options = [];
-
-        $rows = $this->connection->fetchAllAssociative('SELECT id, firstname, lastname, username FROM tl_member ORDER BY lastname, firstname, username');
-
-        foreach ($rows as $row) {
-            $name = trim(($row['firstname'] ?? '').' '.($row['lastname'] ?? ''));
-            $label = '' !== $name ? $name : (string) $row['username'];
-            $options[(int) $row['id']] = $label.' ('.$row['username'].')';
-        }
-
-        return $options;
-    }
-
-    /**
      * Belegt den Typ eines neu angelegten Knotens passend zur Position vor
      * (oncreate_callback).
      *

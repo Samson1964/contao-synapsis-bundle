@@ -42,7 +42,10 @@ Für **nicht angemeldete Besucher** (Gäste) getrennt regelbar und ebenfalls ver
 ## Administratoren und Moderatoren
 
 Je Knoten lassen sich – über **Mitgliedergruppen** und/oder **einzelne Mitglieder** –
-**Administratoren** und **Moderatoren** festlegen. Beide Rollen vererben sich nach unten. Was
+**Administratoren** und **Moderatoren** festlegen. Die einzelnen Mitglieder werden über ein
+**Dialogfenster** ausgewählt (Schaltfläche neben dem Feld): Es zeigt die Mitgliederliste des
+Backends mit **Suche und Blättern** und bleibt damit auch bei zehntausenden Mitgliedern
+flüssig. Beide Rollen vererben sich nach unten. Was
 Moderatoren dürfen, wird global in den [Einstellungen](einstellungen.md) geregelt
 (Themen anpinnen, schließen, verschieben, Beiträge bearbeiten/löschen, Mitglieder sperren);
 **Administratoren** dürfen dies immer. Details siehe [Moderation](moderation.md).
@@ -53,8 +56,9 @@ werden dabei zu Einzelnamen aufgelöst).
 
 ## Umfragen erstellen
 
-Je Knoten lässt sich – über **Gruppen** und/oder **einzelne Mitglieder** – festlegen, wer
-beim Anlegen eines Themas eine **Umfrage** erstellen darf. Auch dieses Recht vererbt sich nach
+Je Knoten lässt sich – über **Gruppen** und/oder **einzelne Mitglieder** (Auswahl über das
+Dialogfenster, wie bei den Rollen) – festlegen, wer beim Anlegen eines Themas eine
+**Umfrage** erstellen darf. Auch dieses Recht vererbt sich nach
 unten. Ist nirgends etwas vergeben, darf niemand Umfragen anlegen. Zur Bedienung siehe
 [Frontend → Umfragen](frontend.md#umfragen).
 

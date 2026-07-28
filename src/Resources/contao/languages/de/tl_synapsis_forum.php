@@ -32,12 +32,12 @@ $GLOBALS['TL_LANG']['tl_synapsis_forum']['groups']      = array('Erlaubte Mitgli
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['guestRead']   = array('Gäste dürfen lesen', 'Nicht angemeldete Besucher (Gäste) dürfen diesen Bereich lesen, aber nicht schreiben. Vererbt nach unten. Wirkungslos, wenn oben die Gruppe „Gäste" ausgewählt ist.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['guestWrite']  = array('Gäste dürfen schreiben', 'Gäste dürfen hier Themen anlegen und antworten (schließt das Lesen ein). Vererbt nach unten. Wirkungslos, wenn oben die Gruppe „Gäste" ausgewählt ist (dann nur Lesen).');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['adminGroups']  = array('Administratoren: Gruppen', 'Mitglieder dieser Gruppen sind hier Administratoren. Die Rolle wird nach unten vererbt.');
-$GLOBALS['TL_LANG']['tl_synapsis_forum']['adminMembers'] = array('Administratoren: Mitglieder', 'Zusätzlich einzelne Mitglieder als Administratoren. Die Rolle wird nach unten vererbt.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['adminMembers'] = array('Administratoren: Mitglieder', 'Zusätzlich einzelne Mitglieder als Administratoren (Auswahl über das Dialogfenster mit Suche). Die Rolle wird nach unten vererbt.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['modGroups']    = array('Moderatoren: Gruppen', 'Mitglieder dieser Gruppen sind hier Moderatoren. Die Rolle wird nach unten vererbt.');
-$GLOBALS['TL_LANG']['tl_synapsis_forum']['modMembers']   = array('Moderatoren: Mitglieder', 'Zusätzlich einzelne Mitglieder als Moderatoren. Die Rolle wird nach unten vererbt.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['modMembers']   = array('Moderatoren: Mitglieder', 'Zusätzlich einzelne Mitglieder als Moderatoren (Auswahl über das Dialogfenster mit Suche). Die Rolle wird nach unten vererbt.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['showModerators'] = array('Moderatoren im Frontend anzeigen', 'Zeigt bei jedem Forum die Namen seiner Moderatoren an (als Gruppe gewählte Moderatoren werden zu Einzelnamen aufgelöst). Gilt für den gesamten Startpunkt.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['pollGroups']  = array('Umfragen: erlaubte Gruppen', 'Mitglieder dieser Gruppen dürfen beim Anlegen eines Themas eine Umfrage erstellen. Das Recht wird nach unten vererbt.');
-$GLOBALS['TL_LANG']['tl_synapsis_forum']['pollMembers'] = array('Umfragen: erlaubte Mitglieder', 'Zusätzlich einzelne Mitglieder, die Umfragen erstellen dürfen. Das Recht wird nach unten vererbt.');
+$GLOBALS['TL_LANG']['tl_synapsis_forum']['pollMembers'] = array('Umfragen: erlaubte Mitglieder', 'Zusätzlich einzelne Mitglieder, die Umfragen erstellen dürfen (Auswahl über das Dialogfenster mit Suche). Das Recht wird nach unten vererbt.');
 $GLOBALS['TL_LANG']['tl_synapsis_forum']['published']   = array('Veröffentlichen', 'Den Eintrag im Frontend sichtbar schalten.');
 
 // Legenden
