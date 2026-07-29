@@ -35,7 +35,7 @@ composer require schachbulle/contao-synapsis-bundle
 Anschließend **die Datenbank aktualisieren** (Contao Manager → Systemwartung → „Datenbank
 aktualisieren", oder `vendor/bin/contao-console contao:migrate`). Nach jedem Update sollte
 die Datenbankaktualisierung erneut ausgeführt werden – die empfohlene Reihenfolge steht in
-den [häufigen Fragen](doc/faq.md#nach-einem-update-richtig-aktualisieren).
+den [häufigen Fragen](docs/faq.md#nach-einem-update-richtig-aktualisieren).
 
 ## Schnellstart: In wenigen Schritten zum sichtbaren Forum
 
@@ -55,19 +55,19 @@ Fertig – die Seite mit dem Modul zeigt jetzt die Forenübersicht des gewählte
 
 ## Dokumentation
 
-Das ausführliche Handbuch liegt im Ordner [`doc/`](doc/):
+Das ausführliche Handbuch liegt im Ordner [`docs/`](docs/):
 
 | Thema | Inhalt |
 |-------|--------|
-| [Grundlagen](doc/grundlagen.md) | Das Startpunkt-Konzept, die Backend-Bereiche, die Forenstruktur, das Statistik-Modul |
-| [Einstellungen je Knoten](doc/knoten-einstellungen.md) | Zugriffsschutz, Gäste, Rollen, Icons, Umfrage-Rechte, Veröffentlichung |
-| [Frontend](doc/frontend.md) | Modul einrichten, alle Ansichten, Bedienung für Mitglieder, Umfragen, Avatare, „Mein Bereich" |
-| [Moderation](doc/moderation.md) | Rollen, Anpinnen/Schließen/Verschieben, Meldungen, Massen-Moderation, Mitglieder sperren |
-| [Benachrichtigungen](doc/benachrichtigungen.md) | Benachrichtigungscenter und E-Mails |
-| [Globale Einstellungen](doc/einstellungen.md) | Farbschema, Community, Wortfilter, E-Mail-Vorlagen, Rechte der Moderatoren |
-| [Import](doc/import.md) | Übernahme aus phpBB und aus dem Support-Ticket-System |
-| [Häufige Fragen](doc/faq.md) | „Warum wird mein Forum nicht angezeigt?", Update-Reihenfolge, Problemlösung |
-| [Für Entwickler](doc/entwicklung.md) | Kompatibilität, Struktur, Datenbank, Tests, Konventionen |
+| [Grundlagen](docs/grundlagen.md) | Das Startpunkt-Konzept, die Backend-Bereiche, die Forenstruktur, das Statistik-Modul |
+| [Einstellungen je Knoten](docs/knoten-einstellungen.md) | Zugriffsschutz, Gäste, Rollen, Icons, Umfrage-Rechte, Veröffentlichung |
+| [Frontend](docs/frontend.md) | Modul einrichten, alle Ansichten, Bedienung für Mitglieder, Umfragen, Avatare, „Mein Bereich" |
+| [Moderation](docs/moderation.md) | Rollen, Anpinnen/Schließen/Verschieben, Meldungen, Massen-Moderation, Mitglieder sperren |
+| [Benachrichtigungen](docs/benachrichtigungen.md) | Benachrichtigungscenter und E-Mails |
+| [Globale Einstellungen](docs/einstellungen.md) | Farbschema, Community, Wortfilter, E-Mail-Vorlagen, Rechte der Moderatoren |
+| [Import](docs/import.md) | Übernahme aus phpBB und aus dem Support-Ticket-System |
+| [Häufige Fragen](docs/faq.md) | „Warum wird mein Forum nicht angezeigt?", Update-Reihenfolge, Problemlösung |
+| [Für Entwickler](docs/entwicklung.md) | Kompatibilität, Struktur, Datenbank, Tests, Konventionen |
 
 Die Änderungen je Version dokumentiert das [CHANGELOG](CHANGELOG.md).
 
