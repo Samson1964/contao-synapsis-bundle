@@ -1,5 +1,15 @@
 # Synapsis Changelog
 
+## Version 1.17.1 (2026-07-28)
+
+> Keine Schema-Änderung, reine Korrektur – nach dem Update genügt `composer update`.
+
+### Behoben
+
+* **Dokumentations-Ordner**: Version 1.17.0 hatte die Umbenennung des Handbuch-Ordners von
+  `doc/` nach `docs/` (Repo-Konvention) versehentlich rückgängig gemacht – die Links in der
+  README liefen dadurch ins Leere. Der Ordner heißt wieder `docs/`.
+
 ## Version 1.17.0 (2026-07-28)
 
 > Keine Schema-Änderung. Da sich die Service-Registrierung geändert hat, nach dem Update den
