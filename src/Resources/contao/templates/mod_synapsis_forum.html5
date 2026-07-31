@@ -44,7 +44,7 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
 
     <?php if (!empty($this->newestTopics)): ?>
         <section class="synapsis-latest">
-            <h3 class="synapsis-latest__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLatest'] ?? 'Neueste Themen' ?></h3>
+            <h3 class="synapsis-latest__title"><?= $GLOBALS['TL_LANG']['MSC']['synapsisLatest'] ?? 'Neueste Beiträge' ?></h3>
             <ul class="synapsis-latest__list">
                 <?php foreach ($this->newestTopics as $topic): ?>
                     <li class="synapsis-latest__item">

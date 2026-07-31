@@ -63,6 +63,11 @@ Im Modul **Forum** wird die Struktur wie die Contao-Seitenstruktur bearbeitet:
 ein Forum enthält Themen. Kategorien selbst können keine Themen enthalten. Unterhalb eines
 Forums lässt sich nichts einfügen – die entsprechende Schaltfläche ist im Baum deaktiviert.
 
+**Nur einen Knoten anzeigen:** Ein Klick auf den **Namen** eines Startpunkts, einer Kategorie
+oder eines Forums grenzt den Baum auf diesen Knoten ein (wie in der Contao-Seitenstruktur).
+Über dem Baum erscheint dann ein **Navigationspfad**: „Alle" hebt die Eingrenzung auf, die
+Zwischenknoten führen eine Ebene höher. Die Auswahl bleibt gemerkt, bis sie zurückgesetzt wird.
+
 Welche Einstellungen die einzelnen Knoten haben (Zugriffsschutz, Gäste, Rollen, Icons usw.),
 beschreibt [Einstellungen je Knoten](knoten-einstellungen.md).
 

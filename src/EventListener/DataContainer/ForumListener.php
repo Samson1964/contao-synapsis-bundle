@@ -13,10 +13,12 @@ namespace Schachbulle\ContaoSynapsisBundle\EventListener\DataContainer;
 use Contao\Backend;
 use Contao\Controller;
 use Contao\DataContainer;
+use Contao\Environment;
 use Contao\Image;
 use Contao\Input;
 use Contao\Message;
 use Contao\StringUtil;
+use Contao\System;
 use Doctrine\DBAL\Connection;
 use Schachbulle\ContaoSynapsisBundle\Frontend\LucideIcons;
 
@@ -323,7 +325,99 @@ class ForumListener
             $label = '<span class="tl_gray">'.$label.'</span>';
         }
 
+        // Titel als Link "Nur diesen Knoten anzeigen" (wie die Seitenstruktur
+        // mit pn=; hier nn=). Der Navigationspfad entsteht in addBreadcrumb().
+        if (($row['id'] ?? 0) > 0) {
+            $label = '<a href="'.Backend::addToUrl('nn='.(int) $row['id']).'" title="'
+                .StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['selectNode'] ?? 'Knoten auswählen').'">'.$label.'</a>';
+        }
+
         return $image.' '.$label.$suffix;
+    }
+
+    /**
+     * "Nur diesen Knoten anzeigen": Merkt sich einen ueber ?nn=<id> gewaehlten
+     * Knoten in der Backend-Sitzung, grenzt den Baum auf diesen Knoten ein und
+     * blendet darueber einen Navigationspfad ein (config.onload).
+     *
+     * Das Muster entspricht der Contao-Seitenstruktur (dort Parameter pn= und
+     * Backend::addPagesBreadcrumb); die Knoten-Titel im Baum sind ueber
+     * renderLabel() als nn=-Links anklickbar. nn=0 hebt die Eingrenzung auf.
+     * Existiert der gemerkte Knoten nicht mehr (z. B. geloescht), wird die
+     * Eingrenzung stillschweigend verworfen.
+     *
+     * @param mixed $dc Data-Container (hier ungenutzt)
+     */
+    public function addBreadcrumb($dc = null): void
+    {
+        $session = System::getContainer()->get('request_stack')->getSession()->getBag('contao_backend');
+
+        // Klick auf einen Knoten: merken und den Parameter aus der URL entfernen
+        // (Redirect wie im Core, damit die Adresse "sauber" bleibt).
+        if (null !== Input::get('nn')) {
+            $node = (int) Input::get('nn');
+
+            if ($node > 0) {
+                $session->set('tl_synapsis_forum_node', $node);
+            } else {
+                $session->remove('tl_synapsis_forum_node');
+            }
+
+            Controller::redirect(preg_replace('/&nn=[^&]*/', '', (string) Environment::get('request')));
+        }
+
+        $node = (int) $session->get('tl_synapsis_forum_node');
+
+        if ($node < 1) {
+            return;
+        }
+
+        // Kette vom gewaehlten Knoten bis zum Startpunkt aufbauen.
+        $chain = [];
+        $id = $node;
+        $guard = 0;
+
+        while ($id > 0 && $guard++ < 50) {
+            $row = $this->connection->fetchAssociative('SELECT id, pid, type, title, published, closed FROM tl_synapsis_forum WHERE id = ?', [$id]);
+
+            if (false === $row || null === $row) {
+                $session->remove('tl_synapsis_forum_node');
+
+                return;
+            }
+
+            $chain[] = $row;
+            $id = (int) $row['pid'];
+        }
+
+        // Baum auf den Knoten eingrenzen; visibleRoot zeigt den Knoten selbst an.
+        $GLOBALS['TL_DCA']['tl_synapsis_forum']['list']['sorting']['root'] = [$node];
+        $GLOBALS['TL_DCA']['tl_synapsis_forum']['list']['sorting']['visibleRoot'] = $node;
+
+        // Navigationspfad: "Alle Foren" > Startpunkt > ... > gewaehlter Knoten.
+        $links = [];
+        $links[] = Image::getHtml('pagemounts.svg').' <a href="'.Backend::addToUrl('nn=0').'" title="'
+            .StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['selectAllNodes'] ?? 'Alle Knoten auswählen').'">'
+            .($GLOBALS['TL_LANG']['MSC']['filterAll'] ?? 'Alle').'</a>';
+
+        foreach (array_reverse($chain) as $row) {
+            $icon = $this->renderLabel($row, '', null, '', true);
+            $title = StringUtil::specialchars((string) $row['title']);
+
+            if ((int) $row['id'] === $node) {
+                $links[] = $icon.' '.$title;
+            } else {
+                $links[] = $icon.' <a href="'.Backend::addToUrl('nn='.(int) $row['id']).'" title="'
+                    .StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['selectNode'] ?? 'Knoten auswählen').'">'.$title.'</a>';
+            }
+        }
+
+        $GLOBALS['TL_DCA']['tl_synapsis_forum']['list']['sorting']['breadcrumb'] = '
+<nav aria-label="'.StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['breadcrumbMenu'] ?? 'Navigationspfad').'">
+  <ul id="tl_breadcrumb">
+    <li>'.implode(' › </li><li>', $links).'</li>
+  </ul>
+</nav>';
     }
 
     /**

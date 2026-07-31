@@ -486,7 +486,7 @@ class SynapsisForum extends Module
 
         $this->Template->breadcrumb = $this->buildBreadcrumb(0);
         $this->Template->categories = $categories;
-        $this->Template->newestTopics = $this->findNewestTopics(10);
+        $this->Template->newestTopics = $this->findNewestPosts(10);
         $this->Template->statistics = $this->buildStatistics();
         $this->Template->online = $this->onlineUsers();
 
@@ -3088,28 +3088,65 @@ class SynapsisForum extends Module
     }
 
     /**
-     * Neueste Themen der fuer den Besucher lesbaren Foren.
+     * "Neueste Beitraege": die zuletzt aktiven Themen der lesbaren Foren, je
+     * Thema mit Datum und Verfasser des NEUESTEN Beitrags (nicht des
+     * Themenerstellers). Der Link fuehrt direkt zu diesem Beitrag - inklusive
+     * der richtigen Seite der Beitragsliste und der Sprungmarke #post-<id>.
      *
      * @return array<array<string, mixed>>
      */
-    private function findNewestTopics(int $limit): array
+    private function findNewestPosts(int $limit): array
     {
         $forumIds = $this->readableForumIds();
         $placeholders = implode(',', array_fill(0, count($forumIds), '?'));
 
-        $topics = Database::getInstance()
-            ->prepare('SELECT * FROM tl_synapsis_topic WHERE pid IN ('.$placeholders.') AND published = ? ORDER BY date DESC')
+        // Je Thema den neuesten veroeffentlichten Beitrag ermitteln (Anti-Join:
+        // es gibt keinen juengeren Beitrag p2 im selben Thema; bei gleichem
+        // Datum entscheidet die hoehere Beitrags-ID).
+        $rows = Database::getInstance()
+            ->prepare(
+                'SELECT t.*, p.id AS lastPostId, p.date AS lastPostDate, p.author AS lastPostAuthor, p.authorName AS lastPostAuthorName'
+                .' FROM tl_synapsis_topic t'
+                .' INNER JOIN tl_synapsis_post p ON p.pid = t.id AND p.published = ?'
+                .' LEFT JOIN tl_synapsis_post p2 ON p2.pid = t.id AND p2.published = ?'
+                .' AND (p2.date > p.date OR (p2.date = p.date AND p2.id > p.id))'
+                .' WHERE p2.id IS NULL AND t.published = ? AND t.pid IN ('.$placeholders.')'
+                .' ORDER BY p.date DESC'
+            )
             ->limit($limit)
-            ->execute(...array_merge($forumIds, ['1']))
+            ->execute(...array_merge(['1', '1', '1'], $forumIds))
         ;
 
-        $rows = [];
+        $perPage = max(1, (int) $this->synapsis_perPage);
+        $result = [];
 
-        while ($topics->next()) {
-            $rows[] = $this->decorateTopic($topics->row());
+        while ($rows->next()) {
+            $row = $rows->row();
+            $topic = $this->decorateTopic($row);
+
+            // Seite des Beitrags in der chronologischen Beitragsliste bestimmen,
+            // damit der Anker #post-<id> auch bei Seitennummerierung trifft.
+            $position = (int) Database::getInstance()
+                ->prepare('SELECT COUNT(*) FROM tl_synapsis_post WHERE pid = ? AND published = ? AND (date < ? OR (date = ? AND id <= ?))')
+                ->execute((int) $row['id'], '1', (int) $row['lastPostDate'], (int) $row['lastPostDate'], (int) $row['lastPostId'])
+                ->row(true)[0]
+            ;
+            $page = (int) ceil(max(1, $position) / $perPage);
+
+            $params = ['topic' => (int) $row['id']];
+
+            if ($page > 1) {
+                $params['page_p'.$this->id] = $page;
+            }
+
+            $topic['url'] = $this->pageUrl($params).'#post-'.(int) $row['lastPostId'];
+            $topic['authorName'] = $this->authorLabel((int) $row['lastPostAuthor'], (string) $row['lastPostAuthorName']);
+            $topic['dateFormatted'] = $this->formatDate((int) $row['lastPostDate']);
+
+            $result[] = $topic;
         }
 
-        return $rows;
+        return $result;
     }
 
     /**
@@ -4248,7 +4285,9 @@ class SynapsisForum extends Module
             .'menubar:false,'
             .'height:260,'
             .'plugins:"lists link image",'
-            .'toolbar:"bold italic | bullist numlist | link image",'
+            // blockquote ist ein TinyMCE-Kernformat (kein Plugin noetig): der
+            // Knopf setzt die aktuelle Auswahl als Zitat, wie beim Zitieren.
+            .'toolbar:"bold italic blockquote | bullist numlist | link image",'
             .'branding:false'
             .'});});</script>'
         ;

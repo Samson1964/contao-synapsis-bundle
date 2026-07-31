@@ -34,7 +34,7 @@ Das Modul kennt mehrere Ansichten, die es automatisch über URL-Parameter umscha
 
 | Aufruf                | Ansicht                                                              |
 |-----------------------|----------------------------------------------------------------------|
-| (ohne Parameter)      | **Übersicht**: Kategorien mit Foren, neueste Themen, Statistiken      |
+| (ohne Parameter)      | **Übersicht**: Kategorien mit Foren, neueste Beiträge, Statistiken    |
 | `?category=<id>`      | **Kategorie**: nur die Foren dieser Kategorie                        |
 | `?forum=<id>`         | **Forum**: Themenliste (seitenweise, angepinnte oben)                |
 | `?topic=<id>`         | **Thema**: Beiträge mit Antwortformular, Umfrage usw.                |
@@ -52,9 +52,13 @@ der Pfadnavigation sind sowohl Foren als auch **Kategorien verlinkt**.
 ## Themen und Beiträge (für Mitglieder)
 
 * **Neues Thema / Antworten** – Angemeldete Mitglieder mit Schreibrecht können Themen anlegen
-  und antworten. Als Editor kommt **TinyMCE** zum Einsatz (Fett, Kursiv, Listen, Links,
-  Bilder); zusätzlich gibt es eine **Smiley-Leiste** zum schnellen Einfügen von Emojis. Sind
+  und antworten. Als Editor kommt **TinyMCE** zum Einsatz (Fett, Kursiv, **Zitat**, Listen,
+  Links, Bilder); der **Zitat-Knopf** setzt den gerade ausgewählten Text als Zitatblock.
+  Zusätzlich gibt es eine **Smiley-Leiste** zum schnellen Einfügen von Emojis. Sind
   Dateianhänge erlaubt, lassen sich Dateien hochladen; Bilder werden im Beitrag eingebunden.
+* **Neueste Beiträge** – Die Übersicht zeigt die zuletzt aktiven Themen mit **Verfasser und
+  Datum des jeweils neuesten Beitrags**; der Link führt direkt zu diesem Beitrag (inklusive
+  der richtigen Seite der Beitragsliste).
 * **Gelöschte Konten** – Wird ein Mitgliedskonto später gelöscht, erscheint als Autor
   „Gast (früherer Benutzername)", damit die Beiträge zuordenbar bleiben.
 * **Gefällt mir** – Beiträge können mit „Gefällt mir" markiert werden (nicht der eigene). Unter

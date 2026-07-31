@@ -1,5 +1,27 @@
 # Synapsis Changelog
 
+## Version 1.17.0 (2026-07-28)
+
+> Keine Schema-Änderung. Da sich die Service-Registrierung geändert hat, nach dem Update den
+> **Anwendungscache neu bauen** (`cache:clear`, bei OPcache PHP neu starten).
+
+### Hinzugefügt
+
+* **Backend: „Nur diesen Knoten anzeigen"** – Ein Klick auf den **Namen** eines Startpunkts,
+  einer Kategorie oder eines Forums grenzt die Baumansicht auf diesen Knoten ein (wie in der
+  Contao-Seitenstruktur). Über dem Baum erscheint ein **Navigationspfad** („Alle" › Startpunkt
+  › … › Knoten) zum Zurückspringen; die Auswahl bleibt in der Sitzung gemerkt.
+* **Zitat-Knopf im Editor**: Die TinyMCE-Werkzeugleiste enthält jetzt **„Blockquote"** – der
+  gerade ausgewählte Text wird als Zitatblock formatiert (gleiche Darstellung wie beim
+  „Zitieren" eines Beitrags).
+
+### Geändert
+
+* **„Neueste Themen" → „Neueste Beiträge"**: Die Liste auf der Übersicht zeigt jetzt
+  **Verfasser und Datum des jeweils neuesten Beitrags** (statt des Themenerstellers) und ist
+  danach sortiert. Der Link führt **direkt zum neuesten Beitrag** – inklusive der richtigen
+  Seite der Beitragsliste und Sprungmarke.
+
 ## Version 1.16.0 (2026-07-28)
 
 > Keine Schema-Änderung. Da sich die Service-Registrierung geändert hat, nach dem Update den
