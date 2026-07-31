@@ -1,0 +1,45 @@
+# Quelle fuer die Metadaten im Contao Manager (contao/package-metadata).
+# Aenderungen hier werden von Claude in den Fork uebertragen.
+# Der englische Block wird beim Abgleich ergaenzt, falls er fehlt.
+
+de:
+    title: Synapsis-Forum
+    description: >
+        Ein vollwertiges Forum für Contao. Die Benutzerverwaltung läuft komplett über die Contao-Mitglieder.
+
+        Du kannst mehrere getrennte Foren auf einer Installation betreiben, verwaltet in einer Baumstruktur wie die Seitenstruktur. Der Zugriffsschutz arbeitet mit Vererbung über Mitgliedergruppen, Gäste bekommen getrennte Lese- und Schreibrechte. Themen und Beiträge bieten einen Editor, Smileys, Dateianhänge, Bild-Lightbox, Zitate, Signaturen und Umfragen.
+
+        Dazu kommen Mitgliederprofile, Rangstufen, Forensuche, RSS-Feeds, Benachrichtigungen im Forum und per E-Mail, Abonnements, Wortfilter, Statistiken und fünf Farbschemata. Für die Moderation gibt es vererbte Rollen, Anpinnen, Schließen, Verschieben, Meldungen, Massen-Moderation und Mitgliedersperren.
+
+        Diese Erweiterung wurde komplett mit Claude Code und den Modellen Opus 4.8/5 und Fable 5 entwickelt.
+    keywords:
+        - Forum
+        - Community
+        - Diskussion
+        - Beiträge
+        - Moderation
+        - Umfrage
+    support:
+        issues: https://github.com/Samson1964/contao-synapsis-bundle/issues
+        source: https://github.com/Samson1964/contao-synapsis-bundle
+
+en:
+    title: Synapsis Forum
+    description: >
+        A full-featured forum for Contao. User management is handled entirely by the Contao members.
+
+        You can run several separate forums on a single installation, organized in a tree structure like the site structure. Access control is inherited via member groups, with separate read and write permissions for guests. Topics and posts offer an editor, smileys, file attachments, an image lightbox, quotes, signatures and polls.
+
+        On top of that there are member profiles, ranks, a forum search, RSS feeds, notifications in the forum and by email, subscriptions, a word filter, statistics and five color schemes. Moderation covers inherited roles, pinning, closing, moving, reports, bulk moderation and member bans.
+
+        This extension was developed entirely with Claude Code, using the Opus 4.8/5 and Fable 5 models.
+    keywords:
+        - forum
+        - community
+        - discussion
+        - posts
+        - moderation
+        - poll
+    support:
+        issues: https://github.com/Samson1964/contao-synapsis-bundle/issues
+        source: https://github.com/Samson1964/contao-synapsis-bundle
