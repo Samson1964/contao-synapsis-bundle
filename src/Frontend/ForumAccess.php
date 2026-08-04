@@ -32,6 +32,12 @@ namespace Schachbulle\ContaoSynapsisBundle\Frontend;
  * "Gaeste duerfen lesen" bedeutet oeffentlich lesbar - dann duerfen auch
  * angemeldete Mitglieder ohne passende Gruppe lesen (aber nicht schreiben).
  *
+ * WICHTIG: Ein geschuetzter Knoten, dessen Gruppen die Gaeste-Gruppe NICHT
+ * enthalten, blockiert den oeffentlichen Zugriff fuer seinen gesamten
+ * Teilbereich. Die Checkboxen an untergeordneten Knoten koennen einen solchen
+ * uebergeordneten Schutz NICHT aufheben (sonst wuerde z. B. ein importiertes
+ * Forum mit "Gaeste duerfen lesen" einen geschuetzten Startpunkt oeffnen).
+ *
  * Veroeffentlichung wird immer geprueft: ist ein Knoten der Kette unveroeffent-
  * licht, ist der Bereich fuer niemanden sichtbar.
  *
@@ -61,10 +67,13 @@ class ForumAccess
 
         // Gaeste gelten als Gruppe -1. Lesbar, wenn die Gruppenpruefung besteht
         // (Mitglied in erlaubter Gruppe bzw. Gast ueber die Gaeste-Gruppe) ODER
-        // eine Gaeste-Checkbox den Bereich oeffentlich lesbar macht.
+        // eine Gaeste-Checkbox den Bereich oeffentlich lesbar macht - Letzteres
+        // aber nur, wenn kein geschuetzter Knoten der Kette Gaeste ausschliesst
+        // (ein Kind kann einen uebergeordneten Schutz nicht aufheben).
         $effectiveGroups = $isGuest ? [self::GUEST_GROUP] : $memberGroupIds;
 
-        return $this->memberAllowed($chain, $effectiveGroups) || $this->guestAllowed($chain, false);
+        return $this->memberAllowed($chain, $effectiveGroups)
+            || (!$this->guestBlocked($chain) && $this->guestAllowed($chain, false));
     }
 
     /**
@@ -106,6 +115,39 @@ class ForumAccess
     {
         foreach ($chain as $node) {
             if (!empty($node['protected'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Schliesst ein geschuetzter Knoten der Kette Gaeste aus? Das tut er, wenn
+     * er Gaeste weder ueber die Gaeste-Gruppe (-1) noch ueber eine EIGENE
+     * Checkbox (guestRead/guestWrite) zulaesst. Dann ist der gesamte
+     * Teilbereich nicht oeffentlich - Checkboxen ANDERER Knoten (ob ueber-
+     * oder untergeordnet) koennen diesen Schutz nicht aufheben. So kann weder
+     * ein Kind einen geschuetzten Startpunkt oeffnen (z. B. ein importiertes
+     * Forum mit guestRead) noch eine offene Kategorie ein Forum, das sich
+     * selbst auf Mitgliedergruppen beschraenkt.
+     *
+     * @param array<array<string, mixed>> $chain
+     */
+    private function guestBlocked(array $chain): bool
+    {
+        foreach ($chain as $node) {
+            if (empty($node['protected'])) {
+                continue;
+            }
+
+            // Eigene Freigabe des geschuetzten Knotens (bewusste Entscheidung
+            // des Verantwortlichen) - dieser Knoten blockiert nicht.
+            if (!empty($node['guestRead']) || !empty($node['guestWrite'])) {
+                continue;
+            }
+
+            if (!\in_array(self::GUEST_GROUP, $this->normalizeGroups($node['groups'] ?? null), true)) {
                 return true;
             }
         }

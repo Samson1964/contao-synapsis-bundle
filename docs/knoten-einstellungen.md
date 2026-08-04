@@ -39,6 +39,14 @@ Für **nicht angemeldete Besucher** (Gäste) getrennt regelbar und ebenfalls ver
 > Hinweis: Ist die fiktive Gruppe „Gäste" bereits in den erlaubten Mitgliedergruppen
 > ausgewählt, dürfen Gäste dort nur **lesen**; die Schreib-Checkbox bleibt dann ohne Wirkung.
 
+**Ein geschützter Bereich bleibt geschützt:** Ist ein Knoten per Zugriffsschutz auf
+Mitgliedergruppen beschränkt und lässt Gäste weder über die Gäste-Gruppe noch über seine
+**eigenen** Checkboxen zu, ist sein gesamter Teilbereich **nicht öffentlich** – die
+Gäste-Checkboxen anderer Knoten (egal ob über- oder untergeordnet) können diesen Schutz
+nicht aufheben. Ein untergeordnetes Forum mit „Gäste dürfen lesen" (etwa aus einem
+[Import](import.md)) öffnet also **keinen** geschützten Startpunkt; umgekehrt kann sich ein
+Forum unterhalb eines offenen Bereichs jederzeit selbst auf Mitgliedergruppen beschränken.
+
 ## Administratoren und Moderatoren
 
 Je Knoten lassen sich – über **Mitgliedergruppen** und/oder **einzelne Mitglieder** –

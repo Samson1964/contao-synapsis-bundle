@@ -7,9 +7,12 @@ Zur Auswahl stehen ein **phpBB-Forum** (CSV-Export) und – falls vorhanden – 
 **Support-Ticket-System** (Fast-Media) aus der aktuellen Datenbank. Beide Wege hängen den
 Import in eine **Kategorie** ein: die fremden Foren entstehen als Foren darunter.
 
-> Hinweis für beide Formate: Importierte Foren werden zunächst **öffentlich lesbar** angelegt,
-> damit die Inhalte sichtbar sind – der Zugriffsschutz lässt sich anschließend je Forum
-> anpassen.
+> Hinweis für beide Formate: Importierte Foren werden zunächst **öffentlich lesbar** angelegt
+> („Gäste dürfen lesen"), damit die Inhalte sichtbar sind – der Zugriffsschutz lässt sich
+> anschließend je Forum anpassen. Liegt die Ziel-Kategorie in einem **geschützten**
+> Startpunkt, bleibt dessen Schutz bestehen: die importierten Foren sind dann nur für die
+> erlaubten Mitgliedergruppen sichtbar (siehe
+> [Gäste-Zugriff](knoten-einstellungen.md#gäste-zugriff)).
 
 ## Import aus phpBB
 

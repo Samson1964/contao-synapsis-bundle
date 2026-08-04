@@ -110,13 +110,60 @@ class ForumAccessTest extends TestCase
 
     public function testGuestReadWirdVererbt(): void
     {
+        // Kategorie oeffnet fuer Gaeste, das Forum darunter ist ungeschuetzt:
+        // die Oeffnung vererbt sich nach unten.
         $chain = [
-            $this->node(['protected' => true, 'groups' => [5]]),   // Forum: mitgliederpflichtig
+            $this->node(),                                         // Forum: erbt
             $this->node(['guestRead' => true]),                    // Kategorie: Gaeste duerfen lesen
         ];
 
         $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
         $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testEigenerSchutzUebersteuertVererbtesGuestRead(): void
+    {
+        // Die Kategorie ist oeffentlich lesbar, das Forum darunter schuetzt
+        // sich selbst auf Gruppe 5 (ohne eigene Gaeste-Freigabe): die geerbte
+        // Oeffnung greift dort NICHT - ein Knoten kann nach unten verschaerfen.
+        $chain = [
+            $this->node(['protected' => true, 'groups' => [5]]),   // Forum: mitgliederpflichtig
+            $this->node(['guestRead' => true]),                    // Kategorie: Gaeste duerfen lesen
+        ];
+
+        $this->assertFalse($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canRead($chain, self::MEMBER, [1]));
+        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [5]));
+    }
+
+    public function testKindCheckboxOeffnetGeschuetztenStartpunktNicht(): void
+    {
+        // Der Startpunkt ist auf Gruppe 5 beschraenkt; ein Forum darunter hat
+        // guestRead (wie es der Import anlegt). Das Kind darf den Schutz des
+        // Startpunkts NICHT aufheben - weder fuer Gaeste noch fuer Mitglieder
+        // fremder Gruppen.
+        $chain = [
+            $this->node(['guestRead' => true]),                    // Forum (importiert)
+            $this->node(),                                         // Kategorie
+            $this->node(['protected' => true, 'groups' => [5]]),   // Startpunkt
+        ];
+
+        $this->assertFalse($this->access->canRead($chain, self::GUEST, []));
+        $this->assertFalse($this->access->canRead($chain, self::MEMBER, [1]));
+        $this->assertTrue($this->access->canRead($chain, self::MEMBER, [5]));
+        $this->assertFalse($this->access->canWrite($chain, self::GUEST, []));
+    }
+
+    public function testKindCheckboxUnterStartpunktMitGaesteGruppeErlaubt(): void
+    {
+        // Erlaubt der geschuetzte Startpunkt Gaeste ueber die Gaeste-Gruppe,
+        // wirkt die Checkbox eines Kindes normal (kein blockierender Knoten).
+        $chain = [
+            $this->node(['guestRead' => true]),                    // Forum (importiert)
+            $this->node(['protected' => true, 'groups' => [5, -1]]), // Startpunkt mit Gaesten
+        ];
+
+        $this->assertTrue($this->access->canRead($chain, self::GUEST, []));
     }
 
     // --- Gaeste-Gruppe (-1) hat Vorrang vor den Checkboxen -------------------

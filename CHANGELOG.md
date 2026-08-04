@@ -1,5 +1,28 @@
 # Synapsis Changelog
 
+## Version 1.17.2 (2026-07-28)
+
+> **Sicherheits-Update – bitte zeitnah einspielen.** Keine Schema-Änderung; nach dem Update
+> `composer update` und den Cache leeren.
+
+### Behoben (Sicherheit)
+
+* **Geschützter Startpunkt war für Gäste einsehbar**: Zwei Lücken ließen Inhalte eines per
+  Zugriffsschutz auf Mitgliedergruppen beschränkten Startpunkts nach außen:
+  1. Die Gäste-Checkbox eines **untergeordneten** Knotens hob den Schutz des gesamten
+     Bereichs auf. Besonders betroffen: **importierte Foren**, die standardmäßig „Gäste
+     dürfen lesen" tragen – sie machten den geschützten Startpunkt samt Inhalten öffentlich.
+     Jetzt gilt: Ein geschützter Knoten ohne **eigene** Gäste-Freigabe (Gäste-Gruppe oder
+     eigene Checkbox) blockiert den öffentlichen Zugriff für seinen gesamten Teilbereich –
+     Checkboxen anderer Knoten können das nicht aufheben. Das schließt auch die umgekehrte
+     Richtung: ein selbst geschütztes Forum bleibt geschützt, auch wenn eine übergeordnete
+     Kategorie öffentlich lesbar ist.
+  2. Die **Kategorie-Einzelansicht** (`?category=<id>`) prüfte den Lesezugriff nicht und
+     zeigte Gästen Titel und Foren eines geschützten Bereichs.
+* Abgesichert durch einen neuen Sieben-Wege-Lecktest (Übersicht, Forum, Thema, Kategorie,
+  Suche, beide Feeds – jeweils als Gast) samt Import-Szenario sowie vier neue/geschärfte
+  Unit-Tests der Zugriffslogik (jetzt 92 Tests).
+
 ## Version 1.17.1 (2026-07-28)
 
 > Keine Schema-Änderung, reine Korrektur – nach dem Update genügt `composer update`.

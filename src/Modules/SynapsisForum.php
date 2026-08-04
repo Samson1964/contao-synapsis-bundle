@@ -527,7 +527,9 @@ class SynapsisForum extends Module
     /**
      * Laedt eine veroeffentlichte Kategorie dieses Startpunkts (oder null). Die
      * Zugehoerigkeit zum Startpunkt wird ueber die Knotenliste geprueft, damit
-     * keine fremde Kategorie aufgerufen werden kann.
+     * keine fremde Kategorie aufgerufen werden kann; zusaetzlich muss der
+     * Besucher LESEZUGRIFF auf die Kategorie haben (sonst zeigte der Direkt-
+     * aufruf ?category=<id> Gaesten die Inhalte eines geschuetzten Bereichs).
      *
      * @return array<string, mixed>|null
      */
@@ -539,7 +541,7 @@ class SynapsisForum extends Module
             ->row()
         ;
 
-        if (empty($row) || !$this->belongsToRoot($id)) {
+        if (empty($row) || !$this->belongsToRoot($id) || !$this->isVisible($id)) {
             return null;
         }
 
