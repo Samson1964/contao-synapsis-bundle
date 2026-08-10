@@ -551,6 +551,51 @@
     content: none !important;
 }
 
+/* --- Zitate in Beitraegen ------------------------------------------------
+   Ein Zitat muss sich beim Lesen sofort vom eigenen Text abheben, ohne ihn zu
+   dominieren: leicht abgesetzte Flaeche mit vollem, feinem Rahmen. Bewusst
+   kein farbiger Seitenbalken und keine Akzentfarbe - die bleibt Aktionen und
+   Zustaenden vorbehalten. Alle Angaben defensiv, weil Website-Themes
+   blockquote gern mit eigenem Balken, Kursivschrift oder riesigen
+   Anfuehrungszeichen versehen. */
+.synapsis .synapsis-post__text blockquote {
+    margin: 0.9em 0;
+    padding: 0.7em 0.9em !important;
+    border: 1px solid var(--syn-border) !important;
+    border-radius: var(--syn-radius);
+    background: var(--syn-bg-alt) !important;
+    color: inherit;
+    font-style: normal;
+    font-size: inherit;
+    quotes: none;
+}
+
+/* Theme-Anfuehrungszeichen (::before/::after am Zitat) entfernen. */
+.synapsis .synapsis-post__text blockquote::before,
+.synapsis .synapsis-post__text blockquote::after {
+    content: none !important;
+}
+
+/* Kein zusaetzlicher Abstand an den Raendern des Zitats. */
+.synapsis .synapsis-post__text blockquote > :first-child { margin-top: 0; }
+.synapsis .synapsis-post__text blockquote > :last-child { margin-bottom: 0; }
+
+/* "Name schrieb:" - die Kopfzeile, die beim Zitieren eines Beitrags entsteht.
+   Wird nur getroffen, wenn der erste Absatz ausschliesslich aus fettem Text
+   besteht; Browser ohne :has() zeigen sie schlicht als fetten Absatz. */
+.synapsis .synapsis-post__text blockquote > p:first-child:has(> strong:only-child) {
+    margin-bottom: 0.5em;
+    padding-bottom: 0.4em;
+    border-bottom: 1px solid var(--syn-border);
+    font-size: 0.9em;
+}
+
+/* Zitat im Zitat: nur der Rahmen staffelt, die Flaeche wird nicht immer
+   dunkler (sonst sind tiefe Zitatketten nicht mehr lesbar). */
+.synapsis .synapsis-post__text blockquote blockquote {
+    background: transparent !important;
+}
+
 .synapsis-post__attachments {
     margin-top: 1rem;
     padding-top: 0.75rem;

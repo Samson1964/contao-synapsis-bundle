@@ -64,7 +64,10 @@ der Pfadnavigation sind sowohl Foren als auch **Kategorien verlinkt**.
 * **Gefällt mir** – Beiträge können mit „Gefällt mir" markiert werden (nicht der eigene). Unter
   dem Beitrag stehen Anzahl und Namen.
 * **Zitieren** – Über „Zitieren" wird der Beitrag als Zitat ins Antwortfeld übernommen; die
-  zitierte Person erhält eine [Benachrichtigung](benachrichtigungen.md).
+  zitierte Person erhält eine [Benachrichtigung](benachrichtigungen.md). Zitate erscheinen im
+  Beitrag als **abgesetzter Block** (leicht getönte Fläche mit feinem Rahmen, darüber die Zeile
+  „… schrieb:"); auch verschachtelte Zitate bleiben lesbar. Denselben Block erzeugt der
+  **Zitat-Knopf** im Editor für den markierten Text.
 * **Bearbeiten / Löschen** – Den **eigenen** Beitrag darf man nachträglich bearbeiten oder
   löschen, solange das Thema offen ist. Nach dem Bearbeiten erscheint ein Hinweis „Zuletzt
   bearbeitet von … am …". Moderatoren/Administratoren dürfen fremde Beiträge bearbeiten/löschen,

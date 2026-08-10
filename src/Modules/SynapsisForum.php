@@ -4312,6 +4312,17 @@ class SynapsisForum extends Module
             // blockquote ist ein TinyMCE-Kernformat (kein Plugin noetig): der
             // Knopf setzt die aktuelle Auswahl als Zitat, wie beim Zitieren.
             .'toolbar:"bold italic blockquote | bullist numlist | link image",'
+            // Zitate im Editor so darstellen wie spaeter im Beitrag, damit beim
+            // Schreiben sichtbar ist, was zitiert ist. Der Editor laeuft in
+            // einem eigenen Dokument, erbt das Forum-CSS also nicht; deshalb
+            // hier die Grundwerte des Standardschemas.
+            .'content_style:'.json_encode(
+                'blockquote{margin:.9em 0;padding:.7em .9em;border:1px solid #dde3e8;'
+                .'border-radius:6px;background:#f4f6f8;font-style:normal}'
+                .'blockquote>:first-child{margin-top:0}'
+                .'blockquote>:last-child{margin-bottom:0}'
+                .'blockquote blockquote{background:transparent}'
+            ).','
             .'branding:false'
             .'});});</script>'
         ;

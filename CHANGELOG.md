@@ -1,5 +1,22 @@
 # Synapsis Changelog
 
+## Version 1.18.1 (2026-08-10)
+
+> Keine Schema-Änderung – nach dem Update `composer update`, Cache leeren und die **Assets neu
+> veröffentlichen** (CSS geändert).
+
+### Behoben
+
+* **Zitate waren nicht als Zitat erkennbar**: Für `blockquote` gab es bislang keine einzige
+  CSS-Regel – zitierter Text sah aus wie normaler Fließtext. Zitate erscheinen jetzt als
+  **abgesetzter Block**: leicht getönte Fläche, feiner Rahmen ringsum, abgerundete Ecken, und
+  die Zeile „… schrieb:" als abgesetzte Kopfzeile. **Verschachtelte Zitate** werden nicht
+  immer dunkler, bleiben also auch in längeren Zitatketten lesbar. Die Regeln setzen sich
+  bewusst gegen Website-Themes durch, die `blockquote` mit eigenem Balken, Kursivschrift oder
+  großen Anführungszeichen versehen.
+* **Editor zeigt Zitate wie im Beitrag**: Der TinyMCE-Editor stellt Zitate jetzt genauso dar,
+  sodass beim Schreiben sichtbar ist, welcher Teil zitiert ist.
+
 ## Version 1.18.0 (2026-08-10)
 
 > Keine Schema-Änderung – nach dem Update `composer update`, Cache leeren und die **Assets neu
