@@ -92,11 +92,11 @@ $GLOBALS['TL_LANG']['tl_synapsis_settings']['teamNotifyOn'] = array(
 );
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['teamSubject'] = array(
     'Betreff-Vorlage (Team)',
-    'Platzhalter: ##forum##, ##topic##, ##author##, ##url##.',
+    'Platzhalter: ##forum##, ##topic##, ##author##, ##date## (Datum/Uhrzeit), ##url##.',
 );
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['teamBody'] = array(
     'Text-Vorlage (Team)',
-    'Platzhalter: ##forum##, ##topic##, ##author##, ##url##.',
+    'Platzhalter: ##forum##, ##topic##, ##author##, ##date## (Datum und Uhrzeit des Beitrags), ##text## (verfasster Text), ##url##.',
 );
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['teamNotifyOnRef'] = array(
     'topic' => 'Nur bei neuen Themen',
@@ -111,11 +111,11 @@ $GLOBALS['TL_LANG']['tl_synapsis_settings']['notifyEnabled'] = array(
 );
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['notifySubject'] = array(
     'Betreff-Vorlage',
-    'Platzhalter: ##topic## (Thementitel), ##name## (Empfänger), ##url## (Adresse des Themas).',
+    'Platzhalter: ##topic## (Thementitel), ##name## (Empfänger), ##date## (Datum und Uhrzeit), ##url## (Adresse des Themas).',
 );
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['notifyBody'] = array(
     'Text-Vorlage',
-    'Platzhalter: ##topic##, ##name##, ##url##.',
+    'Platzhalter: ##topic##, ##name##, ##date## (Datum und Uhrzeit der Antwort), ##text## (verfasster Text), ##url##.',
 );
 $GLOBALS['TL_LANG']['tl_synapsis_settings']['senderName'] = array(
     'Absendername',

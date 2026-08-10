@@ -153,7 +153,7 @@ $GLOBALS['TL_LANG']['MSC']['synapsisNotifyReport']    = '%s hat einen Beitrag ge
 $GLOBALS['TL_LANG']['MSC']['synapsisForumSubscribe']   = 'Forum abonnieren';
 $GLOBALS['TL_LANG']['MSC']['synapsisForumUnsubscribe'] = 'Forum-Abo beenden';
 $GLOBALS['TL_LANG']['MSC']['synapsisNewTopicSubject']  = 'Neues Thema im Forum "##forum##"';
-$GLOBALS['TL_LANG']['MSC']['synapsisNewTopicBody']     = "Hallo ##name##,\n\nim Forum \"##forum##\" wurde ein neues Thema erstellt: \"##topic##\".\n\n##url##\n";
+$GLOBALS['TL_LANG']['MSC']['synapsisNewTopicBody']     = "Hallo ##name##,\n\nam ##date## wurde im Forum \"##forum##\" ein neues Thema erstellt: \"##topic##\".\n\n##text##\n\n##url##\n";
 
 // Umfragen
 $GLOBALS['TL_LANG']['MSC']['synapsisAddPoll']       = 'Umfrage hinzufügen';

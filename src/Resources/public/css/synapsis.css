@@ -13,7 +13,9 @@
     --syn-bg: #ffffff;
     --syn-bg-alt: #f4f6f8;
     --syn-border: #dde3e8;
-    --syn-text: #23303a;
+    /* Fliesstext bewusst reines Schwarz (hoechster Kontrast). Die Farbschemata
+       weiter unten setzen jeweils ihren eigenen, zum Schema passenden Wert. */
+    --syn-text: #000000;
     --syn-muted: #6b7a86;
     --syn-panel: #f3f4f6;
     --syn-radius: 6px;
@@ -234,17 +236,25 @@
     font-size: 1rem;
 }
 
-.synapsis-forum-desc,
+/* Forenbeschreibung: gut lesbar in der Textfarbe (nur kleiner gesetzt) - die
+   gedaempfte Farbe bleibt den Meta-Angaben der Themenliste vorbehalten. */
+.synapsis-forum-desc {
+    font-size: 0.82rem;
+    color: var(--syn-text);
+}
+
 .synapsis-topic-meta {
     font-size: 0.82rem;
     color: var(--syn-muted);
 }
 
-/* Moderatoren-Zeile (Forenliste + Forum-Kopf) */
+/* Moderatoren-Zeile (Forenliste + Forum-Kopf): kursiv, damit sie sich von der
+   Beschreibung abhebt, ohne an Lesbarkeit zu verlieren. */
 .synapsis-forum-mods {
     margin: 0.15rem 0 0;
     font-size: 0.78rem;
-    color: var(--syn-muted);
+    font-style: italic;
+    color: var(--syn-text);
 }
 
 .synapsis-forumview__heading .synapsis-forum-mods {

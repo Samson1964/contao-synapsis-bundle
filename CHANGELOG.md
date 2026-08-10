@@ -1,5 +1,29 @@
 # Synapsis Changelog
 
+## Version 1.18.0 (2026-08-10)
+
+> Keine Schema-Änderung – nach dem Update `composer update`, Cache leeren und die **Assets neu
+> veröffentlichen** (CSS geändert).
+
+### Hinzugefügt
+
+* **Zwei neue Platzhalter in allen E-Mail-Vorlagen**: `##text##` fügt den **verfassten Beitrag**
+  als Klartext ein (Formatierungen entfallen, Absätze und Aufzählungen bleiben als
+  Zeilenumbrüche erhalten), `##date##` das **Datum samt Uhrzeit** der Antwort bzw. der
+  Themen-Eröffnung (im Contao-Datumsformat). Sie stehen in allen drei Benachrichtigungen zur
+  Verfügung – Themen-Abo, Forum-Abo und Team-Benachrichtigung – und sind in den mitgelieferten
+  Standardvorlagen bereits eingesetzt. **Bestehende, selbst angepasste Vorlagen bleiben
+  unverändert**; die neuen Platzhalter lassen sich dort jederzeit ergänzen.
+
+### Geändert (Darstellung)
+
+* **Fließtext in reinem Schwarz**: Die Textfarbe des Forums ist von `#23303a` auf `#000000`
+  umgestellt (höherer Kontrast). Die fünf Farbschemata behalten ihre jeweils abgestimmte
+  Textfarbe.
+* **Forenbeschreibung** wird nicht mehr gedämpft, sondern in der Textfarbe dargestellt; die
+  **Moderatoren-Zeile** ebenfalls, zusätzlich **kursiv**, damit sie sich von der Beschreibung
+  abhebt. Die Meta-Angaben der Themenliste (Verfasser · Datum) bleiben bewusst gedämpft.
+
 ## Version 1.17.2 (2026-07-28)
 
 > **Sicherheits-Update – bitte zeitnah einspielen.** Keine Schema-Änderung; nach dem Update

@@ -26,5 +26,10 @@ gelten sie als gelesen. Es gibt vier Anlässe:
   werden, ob bei **neuen Themen, Antworten oder beidem**, sowie die Betreff-/Text-Vorlage werden
   in den [globalen Einstellungen](einstellungen.md) festgelegt.
 
+In allen E-Mail-Vorlagen stehen neben Thema, Forum, Empfänger und Adresse auch **`##date##`**
+(Datum und Uhrzeit des Beitrags) und **`##text##`** (der verfasste Beitrag als Klartext) zur
+Verfügung – so enthält die Benachrichtigung auf Wunsch gleich den Beitrag selbst. Die
+Vorlagen werden in den [globalen Einstellungen](einstellungen.md) gepflegt.
+
 Alle E-Mail-Benachrichtigungen lassen sich global über **„E-Mail-Benachrichtigungen aktiv"**
 ein- und ausschalten. Der Verfasser selbst wird nie über den eigenen Beitrag benachrichtigt.

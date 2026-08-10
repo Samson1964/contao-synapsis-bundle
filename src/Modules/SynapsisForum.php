@@ -1887,7 +1887,7 @@ class SynapsisForum extends Module
         }
 
         // E-Mail an Forum-Abonnenten/Team und Erwaehnungs-Benachrichtigungen
-        $this->afterNewTopic($topicId, (int) $this->activeForum['id'], $memberId, $title, $firstPostId, $text);
+        $this->afterNewTopic($topicId, (int) $this->activeForum['id'], $memberId, $title, $firstPostId, $text, $now);
 
         $this->redirect($this->pageUrl(['topic' => $topicId]));
     }
@@ -1926,11 +1926,11 @@ class SynapsisForum extends Module
         ;
 
         // Abonnenten benachrichtigen (ausser dem Verfasser)
-        $this->notifySubscribers($topicId, $memberId);
+        $this->notifySubscribers($topicId, $memberId, $text, $now);
 
         // Persoenliche Benachrichtigungen (Erwaehnung/Zitat/Antwort) und Team-E-Mail
         $quotePostId = (int) Input::post('quote_post');
-        $this->afterReply($postId, $topicId, (int) $this->activeForum['id'], $memberId, $text, $quotePostId);
+        $this->afterReply($postId, $topicId, (int) $this->activeForum['id'], $memberId, $text, $quotePostId, $now);
 
         $this->redirect($this->pageUrl(['topic' => $topicId, 'page_p'.$this->id => $this->lastPostPage()]));
     }
@@ -3628,8 +3628,13 @@ class SynapsisForum extends Module
     /**
      * Benachrichtigt die Abonnenten eines Themas per E-Mail ueber eine neue
      * Antwort - mit Ausnahme des Verfassers.
+     *
+     * @param string $text Der verfasste Beitragstext (HTML); steht in der
+     *                     Vorlage als ##text## in Klartext zur Verfuegung
+     * @param int    $date Zeitpunkt der Antwort; steht als ##date## bereit
+     *                     (0 = jetzt)
      */
-    private function notifySubscribers(int $topicId, int $excludeMemberId): void
+    private function notifySubscribers(int $topicId, int $excludeMemberId, string $text = '', int $date = 0): void
     {
         $settings = $this->forumSettings();
 
@@ -3652,9 +3657,11 @@ class SynapsisForum extends Module
         $url = $this->absoluteUrl(['topic' => $topicId]);
 
         $subjectTpl = '' !== (string) ($settings['notifySubject'] ?? '') ? (string) $settings['notifySubject'] : 'Neue Antwort im Thema "##topic##"';
-        $bodyTpl = '' !== (string) ($settings['notifyBody'] ?? '') ? (string) $settings['notifyBody'] : "Hallo ##name##,\n\nim Thema \"##topic##\" wurde eine neue Antwort verfasst.\n\n##url##\n";
+        $bodyTpl = '' !== (string) ($settings['notifyBody'] ?? '') ? (string) $settings['notifyBody'] : "Hallo ##name##,\n\nam ##date## wurde im Thema \"##topic##\" eine neue Antwort verfasst:\n\n##text##\n\n##url##\n";
         $senderName = (string) ($settings['senderName'] ?? '');
         $senderEmail = (string) ($settings['senderEmail'] ?? '');
+        $plainText = NotificationTemplate::plainText($text);
+        $dateLabel = $this->formatDate($date > 0 ? $date : time());
 
         foreach ($subscribers as $subscriber) {
             if ('' === (string) $subscriber['email']) {
@@ -3665,6 +3672,8 @@ class SynapsisForum extends Module
                 'topic' => $title,
                 'name' => trim(($subscriber['firstname'] ?? '').' '.($subscriber['lastname'] ?? '')),
                 'url' => $url,
+                'text' => $plainText,
+                'date' => $dateLabel,
             ];
 
             try {
@@ -3740,8 +3749,11 @@ class SynapsisForum extends Module
     /**
      * Benachrichtigt die Abonnenten eines Forums per E-Mail ueber ein neues
      * Thema - mit Ausnahme des Verfassers.
+     *
+     * @param string $text Text des Eroeffnungsbeitrags (HTML) fuer ##text##
+     * @param int    $date Zeitpunkt der Eroeffnung fuer ##date## (0 = jetzt)
      */
-    private function notifyForumSubscribers(int $forumId, int $topicId, string $title, int $excludeMemberId): void
+    private function notifyForumSubscribers(int $forumId, int $topicId, string $title, int $excludeMemberId, string $text = '', int $date = 0): void
     {
         $settings = $this->forumSettings();
 
@@ -3762,7 +3774,9 @@ class SynapsisForum extends Module
         $forumTitle = $this->forumTitle($forumId);
         $url = $this->absoluteUrl(['topic' => $topicId]);
         $subjectTpl = $GLOBALS['TL_LANG']['MSC']['synapsisNewTopicSubject'] ?? 'Neues Thema im Forum "##forum##"';
-        $bodyTpl = $GLOBALS['TL_LANG']['MSC']['synapsisNewTopicBody'] ?? "Hallo ##name##,\n\nim Forum \"##forum##\" wurde ein neues Thema erstellt: \"##topic##\".\n\n##url##\n";
+        $bodyTpl = $GLOBALS['TL_LANG']['MSC']['synapsisNewTopicBody'] ?? "Hallo ##name##,\n\nam ##date## wurde im Forum \"##forum##\" ein neues Thema erstellt: \"##topic##\".\n\n##text##\n\n##url##\n";
+        $plainText = NotificationTemplate::plainText($text);
+        $dateLabel = $this->formatDate($date > 0 ? $date : time());
 
         foreach ($subscribers as $subscriber) {
             $tokens = [
@@ -3770,6 +3784,8 @@ class SynapsisForum extends Module
                 'topic' => $title,
                 'name' => trim(($subscriber['firstname'] ?? '').' '.($subscriber['lastname'] ?? '')),
                 'url' => $url,
+                'text' => $plainText,
+                'date' => $dateLabel,
             ];
 
             $this->sendMail(
@@ -3787,8 +3803,10 @@ class SynapsisForum extends Module
      * globalen Foreneinstellungen.
      *
      * @param string $event topic (neues Thema) oder reply (Antwort)
+     * @param string $text  Verfasster Beitragstext (HTML) fuer ##text##
+     * @param int    $date  Zeitpunkt des Beitrags fuer ##date## (0 = jetzt)
      */
-    private function notifyTeam(int $forumId, string $event, int $topicId, string $title, string $authorName): void
+    private function notifyTeam(int $forumId, string $event, int $topicId, string $title, string $authorName, string $text = '', int $date = 0): void
     {
         $settings = $this->forumSettings();
 
@@ -3816,13 +3834,15 @@ class SynapsisForum extends Module
         }
 
         $subjectTpl = '' !== (string) ($settings['teamSubject'] ?? '') ? (string) $settings['teamSubject'] : 'Forum: neuer Beitrag im Thema "##topic##"';
-        $bodyTpl = '' !== (string) ($settings['teamBody'] ?? '') ? (string) $settings['teamBody'] : "Im Forum \"##forum##\" hat ##author## im Thema \"##topic##\" geschrieben.\n\n##url##\n";
+        $bodyTpl = '' !== (string) ($settings['teamBody'] ?? '') ? (string) $settings['teamBody'] : "Im Forum \"##forum##\" hat ##author## am ##date## im Thema \"##topic##\" geschrieben:\n\n##text##\n\n##url##\n";
 
         $tokens = [
             'forum' => $this->forumTitle($forumId),
             'topic' => $title,
             'author' => $authorName,
             'url' => $this->absoluteUrl(['topic' => $topicId]),
+            'text' => NotificationTemplate::plainText($text),
+            'date' => $this->formatDate($date > 0 ? $date : time()),
         ];
 
         $subject = NotificationTemplate::render($subjectTpl, $tokens);
@@ -3992,7 +4012,7 @@ class SynapsisForum extends Module
      * Nachbereitung einer Antwort: persoenliche Benachrichtigungen (Erwaehnung,
      * Zitat, Antwort auf das eigene Thema) und E-Mail an das Team.
      */
-    private function afterReply(int $postId, int $topicId, int $forumId, int $authorId, string $text, int $quotePostId): void
+    private function afterReply(int $postId, int $topicId, int $forumId, int $authorId, string $text, int $quotePostId, int $date = 0): void
     {
         $notified = [$authorId => true];
 
@@ -4027,22 +4047,24 @@ class SynapsisForum extends Module
             $this->createNotification($topicAuthor, 'reply', $topicId, $postId, $forumId, $authorId);
         }
 
-        $this->notifyTeam($forumId, 'reply', $topicId, (string) $this->activeTopic['title'], $this->memberUsername($authorId));
+        $this->notifyTeam($forumId, 'reply', $topicId, (string) $this->activeTopic['title'], $this->memberUsername($authorId), $text, $date);
     }
 
     /**
      * Nachbereitung eines neuen Themas: E-Mail an Forum-Abonnenten und Team,
      * persoenliche Erwaehnungs-Benachrichtigungen aus dem ersten Beitrag.
+     *
+     * @param int $date Zeitpunkt der Eroeffnung fuer die Vorlagen (0 = jetzt)
      */
-    private function afterNewTopic(int $topicId, int $forumId, int $authorId, string $title, int $firstPostId, string $text): void
+    private function afterNewTopic(int $topicId, int $forumId, int $authorId, string $title, int $firstPostId, string $text, int $date = 0): void
     {
-        $this->notifyForumSubscribers($forumId, $topicId, $title, $authorId);
+        $this->notifyForumSubscribers($forumId, $topicId, $title, $authorId, $text, $date);
 
         foreach ($this->detectMentions($text) as $mentionId) {
             $this->createNotification($mentionId, 'mention', $topicId, $firstPostId, $forumId, $authorId);
         }
 
-        $this->notifyTeam($forumId, 'topic', $topicId, $title, $this->memberUsername($authorId));
+        $this->notifyTeam($forumId, 'topic', $topicId, $title, $this->memberUsername($authorId), $text, $date);
     }
 
     /**

@@ -29,7 +29,9 @@ Im Backend-Modul **Synapsis-Forum → Einstellungen** (gilt über alle Startpunk
 
 * **E-Mail-Benachrichtigungen aktiv** – Zentraler An/aus-Schalter für **alle** E-Mails.
 * **Betreff- und Text-Vorlage** für die Antwort-Benachrichtigung an Themen-Abonnenten.
-  Platzhalter: `##topic##` (Thementitel), `##name##` (Empfänger), `##url##` (Adresse des Themas).
+  Platzhalter: `##topic##` (Thementitel), `##name##` (Empfänger), `##date##` (Datum und
+  Uhrzeit der Antwort), `##text##` (der verfasste Beitrag als Klartext), `##url##` (Adresse
+  des Themas).
 
 ## Team-Benachrichtigung
 
@@ -38,7 +40,11 @@ Bei neuen Beiträgen zusätzlich das **Team** informieren:
 * **Administratoren benachrichtigen** und/oder **Moderatoren benachrichtigen** (jeweils an/aus).
 * **Auslöser** – bei **neuen Themen**, **Antworten** oder **beidem**.
 * **Betreff- und Text-Vorlage** mit den Platzhaltern `##forum##`, `##topic##`, `##author##`
-  (Verfasser) und `##url##`.
+  (Verfasser), `##date##` (Datum und Uhrzeit), `##text##` (verfasster Beitrag) und `##url##`.
+
+> Der Platzhalter `##text##` fügt den Beitrag als **Klartext** ein: Formatierungen werden
+> entfernt, Absätze und Aufzählungen bleiben als Zeilenumbrüche erhalten. `##date##` folgt
+> dem in Contao eingestellten Datums- und Zeitformat.
 
 ## Absender (optional)
 

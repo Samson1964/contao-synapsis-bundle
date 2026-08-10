@@ -56,7 +56,7 @@ class SettingsListener
                     'tstamp' => time(),
                     'notifyEnabled' => '1',
                     'notifySubject' => 'Neue Antwort im Thema "##topic##"',
-                    'notifyBody' => "Hallo ##name##,\n\nim Thema \"##topic##\" wurde eine neue Antwort verfasst.\n\n##url##\n",
+                    'notifyBody' => "Hallo ##name##,\n\nam ##date## wurde im Thema \"##topic##\" eine neue Antwort verfasst:\n\n##text##\n\n##url##\n",
                     'modCanPin' => '1',
                     'modCanLock' => '1',
                     'modCanMove' => '1',
@@ -65,7 +65,7 @@ class SettingsListener
                     'showRanks' => '1',
                     'teamNotifyOn' => 'both',
                     'teamSubject' => 'Forum: neuer Beitrag im Thema "##topic##"',
-                    'teamBody' => "Im Forum \"##forum##\" hat ##author## im Thema \"##topic##\" geschrieben.\n\n##url##\n",
+                    'teamBody' => "Im Forum \"##forum##\" hat ##author## am ##date## im Thema \"##topic##\" geschrieben:\n\n##text##\n\n##url##\n",
                 ])
                 ->execute()
             ;
