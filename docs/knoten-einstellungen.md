@@ -39,6 +39,12 @@ Für **nicht angemeldete Besucher** (Gäste) getrennt regelbar und ebenfalls ver
 > Hinweis: Ist die fiktive Gruppe „Gäste" bereits in den erlaubten Mitgliedergruppen
 > ausgewählt, dürfen Gäste dort nur **lesen**; die Schreib-Checkbox bleibt dann ohne Wirkung.
 
+**Ohne Lesezugriff zeigt das Modul gar nichts.** Darf ein Besucher im gewählten Startpunkt
+kein einziges Forum lesen, gibt das Frontend-Modul **nichts** aus – auch keine leere Hülle mit
+Suche, Statistik, „Wer ist online" oder Mitgliederprofilen. So erfahren Unbefugte auch keine
+Namen von Mitgliedern. Einen Hinweis wie „Bitte melden Sie sich an" platziert man daneben als
+eigenes Inhaltselement (in Contao über „Zugriffsschutz → nur Gäste anzeigen").
+
 **Ein geschützter Bereich bleibt geschützt:** Ist ein Knoten per Zugriffsschutz auf
 Mitgliedergruppen beschränkt und lässt Gäste weder über die Gäste-Gruppe noch über seine
 **eigenen** Checkboxen zu, ist sein gesamter Teilbereich **nicht öffentlich** – die

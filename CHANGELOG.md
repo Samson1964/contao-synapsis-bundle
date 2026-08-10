@@ -1,5 +1,26 @@
 # Synapsis Changelog
 
+## Version 1.19.0 (2026-08-10)
+
+> **Sicherheits-Update** – keine Schema-Änderung; nach dem Update `composer update` und Cache
+> leeren.
+
+### Behoben (Sicherheit)
+
+* **Namen von Mitgliedern waren für Unbefugte sichtbar.** Auch wenn ein Besucher im Startpunkt
+  kein einziges Forum lesen durfte, gab das Modul weiterhin eine Hülle aus – und darin zwei
+  Stellen mit personenbezogenen Daten:
+  * **„Wer ist online"** nannte die Klarnamen der gerade aktiven Mitglieder.
+  * **Mitgliederprofile** (`?member=<id>`) lieferten Name, Rang und Beitrittsdatum – durch
+    schlichtes Hochzählen der ID abrufbar, also als Mitgliederliste auslesbar.
+* **Neues Verhalten:** Wer im gewählten Startpunkt kein Forum lesen darf, bekommt vom Modul
+  **gar keine Ausgabe** mehr – keine Suche, keine Statistik, keine Online-Liste, keine Profile.
+  Einen Hinweis auf die Anmeldung platziert man daneben als eigenes Inhaltselement (in Contao
+  über den Zugriffsschutz „nur Gäste anzeigen").
+* Abgesichert durch acht zusätzliche Prüfungen im Gäste-Lecktest (Übersicht, Forum, Thema,
+  Profile, Online-Liste, Statistik, Suche – jeweils auf **leere** Ausgabe), auf Contao 4.13
+  und 5.
+
 ## Version 1.18.1 (2026-08-10)
 
 > Keine Schema-Änderung – nach dem Update `composer update`, Cache leeren und die **Assets neu

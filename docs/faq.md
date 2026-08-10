@@ -12,7 +12,9 @@ Wenn im Frontend nichts (oder eine leere Übersicht) erscheint, hilft diese Chec
 * Ist das **Frontend-Modul „Forum"** angelegt und der **richtige Startpunkt** ausgewählt?
 * Ist das Modul in eine **Seite eingebunden** (Inhaltselement „Modul" oder Layout-Spalte)?
 * Darf die betrachtende Person **lesen**? Für Gäste muss „Gäste dürfen lesen" aktiv sein; sonst
-  ist Anmeldung mit passender Mitgliedergruppe nötig.
+  ist Anmeldung mit passender Mitgliedergruppe nötig. **Ohne Lesezugriff gibt das Modul gar
+  nichts aus** – die Seite wirkt dann leer, das ist beabsichtigt (siehe
+  [Gäste-Zugriff](knoten-einstellungen.md#gäste-zugriff)).
 * Ist die **Seite selbst** bzw. das Modul nicht durch einen Contao-Zugriffsschutz für andere
   Gruppen gesperrt?
 * Nach einem Update: wurde die **Datenbank aktualisiert** (`contao:migrate`) und wurden die

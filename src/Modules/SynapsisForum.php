@@ -242,6 +242,16 @@ class SynapsisForum extends Module
             return '';
         }
 
+        // Wer im Startpunkt kein einziges Forum lesen darf, bekommt vom Modul
+        // GAR NICHTS zu sehen - auch kein leeres Geruest mit Suche, Statistik,
+        // "Wer ist online" oder Mitgliederprofilen. Sonst erfuehren nicht
+        // berechtigte Besucher ueber die Online-Liste und ueber ?member=<id>
+        // die Namen der Mitglieder eines geschuetzten Forums. Einen Hinweis auf
+        // die Anmeldung platziert man als eigenes Inhaltselement auf der Seite.
+        if (!$this->hasReadableForums()) {
+            return '';
+        }
+
         // RSS-Feed: XML ausgeben und die Seitenausgabe kurzschliessen.
         if (null !== Input::get('feed')) {
             $this->emitFeed();
@@ -3071,6 +3081,19 @@ class SynapsisForum extends Module
         }
 
         return $this->readableForumIdsCache = ([] === $ids ? [0] : $ids);
+    }
+
+    /**
+     * Darf der Besucher in diesem Startpunkt ueberhaupt ein Forum lesen?
+     *
+     * readableForumIds() liefert bewusst nie ein leeres Array, sondern im
+     * Verweigerungsfall die Ersatzliste [0] - nur so bleiben die vielen
+     * "... IN (?)"-Abfragen syntaktisch gueltig und treffen zugleich nichts.
+     * Genau dieser Ersatzwert kennzeichnet hier "kein Lesezugriff".
+     */
+    private function hasReadableForums(): bool
+    {
+        return [0] !== $this->readableForumIds();
     }
 
     /**
