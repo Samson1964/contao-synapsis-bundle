@@ -19,6 +19,11 @@ einstellen:
 
 Dazu die üblichen Contao-Felder (Name, Überschrift, Zugriffsschutz, CSS-ID).
 
+> Die aus Contao 4 bekannte Experten-Option **„Nur Gästen anzeigen"** gibt es hier bewusst
+> nicht: Contao hat sie in Fassung 5 entfernt, und das Forum blendet sich für Besucher ohne
+> Lesezugriff ohnehin vollständig aus (siehe
+> [Gäste-Zugriff](knoten-einstellungen.md#gäste-zugriff)).
+
 **So wird es sichtbar:** Das Modul anschließend in eine Seite bringen – am einfachsten über
 ein Inhaltselement **„Modul"** in einem Artikel, oder indem man es im **Seitenlayout** einer
 Spalte zuweist.

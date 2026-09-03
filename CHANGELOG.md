@@ -1,5 +1,28 @@
 # Synapsis Changelog
 
+## Version 1.19.1 (2026-08-10)
+
+### Behoben
+
+* **Palette des Frontend-Moduls nannte ein Feld, das es in Contao 5 nicht gibt.** Die Palette
+  `synapsis_forum` führte im Bereich „Experten-Einstellungen" das Kernfeld `guests`
+  („Nur Gästen anzeigen"). Contao hat es mit 4.12 für veraltet erklärt und in **Contao 5
+  ersatzlos entfernt** – dort existiert weder die DCA-Definition noch die Datenbankspalte.
+  Contao übergeht ein unbekanntes Palettenfeld **stillschweigend** (kein Fehler, kein
+  Logeintrag), weshalb das nur beim Abgleich der Paletten auffiel. Das Feld ist jetzt aus der
+  Palette entfernt; für das Forum war es ohnehin gegenstandslos, seit das Modul Besuchern ohne
+  Lesezugriff von sich aus nichts mehr ausgibt (1.19.0).
+* Unter **Contao 4.13** bleibt das Feld im Kern bestehen: Ein dort zuvor gesetzter Wert wirkt
+  weiter, lässt sich aber nicht mehr über die Palette ändern. Da die Option standardmäßig aus
+  ist, ist praktisch niemand betroffen; im Zweifel prüft man
+  `SELECT id, name FROM tl_module WHERE type = 'synapsis_forum' AND guests = '1'`.
+
+### Hinzugefügt
+
+* Neuer Test `tests/Dca/ModulePaletteTest.php`, der jedes Feld der Palette (und der
+  Unterpalette) gegen die Felder des Bundles **und der installierten Contao-Fassung** prüft.
+  So fällt künftig auf, wenn ein Kernfeld zwischen zwei Contao-Fassungen verschwindet.
+
 ## Version 1.19.0 (2026-08-10)
 
 > **Sicherheits-Update** – keine Schema-Änderung; nach dem Update `composer update` und Cache

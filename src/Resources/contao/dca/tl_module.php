@@ -16,12 +16,22 @@ declare(strict_types=1);
  * angehaengt (die Kern-DCA wird von Contao geladen).
  */
 
-// Palette des Modultyps
+/*
+ * Palette des Modultyps.
+ *
+ * Bewusst OHNE das Kernfeld "guests" ("Nur Gaesten anzeigen"): Contao hat es mit
+ * 4.12 als veraltet erklaert und in Contao 5 ersatzlos entfernt - dort gibt es
+ * weder die DCA-Definition noch die Datenbankspalte. Die Palette haette also ein
+ * Feld benannt, das es gar nicht gibt; Contao uebergeht so etwas stillschweigend.
+ * Fuer das Forum ist die Option ohnehin gegenstandslos: Seit 1.19.0 gibt das Modul
+ * Besuchern ohne Lesezugriff von sich aus nichts mehr aus, und einen Hinweis nur
+ * fuer Gaeste setzt man als eigenes Inhaltselement daneben.
+ */
 $GLOBALS['TL_DCA']['tl_module']['palettes']['synapsis_forum'] = '{title_legend},name,headline,type;'
     .'{config_legend},synapsis_root,synapsis_perPage,synapsis_editor;'
     .'{upload_legend},synapsis_allowUploads;'
     .'{protected_legend:hide},protected;'
-    .'{expert_legend:hide},guests,cssID';
+    .'{expert_legend:hide},cssID';
 
 // Unterpalette: Upload-Ordner nur bei aktivierten Uploads
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['synapsis_allowUploads'] = 'synapsis_uploadFolder';
