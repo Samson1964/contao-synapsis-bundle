@@ -2,9 +2,10 @@
 /*
  * Uebersicht des Startpunkts: Kategorien mit Foren, neueste Themen, Statistik.
  *
- * @var array $this->categories
- * @var array $this->newestTopics
- * @var array $this->statistics
+ * @var array  $this->categories
+ * @var array  $this->newestTopics
+ * @var array  $this->statistics
+ * @var string $this->rootDescription Beschreibung des Startpunkts (Einleitung)
  */
 
 use Contao\StringUtil;
@@ -16,6 +17,10 @@ $requestToken = System::getContainer()->get('contao.csrf.token_manager')->getDef
 
     <?php if ($this->headline): ?>
         <<?= $this->hl ?> class="synapsis-headline"><?= $this->headline ?></<?= $this->hl ?>>
+    <?php endif; ?>
+
+    <?php if ('' !== (string) $this->rootDescription): ?>
+        <p class="synapsis-index__desc"><?= StringUtil::specialchars($this->rootDescription) ?></p>
     <?php endif; ?>
 
     <?php if (!empty($this->breadcrumb)): ?>

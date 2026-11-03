@@ -9,7 +9,11 @@ und Foren darunter, kann dort aber ergänzt werden.
 ## Bezeichnung und Beschreibung
 
 * **Bezeichnung / Alias** – Der Name und die (automatisch erzeugte) URL-Kennung.
-* **Beschreibung** – Ein kurzer Text, der im Frontend unter dem Forennamen erscheint.
+* **Beschreibung** – Ein kurzer Text, der im Frontend unter dem Namen des Bereichs erscheint:
+  bei **Kategorien** und **Foren** in der jeweiligen Zeile der Übersicht, beim **Startpunkt**
+  als Einleitung über der gesamten Übersicht (unterhalb der Überschrift des Moduls). In den
+  Unteransichten – Kategorie, Forum, Thema – wird die Einleitung des Startpunkts nicht
+  wiederholt.
 
 ## Forum-Icon
 

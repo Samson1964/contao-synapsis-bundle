@@ -495,6 +495,7 @@ class SynapsisForum extends Module
         }
 
         $this->Template->breadcrumb = $this->buildBreadcrumb(0);
+        $this->Template->rootDescription = $this->rootDescription();
         $this->Template->categories = $categories;
         $this->Template->newestTopics = $this->findNewestPosts(10);
         $this->Template->statistics = $this->buildStatistics();
@@ -543,6 +544,34 @@ class SynapsisForum extends Module
      *
      * @return array<string, mixed>|null
      */
+    /**
+     * Liest die Beschreibung des Startpunkts fuer die Uebersicht.
+     *
+     * Der Startpunkt selbst taucht im Frontend nirgends als eigene Zeile auf -
+     * anders als Kategorien und Foren, die ihre Beschreibung in der jeweiligen
+     * Zeile mitbringen. Seine Beschreibung ist daher als Einleitung des
+     * gesamten Forums gedacht und erscheint unter der Ueberschrift des Moduls.
+     *
+     * Der Lesezugriff ist an dieser Stelle bereits geklaert: generate() bricht
+     * ab, bevor ueberhaupt etwas gerendert wird, wenn der Besucher im
+     * Startpunkt kein Forum lesen darf.
+     *
+     * @return string Die Beschreibung ohne umgebende Leerzeichen, oder eine
+     *                leere Zeichenkette, wenn keine hinterlegt ist oder der
+     *                Startpunkt nicht (mehr) existiert - das Template gibt
+     *                dann nichts aus
+     */
+    private function rootDescription(): string
+    {
+        $row = Database::getInstance()
+            ->prepare('SELECT description FROM tl_synapsis_forum WHERE id = ?')
+            ->execute($this->rootId)
+            ->row()
+        ;
+
+        return trim((string) ($row['description'] ?? ''));
+    }
+
     private function findCategory(int $id): ?array
     {
         $row = Database::getInstance()

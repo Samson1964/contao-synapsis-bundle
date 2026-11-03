@@ -238,6 +238,13 @@
 
 /* Forenbeschreibung: gut lesbar in der Textfarbe (nur kleiner gesetzt) - die
    gedaempfte Farbe bleibt den Meta-Angaben der Themenliste vorbehalten. */
+/* Beschreibung des Startpunkts: Einleitung ueber der gesamten Uebersicht. */
+.synapsis-index__desc {
+    margin: 0 0 1rem;
+    max-width: 70ch;
+    color: var(--syn-text);
+}
+
 .synapsis-forum-desc {
     font-size: 0.82rem;
     color: var(--syn-text);

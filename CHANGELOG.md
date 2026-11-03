@@ -1,5 +1,20 @@
 # Synapsis Changelog
 
+## Version 1.19.2 (2026-11-03)
+
+### Behoben
+
+* **Die Beschreibung des Startpunkts wurde im Frontend nie angezeigt.** Das Feld stand in der
+  Eingabemaske des Startpunkts zur Verfügung, und die Dokumentation sagte eine Anzeige zu –
+  ausgegeben wurde aber nur die Beschreibung von **Kategorien** und **Foren**, weil die
+  Übersicht ausschließlich die untergeordneten Knoten einliest. Der eingegebene Text
+  verschwand damit wirkungslos in der Datenbank.
+* Die Beschreibung des Startpunkts erscheint jetzt als **Einleitung über der Übersicht**,
+  direkt unter der Überschrift des Moduls (`<p class="synapsis-index__desc">`). Ist keine
+  hinterlegt – oder nur aus Leerzeichen –, gibt das Template nichts aus, es entsteht also kein
+  leerer Absatz. In den Unteransichten (Kategorie, Forum, Thema) wird die Einleitung bewusst
+  nicht wiederholt; dort trägt der jeweilige Bereich seine eigene Beschreibung.
+
 ## Version 1.19.1 (2026-08-10)
 
 ### Behoben
